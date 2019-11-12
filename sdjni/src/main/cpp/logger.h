@@ -1,6 +1,3 @@
-//
-// Created by wei on 17-12-27.
-//
 
 #ifndef LOGGER
 #define LOGGER

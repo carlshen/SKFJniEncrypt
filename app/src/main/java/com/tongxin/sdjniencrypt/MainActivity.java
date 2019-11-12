@@ -32,7 +32,7 @@ import java.util.Arrays;
  * 用于公司的项目验证。
  */
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
-    public final String TAG = "tongfang";
+    public final String TAG = "tongxin";
 
     private final String str = "123abcABC*%!~#+_/中文测试";
     private final String ecode = "SkiDk/JC5F/BXKf/np7rWNub7ibxzYMjKwkQ7A6AqPw=";

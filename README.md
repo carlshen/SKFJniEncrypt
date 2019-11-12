@@ -1,6 +1,6 @@
-[English](https://github.com/BruceWind/AESJniEncrypt/blob/master/README.md)
+[English](https://github.com/carlshen/SDJniEncrypt/blob/master/README.md)
 
-[中文](https://github.com/BruceWind/AESJniEncrypt/blob/master/README_zh.md)
+[中文](https://github.com/carlshen/SDJniEncrypt/blob/master/README_zh.md)
 
 Thanks for author.
 I just learn from it.
