@@ -67,7 +67,7 @@ JNIEXPORT jstring JNICALL encode(JNIEnv *env, jobject instance, jobject context,
 
     //先进行apk被 二次打包的校验
     if (check_signature(env, instance, context) != 1 || check_is_emulator(env) != 1) {
-        char *str = UNSIGNATURE;
+        char *str = (char *) UNSIGNATURE;
 //        return (*env)->NewString(env, str, strlen(str));
         return charToJstring(env,str);
     }
@@ -89,7 +89,7 @@ JNIEXPORT jstring JNICALL decode(JNIEnv *env, jobject instance, jobject context,
 
     //先进行apk被 二次打包的校验
     if (check_signature(env, instance, context) != 1|| check_is_emulator(env) != 1) {
-        char *str = UNSIGNATURE;
+        char *str = (char *) UNSIGNATURE;
 //        return (*env)->NewString(env, str, strlen(str));
         return charToJstring(env,str);
     }
@@ -109,7 +109,7 @@ JNIEXPORT jstring JNICALL decode(JNIEnv *env, jobject instance, jobject context,
 
 JNIEXPORT jlong JNICALL set_package(JNIEnv *env, jobject instance, jstring str_) {
     // set package name
-    char *pkgname = (*env)->GetStringUTFChars(env, str_, JNI_FALSE);
+    char *pkgname = (char *) (*env)->GetStringUTFChars(env, str_, JNI_FALSE);
     LOGI("set_package package name: %s\n", pkgname);
     unsigned long pkgresult = SDSCSetPackageName(pkgname);
     LOGI("setpackage result: %ld", pkgresult);
@@ -118,7 +118,7 @@ JNIEXPORT jlong JNICALL set_package(JNIEnv *env, jobject instance, jstring str_)
 }
 
 JNIEXPORT jlong JNICALL init_params(JNIEnv *env, jobject instance, jlong handle, jstring str_) {
-    char *szDrive = (*env)->GetStringUTFChars(env, str_, JNI_FALSE);
+    char *szDrive = (char *) (*env)->GetStringUTFChars(env, str_, JNI_FALSE);
     LOGI("init_params szDrive: %s\n", szDrive);
     unsigned long baseResult = SDSCInitParams(handle, szDrive);
     LOGI("init_params baseResult: %ld", baseResult);
@@ -135,16 +135,16 @@ JNIEXPORT jlong JNICALL destroy_params(JNIEnv *env, jobject instance) {
 JNIEXPORT jstring JNICALL refresh_dev(JNIEnv *env, jobject instance) {
     char *pszDrives = (char *) malloc(SDSC_MAX_DEV_NUM * SDSC_MAX_DEV_NAME_LEN * sizeof(char));
     if (pszDrives == NULL) {
-        LOGE("RefreshDev with null alloc.");
+        LOGE("EnumDev with null alloc.");
         return (*env)->NewStringUTF(env, '\0');
     }
     memset(pszDrives, 0x00, SDSC_MAX_DEV_NUM * SDSC_MAX_DEV_NAME_LEN * sizeof(char));
     unsigned long pulDrivesLen = SDSC_MAX_DEV_NUM * SDSC_MAX_DEV_NAME_LEN * sizeof(char);
     unsigned long pulDriveNum = 0;
     unsigned long baseResult = SDSCListDevs(pszDrives, &pulDrivesLen, &pulDriveNum);
-    LOGI("RefreshDev result: %ld", baseResult);
-    LOGI("RefreshDev pulDriveNum: %ld", pulDriveNum);
-    LOGI("RefreshDev pszDrives: %s\n", pszDrives);
+    LOGI("EnumDev result: %ld", baseResult);
+    LOGI("EnumDev pulDriveNum: %ld", pulDriveNum);
+    LOGI("EnumDev pszDrives: %s\n", pszDrives);
     jstring  result = charToJstring(env, pszDrives);
     // need free the memory
     free(pszDrives);
@@ -152,7 +152,7 @@ JNIEXPORT jstring JNICALL refresh_dev(JNIEnv *env, jobject instance) {
 }
 
 JNIEXPORT jint JNICALL connect_dev(JNIEnv *env, jobject instance, jstring str_) {
-    char *szDrive = (*env)->GetStringUTFChars(env, str_, JNI_FALSE);
+    char *szDrive = (char *) (*env)->GetStringUTFChars(env, str_, JNI_FALSE);
     if (szDrive == NULL) {
         LOGE("connect_dev with null string.");
         return -1;
@@ -349,7 +349,7 @@ static JNINativeMethod method_table[] = {
         {"setPackageName", "(Ljava/lang/String;)J",                                    (void *) set_package},
         {"InitParams",      "(JLjava/lang/String;)J",                                  (void *) init_params},
         {"DestroyParams",   "()J",                                                     (void *) destroy_params},
-        {"RefreshDev",      "()Ljava/lang/String;",                                     (void *) refresh_dev},
+        {"EnumDev",         "()Ljava/lang/String;",                                    (void *) refresh_dev},
         {"ConnectDev",      "(Ljava/lang/String;)I",                                    (void *) connect_dev},
         {"DisconnectDev",   "(I)J",                                                    (void *) disconnect_dev},
         {"BeginTransaction", "(I)J",                                                (void *) begin_transaction},

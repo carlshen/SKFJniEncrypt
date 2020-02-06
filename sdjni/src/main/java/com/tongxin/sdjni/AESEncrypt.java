@@ -49,7 +49,7 @@ public class AESEncrypt {
     public static native long setPackageName(String str);
     public static native long InitParams(long type, String dev);
     public static native long DestroyParams();
-    public static native String RefreshDev();
+    public static native String EnumDev();
     public static native int ConnectDev(String dev);
     public static native long DisconnectDev(int handle);
     public static native long BeginTransaction(int handle);

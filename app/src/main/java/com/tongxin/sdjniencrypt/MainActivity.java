@@ -1,7 +1,6 @@
 package com.tongxin.sdjniencrypt;
 
 import android.Manifest;
-import android.annotation.TargetApi;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
@@ -27,7 +26,7 @@ import java.io.File;
 import java.util.Arrays;
 
 /**
- * Created by carl on 19-11-12.
+ * Created by carl on 20-02-06.
  *
  * 用于公司的项目验证。
  */
@@ -51,7 +50,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         deviceLog = (TextView) findViewById(R.id.device_log);
@@ -114,13 +112,13 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
     }
 
-    @TargetApi(Build.VERSION_CODES.KITKAT)
     private void callTongfang() {
         appsDir = getExternalFilesDirs("/");
         long result = AESEncrypt.setPackageName(getPackageName());
         Log.i(TAG, "getPackageName(): " + getPackageName());
         Log.i(TAG, "setPackageName result: " + result);
     }
+
     private void SetDevList(String devs) {
         String[] temp = devs.split(",");
         if (temp == null || temp.length < 1) {
@@ -158,9 +156,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     public void onClick(View view) {
         switch (view.getId()) {
             case R.id.device_refresh:
-                dev = AESEncrypt.RefreshDev();
+                dev = AESEncrypt.EnumDev();
                 deviceLog.setText(deviceLog.getText() + "Refresh return " + dev + "\n");
-                Log.i(TAG, "-----------RefreshDev dev: " + dev);
+                Log.i(TAG, "-----------EnumDev dev: " + dev);
                 if (!TextUtils.isEmpty(dev)) {
                     SetDevList(dev);
                 } else {

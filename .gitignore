@@ -22,6 +22,8 @@
 bin/
 gen/
 out/
+.cxx/
+sdjni/.cxx/*
 
 # Gradle files
 .gradle/
