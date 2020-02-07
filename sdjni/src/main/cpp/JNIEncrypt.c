@@ -1,5 +1,6 @@
 #include <jni.h>
 #include "aes.h"
+#include "logger.h"
 #include "checksignature.h"
 #include "check_emulator.h"
 #include <string.h>
@@ -132,7 +133,7 @@ JNIEXPORT jlong JNICALL destroy_params(JNIEnv *env, jobject instance) {
     return baseResult;
 }
 
-JNIEXPORT jstring JNICALL refresh_dev(JNIEnv *env, jobject instance) {
+JNIEXPORT jstring JNICALL enum_dev(JNIEnv *env, jobject instance) {
     char *pszDrives = (char *) malloc(SDSC_MAX_DEV_NUM * SDSC_MAX_DEV_NAME_LEN * sizeof(char));
     if (pszDrives == NULL) {
         LOGE("EnumDev with null alloc.");
@@ -349,7 +350,7 @@ static JNINativeMethod method_table[] = {
         {"setPackageName", "(Ljava/lang/String;)J",                                    (void *) set_package},
         {"InitParams",      "(JLjava/lang/String;)J",                                  (void *) init_params},
         {"DestroyParams",   "()J",                                                     (void *) destroy_params},
-        {"EnumDev",         "()Ljava/lang/String;",                                    (void *) refresh_dev},
+        {"EnumDev",         "()Ljava/lang/String;",                                    (void *) enum_dev},
         {"ConnectDev",      "(Ljava/lang/String;)I",                                    (void *) connect_dev},
         {"DisconnectDev",   "(I)J",                                                    (void *) disconnect_dev},
         {"BeginTransaction", "(I)J",                                                (void *) begin_transaction},
