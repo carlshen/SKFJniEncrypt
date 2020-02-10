@@ -25,6 +25,8 @@ add_library( # Sets the name of the library.
              src/main/cpp/base64.h
              src/main/cpp/aes.c
              src/main/cpp/base64.c
+             src/main/cpp/transmit.c
+             src/main/cpp/transmit.h
              )
 
 # 搜索指定的预构建库并将路径存储为变量。 因为默认情况下，CMake在搜索路径中包含系统库，

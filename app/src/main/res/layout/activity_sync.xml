@@ -22,6 +22,12 @@
             android:layout_weight="1"
             android:text="@string/btn_connect_device" />
         <Button
+            android:id="@+id/btn_info"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="@string/btn_info_device" />
+        <Button
             android:id="@+id/btn_disconnect"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
@@ -33,112 +39,140 @@
         android:layout_height="wrap_content"
         android:orientation="horizontal" >
         <Button
-            android:id="@+id/btn_importcert"
+            android:id="@+id/btn_createapp"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="ImportCert" />
+            android:text="createapp" />
         <Button
-            android:id="@+id/btn_exportcert"
+            android:id="@+id/btn_openapp"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="ExportCert" />
+            android:text="openapp" />
         <Button
-            android:id="@+id/btn_setpath"
+            android:id="@+id/btn_createcon"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="SetAppPath" />
+            android:text="createcon" />
         <Button
-            android:id="@+id/btn_getfunc"
+            android:id="@+id/btn_setsymkey"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="GetFuncList" />
+            android:text="setsymkey" />
     </LinearLayout>
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal" >
         <Button
-            android:id="@+id/btn_genrandom"
+            android:id="@+id/btn_encrinit"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="GenRandom" />
+            android:text="encrinit" />
         <Button
-            android:id="@+id/btn_genecckey"
+            android:id="@+id/btn_encrpyt"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="GenECCKeyPair" />
+            android:text="encrpyt" />
         <Button
-            android:id="@+id/btn_importecckey"
+            android:id="@+id/btn_decrinit"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="ImportECCKeyPair" />
+            android:text="decrinit" />
+        <Button
+            android:id="@+id/btn_decrypt"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="decrypt" />
     </LinearLayout>
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal" >
         <Button
-            android:id="@+id/btn_eccsigndata"
+            android:id="@+id/btn_encrfile"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="ECCSignData" />
+            android:text="encryptFile" />
+        <Button
+            android:id="@+id/btn_decrfile"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="decryptFile" />
+        <Button
+            android:id="@+id/btn_getkey"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="GetKey" />
+        <Button
+            android:id="@+id/btn_checkkey"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="CheckKey" />
+    </LinearLayout>
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal" >
+        <Button
+            android:id="@+id/btn_setpin"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="SetPin" />
+        <Button
+            android:id="@+id/btn_getpin"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="GetPin" />
+        <Button
+            android:id="@+id/btn_digestinit"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="DigestInit" />
+        <Button
+            android:id="@+id/btn_digest"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Digest" />
+    </LinearLayout>
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal" >
+        <Button
+            android:id="@+id/btn_ecckey"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="ECCKey" />
+        <Button
+            android:id="@+id/btn_eccsign"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="ECCSign" />
         <Button
             android:id="@+id/btn_eccverify"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:text="ECCVerify" />
-        <Button
-            android:id="@+id/btn_gendatawithecc"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="GenerateDataWithECC" />
-        <Button
-            android:id="@+id/btn_genkeywithecc"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="GenerateKeyWithECC" />
     </LinearLayout>
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal" >
-        <Button
-            android:id="@+id/btn_gendatakeywithecc"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="GenerateDataKeyWithECC" />
-        <Button
-            android:id="@+id/btn_exportpublickey"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="ExportPublicKey" />
-        <Button
-            android:id="@+id/btn_exportsessionkey"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="ImportSessionKey" />
-        <Button
-            android:id="@+id/btn_nextpage"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="GotoNextPage" />
-    </LinearLayout>
-
     <TextView
         android:id="@+id/tv_result"
         android:layout_width="match_parent"
@@ -153,14 +187,11 @@
           android:layout_height="1dp"
           android:background="@android:color/darker_gray" />
 
-    <TextView
-        android:id="@+id/tv_log"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:singleLine="false"
-        android:hint="log"
-        android:textSize="20sp"
-        android:text=""/>
+    <FrameLayout
+          android:id="@+id/sample_content_fragment"
+          android:layout_weight="2"
+          android:layout_width="match_parent"
+          android:layout_height="0px" />
 
 </LinearLayout>
 

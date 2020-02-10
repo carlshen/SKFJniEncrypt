@@ -7,6 +7,7 @@
 #include <sys/ptrace.h>
 #include <SDSCErr.h>
 #include <SDSCDev.h>
+#include "transmit.h"
 
 #define CBC 1
 #define ECB 1
@@ -247,6 +248,26 @@ JNIEXPORT jlong JNICALL reset_control(JNIEnv *env, jobject instance, jint handle
     return baseResult;
 }
 
+#if 1 //temporary replaced with other debugging interface,
+JNIEXPORT jbyteArray JNICALL transmit(JNIEnv *env, jobject instance, jint handle, jbyteArray str_, jlong length, jlong mode) {
+    unsigned long result;
+
+    if(length == 2){
+    }else if(length == 4) {
+    }else if(length == 5) {
+        result = TransmitData_WriteKeyTest(handle);
+        LOGI("TransmitData WriteKeyTest ret:%d", result);
+    }else if(length == 6) {
+        result = TransmitData_ClearKeyTest(handle);
+        LOGI("TransmitData ClearKeyTest ret:%d", result);
+    } else {
+        result = TransmitData_EncryptTest(handle);
+        LOGI("TransmitData EncryptTest ret:%d", result);
+    }
+
+    return NULL;
+}
+#else
 JNIEXPORT jbyteArray JNICALL transmit(JNIEnv *env, jobject instance, jint handle, jbyteArray str_, jlong length, jlong mode) {
     jbyte* bBuffer = (*env)->GetByteArrayElements(env, str_, 0);
     unsigned char* pbCommand = (unsigned char*) bBuffer;
@@ -262,7 +283,8 @@ JNIEXPORT jbyteArray JNICALL transmit(JNIEnv *env, jobject instance, jint handle
     memset(pbOutData, 0x00, SDSC_MAX_DEV_NAME_LEN * sizeof(char));
     unsigned long pulOutDataLen = SDSC_MAX_DEV_NAME_LEN * sizeof(char);
     unsigned long pulCosState = 0;
-//    LOGI("transmit pbCommand: %s\n", pbCommand);
+
+    //    LOGI("transmit pbCommand: %s\n", pbCommand);
     unsigned long baseResult = SDSCTransmit(handle, pbCommand, length, mode, pbOutData, &pulOutDataLen, &pulCosState);
     LOGI("transmit baseResult: %ld", baseResult);
     if (baseResult != 0) {
@@ -274,10 +296,12 @@ JNIEXPORT jbyteArray JNICALL transmit(JNIEnv *env, jobject instance, jint handle
     jbyte *by = (jbyte*)pbOutData;
     jbyteArray jarray = (*env)->NewByteArray(env, pulOutDataLen);
     (*env)->SetByteArrayRegion(env, jarray, 0, pulOutDataLen, by);
+
     // need free the memory
     free(pbOutData);
     return jarray;
 }
+#endif
 
 JNIEXPORT jbyteArray JNICALL transmit_ex(JNIEnv *env, jobject instance, jint handle, jbyteArray str_, jlong mode) {
     jbyte* bBuffer = (*env)->GetByteArrayElements(env, str_, 0);

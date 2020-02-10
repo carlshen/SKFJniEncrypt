@@ -1,10 +1,9 @@
 package com.tongxin.sdjni;
 
 /**
- * Created by carl on 19-11-12.
+ * Created by carl on 20-02-06.
  *
- * 秘文的key 在 C 的代码，如需修改请先修改JNIEncrypt.c
- * 另外native做了签名校验
+ * SKF encrypt/decrypt native lib.
  */
 
 public class AESEncrypt {

@@ -370,5 +370,22 @@ unsigned long SDSCGetSCIOType
 	unsigned long *pulSCIOType
 );
 
+unsigned long SDHAReadData
+(
+	int fd,
+	unsigned long ulSectorIndex,
+	unsigned long ulDataLen,
+	unsigned char *pbOutData,
+	unsigned long *pulOutDataLen
+);
+
+
+unsigned long SDHAWriteData
+(
+	int fd,
+	unsigned long ulSectorIndex,
+	unsigned char *pbInData,
+	unsigned long ulInDataLen
+);
 
 #endif // end #ifndef __SDSCDEV_H__
