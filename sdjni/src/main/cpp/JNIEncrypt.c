@@ -65,50 +65,6 @@ char *getKey() {
 
 }
 
-JNIEXPORT jstring JNICALL encode(JNIEnv *env, jobject instance, jobject context, jstring str_) {
-
-    //先进行apk被 二次打包的校验
-    if (check_signature(env, instance, context) != 1 || check_is_emulator(env) != 1) {
-        char *str = (char *) UNSIGNATURE;
-//        return (*env)->NewString(env, str, strlen(str));
-        return charToJstring(env,str);
-    }
-
-    uint8_t *AES_KEY = (uint8_t *) getKey();
-    const char *in = (*env)->GetStringUTFChars(env, str_, JNI_FALSE);
-    char *baseResult = AES_128_ECB_PKCS5Padding_Encrypt(in, AES_KEY);
-    (*env)->ReleaseStringUTFChars(env, str_, in);
-//    return (*env)->NewStringUTF(env, baseResult);
-    jstring  result = (*env)->NewStringUTF(env, baseResult);
-    free(baseResult);
-    free(AES_KEY);
-    return result;
-}
-
-
-JNIEXPORT jstring JNICALL decode(JNIEnv *env, jobject instance, jobject context, jstring str_) {
-
-
-    //先进行apk被 二次打包的校验
-    if (check_signature(env, instance, context) != 1|| check_is_emulator(env) != 1) {
-        char *str = (char *) UNSIGNATURE;
-//        return (*env)->NewString(env, str, strlen(str));
-        return charToJstring(env,str);
-    }
-
-    uint8_t *AES_KEY = (uint8_t *) getKey();
-    const char *str = (*env)->GetStringUTFChars(env, str_, JNI_FALSE);
-    char *desResult = AES_128_ECB_PKCS5Padding_Decrypt(str, AES_KEY);
-    (*env)->ReleaseStringUTFChars(env, str_, str);
-//    return (*env)->NewStringUTF(env, desResult);
-    //不用系统自带的方法NewStringUTF是因为如果desResult是乱码,会抛出异常
-//    return charToJstring(env,desResult);
-    jstring result = charToJstring(env,desResult);
-    free(desResult);
-    free(AES_KEY);
-    return result;
-}
-
 JNIEXPORT jlong JNICALL set_package(JNIEnv *env, jobject instance, jstring str_) {
     // set package name
     char *pkgname = (char *) (*env)->GetStringUTFChars(env, str_, JNI_FALSE);
@@ -119,7 +75,7 @@ JNIEXPORT jlong JNICALL set_package(JNIEnv *env, jobject instance, jstring str_)
     return pkgresult;
 }
 
-JNIEXPORT jlong JNICALL init_params(JNIEnv *env, jobject instance, jlong handle, jstring str_) {
+JNIEXPORT jlong JNICALL get_func_list(JNIEnv *env, jobject instance, jlong handle, jstring str_) {
     char *szDrive = (char *) (*env)->GetStringUTFChars(env, str_, JNI_FALSE);
     LOGI("init_params szDrive: %s\n", szDrive);
     unsigned long baseResult = SDSCInitParams(handle, szDrive);
@@ -128,7 +84,13 @@ JNIEXPORT jlong JNICALL init_params(JNIEnv *env, jobject instance, jlong handle,
     return baseResult;
 }
 
-JNIEXPORT jlong JNICALL destroy_params(JNIEnv *env, jobject instance) {
+JNIEXPORT jlong JNICALL import_cert(JNIEnv *env, jobject instance) {
+    unsigned long baseResult = SDSCDestroyParams();
+    LOGI("destroy_params baseResult: %ld", baseResult);
+    return baseResult;
+}
+
+JNIEXPORT jlong JNICALL export_cert(JNIEnv *env, jobject instance) {
     unsigned long baseResult = SDSCDestroyParams();
     LOGI("destroy_params baseResult: %ld", baseResult);
     return baseResult;
@@ -173,6 +135,204 @@ JNIEXPORT jint JNICALL connect_dev(JNIEnv *env, jobject instance, jstring str_) 
 }
 
 JNIEXPORT jlong JNICALL disconnect_dev(JNIEnv *env, jobject instance, jint handle) {
+    unsigned long baseResult = SDSCDisconnectDev(handle);
+    LOGI("disconnect_dev baseResult: %ld", baseResult);
+    return baseResult;
+}
+
+JNIEXPORT jlong JNICALL gen_random(JNIEnv *env, jobject instance, jint handle) {
+    unsigned long baseResult = SDSCDisconnectDev(handle);
+    LOGI("disconnect_dev baseResult: %ld", baseResult);
+    return baseResult;
+}
+
+JNIEXPORT jlong JNICALL gen_ecc_key(JNIEnv *env, jobject instance, jint handle) {
+    unsigned long baseResult = SDSCDisconnectDev(handle);
+    LOGI("disconnect_dev baseResult: %ld", baseResult);
+    return baseResult;
+}
+
+JNIEXPORT jlong JNICALL import_ecc_key(JNIEnv *env, jobject instance, jint handle) {
+    unsigned long baseResult = SDSCDisconnectDev(handle);
+    LOGI("disconnect_dev baseResult: %ld", baseResult);
+    return baseResult;
+}
+
+JNIEXPORT jlong JNICALL ecc_sign_data(JNIEnv *env, jobject instance, jint handle) {
+    unsigned long baseResult = SDSCDisconnectDev(handle);
+    LOGI("disconnect_dev baseResult: %ld", baseResult);
+    return baseResult;
+}
+
+JNIEXPORT jlong JNICALL ecc_verify(JNIEnv *env, jobject instance, jint handle) {
+    unsigned long baseResult = SDSCDisconnectDev(handle);
+    LOGI("disconnect_dev baseResult: %ld", baseResult);
+    return baseResult;
+}
+
+JNIEXPORT jlong JNICALL gen_data_ecc(JNIEnv *env, jobject instance, jint handle) {
+    unsigned long baseResult = SDSCDisconnectDev(handle);
+    LOGI("disconnect_dev baseResult: %ld", baseResult);
+    return baseResult;
+}
+
+JNIEXPORT jlong JNICALL gen_key_ecc(JNIEnv *env, jobject instance, jint handle) {
+    unsigned long baseResult = SDSCDisconnectDev(handle);
+    LOGI("disconnect_dev baseResult: %ld", baseResult);
+    return baseResult;
+}
+
+JNIEXPORT jlong JNICALL gen_data_key_ecc(JNIEnv *env, jobject instance, jint handle) {
+    unsigned long baseResult = SDSCDisconnectDev(handle);
+    LOGI("disconnect_dev baseResult: %ld", baseResult);
+    return baseResult;
+}
+
+JNIEXPORT jlong JNICALL export_public_key(JNIEnv *env, jobject instance, jint handle) {
+    unsigned long baseResult = SDSCDisconnectDev(handle);
+    LOGI("disconnect_dev baseResult: %ld", baseResult);
+    return baseResult;
+}
+
+JNIEXPORT jlong JNICALL import_session_key(JNIEnv *env, jobject instance, jint handle) {
+    unsigned long baseResult = SDSCDisconnectDev(handle);
+    LOGI("disconnect_dev baseResult: %ld", baseResult);
+    return baseResult;
+}
+
+JNIEXPORT jlong JNICALL set_sym_key(JNIEnv *env, jobject instance, jint handle) {
+    unsigned long baseResult = SDSCDisconnectDev(handle);
+    LOGI("disconnect_dev baseResult: %ld", baseResult);
+    return baseResult;
+}
+
+JNIEXPORT jlong JNICALL close_handle(JNIEnv *env, jobject instance, jint handle) {
+    unsigned long baseResult = SDSCDisconnectDev(handle);
+    LOGI("disconnect_dev baseResult: %ld", baseResult);
+    return baseResult;
+}
+
+JNIEXPORT jlong JNICALL get_dev_info(JNIEnv *env, jobject instance, jint handle) {
+    unsigned long baseResult = SDSCDisconnectDev(handle);
+    LOGI("disconnect_dev baseResult: %ld", baseResult);
+    return baseResult;
+}
+
+JNIEXPORT jlong JNICALL encrypt_init(JNIEnv *env, jobject instance, jint handle) {
+    unsigned long baseResult = SDSCDisconnectDev(handle);
+    LOGI("disconnect_dev baseResult: %ld", baseResult);
+    return baseResult;
+}
+
+JNIEXPORT jlong JNICALL encrypt(JNIEnv *env, jobject instance, jint handle) {
+    unsigned long baseResult = SDSCDisconnectDev(handle);
+    LOGI("disconnect_dev baseResult: %ld", baseResult);
+    return baseResult;
+}
+
+JNIEXPORT jlong JNICALL encrypt_update(JNIEnv *env, jobject instance, jint handle) {
+    unsigned long baseResult = SDSCDisconnectDev(handle);
+    LOGI("disconnect_dev baseResult: %ld", baseResult);
+    return baseResult;
+}
+
+JNIEXPORT jlong JNICALL encrypt_final(JNIEnv *env, jobject instance, jint handle) {
+    unsigned long baseResult = SDSCDisconnectDev(handle);
+    LOGI("disconnect_dev baseResult: %ld", baseResult);
+    return baseResult;
+}
+
+JNIEXPORT jlong JNICALL decrypt_init(JNIEnv *env, jobject instance, jint handle) {
+    unsigned long baseResult = SDSCDisconnectDev(handle);
+    LOGI("disconnect_dev baseResult: %ld", baseResult);
+    return baseResult;
+}
+
+JNIEXPORT jlong JNICALL decrypt(JNIEnv *env, jobject instance, jint handle) {
+    unsigned long baseResult = SDSCDisconnectDev(handle);
+    LOGI("disconnect_dev baseResult: %ld", baseResult);
+    return baseResult;
+}
+
+JNIEXPORT jlong JNICALL decrypt_update(JNIEnv *env, jobject instance, jint handle) {
+    unsigned long baseResult = SDSCDisconnectDev(handle);
+    LOGI("disconnect_dev baseResult: %ld", baseResult);
+    return baseResult;
+}
+
+JNIEXPORT jlong JNICALL decrypt_final(JNIEnv *env, jobject instance, jint handle) {
+    unsigned long baseResult = SDSCDisconnectDev(handle);
+    LOGI("disconnect_dev baseResult: %ld", baseResult);
+    return baseResult;
+}
+
+JNIEXPORT jlong JNICALL digest_init(JNIEnv *env, jobject instance, jint handle) {
+    unsigned long baseResult = SDSCDisconnectDev(handle);
+    LOGI("disconnect_dev baseResult: %ld", baseResult);
+    return baseResult;
+}
+
+JNIEXPORT jlong JNICALL digest(JNIEnv *env, jobject instance, jint handle) {
+    unsigned long baseResult = SDSCDisconnectDev(handle);
+    LOGI("disconnect_dev baseResult: %ld", baseResult);
+    return baseResult;
+}
+
+JNIEXPORT jlong JNICALL digest_update(JNIEnv *env, jobject instance, jint handle) {
+    unsigned long baseResult = SDSCDisconnectDev(handle);
+    LOGI("disconnect_dev baseResult: %ld", baseResult);
+    return baseResult;
+}
+
+JNIEXPORT jlong JNICALL digest_final(JNIEnv *env, jobject instance, jint handle) {
+    unsigned long baseResult = SDSCDisconnectDev(handle);
+    LOGI("disconnect_dev baseResult: %ld", baseResult);
+    return baseResult;
+}
+
+JNIEXPORT jlong JNICALL mac_init(JNIEnv *env, jobject instance, jint handle) {
+    unsigned long baseResult = SDSCDisconnectDev(handle);
+    LOGI("disconnect_dev baseResult: %ld", baseResult);
+    return baseResult;
+}
+
+JNIEXPORT jlong JNICALL mac_update(JNIEnv *env, jobject instance, jint handle) {
+    unsigned long baseResult = SDSCDisconnectDev(handle);
+    LOGI("disconnect_dev baseResult: %ld", baseResult);
+    return baseResult;
+}
+
+JNIEXPORT jlong JNICALL mac_final(JNIEnv *env, jobject instance, jint handle) {
+    unsigned long baseResult = SDSCDisconnectDev(handle);
+    LOGI("disconnect_dev baseResult: %ld", baseResult);
+    return baseResult;
+}
+
+JNIEXPORT jlong JNICALL generate_key(JNIEnv *env, jobject instance, jint handle) {
+    unsigned long baseResult = SDSCDisconnectDev(handle);
+    LOGI("disconnect_dev baseResult: %ld", baseResult);
+    return baseResult;
+}
+
+JNIEXPORT jlong JNICALL ecc_export_session_key(JNIEnv *env, jobject instance, jint handle) {
+    unsigned long baseResult = SDSCDisconnectDev(handle);
+    LOGI("disconnect_dev baseResult: %ld", baseResult);
+    return baseResult;
+}
+
+JNIEXPORT jlong JNICALL ecc_prv_key_decrypt(JNIEnv *env, jobject instance, jint handle) {
+    unsigned long baseResult = SDSCDisconnectDev(handle);
+    LOGI("disconnect_dev baseResult: %ld", baseResult);
+    return baseResult;
+}
+
+JNIEXPORT jlong JNICALL import_key_pair(JNIEnv *env, jobject instance, jint handle) {
+    unsigned long baseResult = SDSCDisconnectDev(handle);
+    LOGI("disconnect_dev baseResult: %ld", baseResult);
+    return baseResult;
+}
+
+JNIEXPORT jlong JNICALL cipher(JNIEnv *env, jobject instance, jint handle) {
     unsigned long baseResult = SDSCDisconnectDev(handle);
     LOGI("disconnect_dev baseResult: %ld", baseResult);
     return baseResult;
@@ -368,15 +528,47 @@ check_jni(JNIEnv *env, jobject instance, jobject con) {
 
 // Java和JNI函数的绑定表
 static JNINativeMethod method_table[] = {
-        {"checkSignature", "(Ljava/lang/Object;)I",                                    (void *) check_jni},
-//        {"decode",         "(Ljava/lang/Object;Ljava/lang/String;)Ljava/lang/String;", (void *) decode},
-//        {"encode",         "(Ljava/lang/Object;Ljava/lang/String;)Ljava/lang/String;", (void *) encode},
-        {"setPackageName", "(Ljava/lang/String;)J",                                    (void *) set_package},
-        {"InitParams",      "(JLjava/lang/String;)J",                                  (void *) init_params},
-        {"DestroyParams",   "()J",                                                     (void *) destroy_params},
+        {"setPackageName",  "(Ljava/lang/String;)J",                                   (void *) set_package},
+        {"GetFuncList",     "(Ljava/lang/String;)Ljava/lang/String;",                  (void *) get_func_list},
+        {"ImportCert",      "(I)J",                                                     (void *) import_cert},
+        {"ExportCert",      "(I)J",                                                     (void *) export_cert},
         {"EnumDev",         "()Ljava/lang/String;",                                    (void *) enum_dev},
         {"ConnectDev",      "(Ljava/lang/String;)I",                                    (void *) connect_dev},
         {"DisconnectDev",   "(I)J",                                                    (void *) disconnect_dev},
+        {"GenRandom",       "(I)J",                                                    (void *) gen_random},
+        {"GenECCKeyPair",   "(I)J",                                                    (void *) gen_ecc_key},
+        {"ImportECCKey",    "(I)J",                                                    (void *) import_ecc_key},
+        {"ECCSignData",     "(I)J",                                                    (void *) ecc_sign_data},
+        {"ECCVerify",       "(I)J",                                                    (void *) ecc_verify},
+        {"GenDataWithECC",   "(I)J",                                                    (void *) gen_data_ecc},
+        {"GenKeyWithECC",    "(I)J",                                                    (void *) gen_key_ecc},
+        {"GenDataAndKeyWithECC", "(I)J",                                                (void *) gen_data_key_ecc},
+        {"ExportPublicKey",   "(I)J",                                                   (void *) export_public_key},
+        {"ImportSessionKey",  "(I)J",                                                   (void *) import_session_key},
+        {"SetSymKey",         "(I)J",                                                   (void *) set_sym_key},
+        {"CloseHandle",       "(I)J",                                                   (void *) close_handle},
+        {"GetDevInfo",        "(I)Ljava/lang/String;",                                   (void *) get_dev_info},
+        {"EncryptInit",       "(I)J",                                                   (void *) encrypt_init},
+        {"Encrypt",           "(I)J",                                                   (void *) encrypt},
+        {"EncryptUpdate",     "(I)J",                                                   (void *) encrypt_update},
+        {"EncryptFinal",      "(I)J",                                                   (void *) encrypt_final},
+        {"DecryptInit",       "(I)J",                                                   (void *) decrypt_init},
+        {"Decrypt",           "(I)J",                                                   (void *) decrypt},
+        {"DecryptUpdate",     "(I)J",                                                   (void *) decrypt_update},
+        {"DecryptFinal",      "(I)J",                                                   (void *) decrypt_final},
+        {"DigestInit",        "(I)J",                                                   (void *) digest_init},
+        {"Digest",            "(I)J",                                                   (void *) digest},
+        {"DigestUpdate",      "(I)J",                                                   (void *) digest_update},
+        {"DigestFinal",       "(I)J",                                                   (void *) digest_final},
+        {"MacInit",           "(I)J",                                                   (void *) mac_init},
+        {"MacUpdate",         "(I)J",                                                   (void *) mac_update},
+        {"MacFinal",          "(I)J",                                                   (void *) mac_final},
+        {"GenerateKey",       "(I)J",                                                   (void *) generate_key},
+        {"ECCExportSessionKey", "(I)J",                                                 (void *) ecc_export_session_key},
+        {"ECCPrvKeyDecrypt",  "(I)J",                                                   (void *) ecc_prv_key_decrypt},
+        {"ImportKeyPair",     "(I)J",                                                   (void *) import_key_pair},
+        {"Cipher",            "(I)J",                                                   (void *) cipher},
+
         {"BeginTransaction", "(I)J",                                                (void *) begin_transaction},
         {"EndTransaction",   "(I)J",                                                  (void *) end_transaction},
         {"GetFirmVer",        "(I)Ljava/lang/String;",                                 (void *) get_firm_ver},

@@ -1,6 +1,7 @@
 package com.tongxin.sdjniencrypt;
 
 import android.Manifest;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
@@ -9,51 +10,51 @@ import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.text.TextUtils;
-import android.util.Log;
-import android.view.Menu;
-import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 
-import java.io.File;
+import com.tongxin.sdjni.AESEncrypt;
 
 /**
- * Created by carl on 2019/12/31.
+ * Created by carl on 20-02-06.
+ *
+ * 用于公司的项目验证。
  */
 public class SyncActivity extends AppCompatActivity {
 
     public static final String TAG = "SyncActivity";
     private boolean mLogShown = false;
-    private Button mButtonEnum = null;
-    private Button mButtonConnect = null;
-    private Button mButtonInfo = null;
-    private Button mButtonDisconnect = null;
-    // container management
-    private Button mImportCert = null;
-    private Button mExportCert = null;
-    // cipher management
-    private Button mGenRandom = null;
-    private Button mSyncDemo = null;
+    private TextView tvResult = null;
+    private TextView tvLog = null;
+    // next 2nd page
     private Button mSetSymKey = null;
-    private Button mGetSymKey = null;
-    private Button mCheckSymKey = null;
-    private Button mEncrInit = null;
+    private Button mCloseHandle = null;
+    private Button mGetDevInfo = null;
+    private Button mEncryptInit = null;
     private Button mEncrypt = null;
-    private Button mDecrInit = null;
+    private Button mEncryptUpdate = null;
+    private Button mEncryptFinal = null;
+    private Button mDecryptInit = null;
     private Button mDecrypt = null;
-    private Button mEncryptFile = null;
-    private Button mDecryptFile = null;
+    private Button mDecryptUpdate = null;
+    private Button mDecryptFinal = null;
     private Button mDigestInit = null;
     private Button mDigest = null;
-    private Button mECCKey = null;
-    private Button mECCSign = null;
-    private Button mECCVerify = null;
-    private Button mSetPin = null;
-    private Button mGetPin = null;
+    private Button mDigestUpdate = null;
+    private Button mDigestFinal = null;
+    private Button mMacInit = null;
+    private Button mMacUpdate = null;
+    private Button mMacFinal = null;
+    private Button mGenerateKey = null;
+    private Button mECCExportSessionKey = null;
+    private Button mECCPrvKeyDecrypt = null;
+    private Button mImportKeyPair = null;
+    private Button mCipher = null;
+
     private String mECCData = null;
     private String ECCKeyPair = null;
-    private TextView tvResult = null;
+    private int deviceHandle = -1;
     private String deviceName = null;
     private String deviceData = null;
     private String KeyData = null;
@@ -64,108 +65,105 @@ public class SyncActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_sync);
+        Intent intent = getIntent();
+        if (intent != null) {
+            deviceName = intent.getStringExtra(AESEncrypt.DEVICE_NAME);
+            deviceHandle = intent.getIntExtra(AESEncrypt.DEVICE_HANDLE, -1);
+        }
 
         tvResult = (TextView) findViewById(R.id.tv_result);
-        mButtonEnum = (Button) findViewById(R.id.btn_device);
-        mButtonEnum.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-//                SkfInterface.getSkfInstance().SKF_EnumDev(getApplicationContext());
-            }
-        });
-        mButtonConnect = (Button) findViewById(R.id.btn_connect);
-        mButtonConnect.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-//                boolean result = SkfInterface.getSkfInstance().SKF_ConnectDev(deviceName);
-//                tvResult.setText("ConnectDev: " + result);
-            }
-        });
-        mButtonInfo = (Button) findViewById(R.id.btn_info);
-        mButtonInfo.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-//                boolean result = SkfInterface.getSkfInstance().SKF_GetDevInfo(deviceName);
-//                tvResult.setText("DevInfo: " + result);
-            }
-        });
-        mButtonDisconnect = (Button) findViewById(R.id.btn_disconnect);
-        mButtonDisconnect.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-//                boolean result = SkfInterface.getSkfInstance().SKF_DisconnectDev(deviceName);
-//                tvResult.setText("DisconnectDev: " + result);
-            }
-        });
+        tvLog = (TextView) findViewById(R.id.tv_log);
 
-        // ======== next 2nd interfaces
-        mImportCert = (Button) findViewById(R.id.btn_createapp);
-        mImportCert.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-//                boolean result = SkfInterface.getSkfInstance().SKF_CreateApplication(deviceName);
-//                tvResult.setText("DisconnectDev: " + result);
-            }
-        });
-        mExportCert = (Button) findViewById(R.id.btn_openapp);
-        mExportCert.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-//                boolean result = SkfInterface.getSkfInstance().SKF_OpenApplication(deviceName);
-//                tvResult.setText("DisconnectDev: " + result);
-            }
-        });
-        mGenRandom = (Button) findViewById(R.id.btn_createcon);
-        mGenRandom.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-//                boolean result = SkfInterface.getSkfInstance().SKF_CreateContainer(deviceName);
-//                tvResult.setText("DisconnectDev: " + result);
-            }
-        });
         mSetSymKey = (Button) findViewById(R.id.btn_setsymkey);
         mSetSymKey.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                String symKey = "";
-                byte[] key = null;
-                try {
-                    key = EncryptUtil.generateKey();
-                    symKey = EncryptUtil.ByteArrayToHexString(key);
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-                Log.i(TAG, "====== mSetSymKey = " + symKey);
-//                boolean result = SkfInterface.getSkfInstance().SKF_SetSymmKey(deviceName, key, 1025);
-//                tvResult.setText("DisconnectDev: " + result);
+                long result = AESEncrypt.SetSymKey(deviceHandle);
+                tvResult.setText("SetSymKey: " + result);
             }
         });
-        mCheckSymKey = (Button) findViewById(R.id.btn_checkkey);
-        mCheckSymKey.setOnClickListener(new View.OnClickListener() {
+        mCloseHandle = (Button) findViewById(R.id.btn_closehandle);
+        mCloseHandle.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-//                boolean result = SkfInterface.getSkfInstance().SKF_CheckSymmKey(deviceName);
-//                tvResult.setText("DisconnectDev: " + result);
+                long result = AESEncrypt.CloseHandle(deviceHandle);
+                tvResult.setText("CloseHandle: " + result);
             }
         });
-        mGetSymKey = (Button) findViewById(R.id.btn_getkey);
-        mGetSymKey.setOnClickListener(new View.OnClickListener() {
+        mGetDevInfo = (Button) findViewById(R.id.btn_getdevinfo);
+        mGetDevInfo.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-//                boolean result = SkfInterface.getSkfInstance().SKF_GetSymmKey(deviceName, 1025);
-//                tvResult.setText("DisconnectDev: " + result);
+                String result = AESEncrypt.GetDevInfo(deviceHandle);
+                tvResult.setText("GetDevInfo: " + result);
             }
         });
-        mEncrInit = (Button) findViewById(R.id.btn_encrinit);
-        mEncrInit.setOnClickListener(new View.OnClickListener() {
+        mEncryptInit = (Button) findViewById(R.id.btn_encryptInit);
+        mEncryptInit.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-//                boolean result = SkfInterface.getSkfInstance().SKF_EncryptInit(KeyData);
-//                tvResult.setText("DisconnectDev: " + result);
+                long result = AESEncrypt.EncryptInit(deviceHandle);
+                tvResult.setText("EncryptInit: " + result);
             }
         });
-        mEncrypt = (Button) findViewById(R.id.btn_encrpyt);
+        mEncrypt = (Button) findViewById(R.id.btn_encrypt);
         mEncrypt.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                long result = AESEncrypt.Encrypt(deviceHandle);
+                tvResult.setText("Encrypt: " + result);
+            }
+        });
+        mEncryptUpdate = (Button) findViewById(R.id.btn_encryptupdate);
+        mEncryptUpdate.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                long result = AESEncrypt.EncryptUpdate(deviceHandle);
+                tvResult.setText("EncryptUpdate: " + result);
+            }
+        });
+        mEncryptFinal = (Button) findViewById(R.id.btn_encryptfinal);
+        mEncryptFinal.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                long result = AESEncrypt.EncryptFinal(deviceHandle);
+                tvResult.setText("EncryptFinal: " + result);
+            }
+        });
+        mDecryptInit = (Button) findViewById(R.id.btn_decryptInit);
+        mDecryptInit.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                long result = AESEncrypt.DecryptInit(deviceHandle);
+                tvResult.setText("DecryptInit: " + result);
+            }
+        });
+        mDecrypt = (Button) findViewById(R.id.btn_decrypt);
+        mDecrypt.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                long result = AESEncrypt.Decrypt(deviceHandle);
+                tvResult.setText("Decrypt: " + result);
+            }
+        });
+        mDecryptUpdate = (Button) findViewById(R.id.btn_decryptupdate);
+        mDecryptUpdate.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                long result = AESEncrypt.DecryptUpdate(deviceHandle);
+                tvResult.setText("DecryptUpdate: " + result);
+            }
+        });
+        mDecryptFinal = (Button) findViewById(R.id.btn_decryptfinal);
+        mDecryptFinal.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                long result = AESEncrypt.DecryptFinal(deviceHandle);
+                tvResult.setText("DecryptFinal: " + result);
+            }
+        });
+        mDigestInit = (Button) findViewById(R.id.btn_digestInit);
+        mDigestInit.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 StringBuilder encbuilder = new StringBuilder(1024);
@@ -173,112 +171,77 @@ public class SyncActivity extends AppCompatActivity {
                     encbuilder.append("112233445566778899001122334455667788aabb");
                 }
                 EncrpytData = encbuilder.toString();
-//                boolean result = SkfInterface.getSkfInstance().SKF_Encrypt(KeyData, EncrpytData.getBytes());
-//                tvResult.setText("DisconnectDev: " + result);
-            }
-        });
-        mDecrInit = (Button) findViewById(R.id.btn_decrinit);
-        mDecrInit.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-//                boolean result = SkfInterface.getSkfInstance().SKF_DecryptInit(KeyData);
-//                tvResult.setText("DisconnectDev: " + result);
-            }
-        });
-        mDecrypt = (Button) findViewById(R.id.btn_decrypt);
-        mDecrypt.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if (TextUtils.isEmpty(DecrpytData)) {
-                    tvResult.setText("SKF_Decrypt: There is no decrypt data");
-                    return;
-                }
-//                boolean result = SkfInterface.getSkfInstance().SKF_Decrypt(KeyData, EncryptUtil.HexStringToByteArray(DecrpytData));
-            }
-        });
-        mEncryptFile = (Button) findViewById(R.id.btn_encrfile);
-        mEncryptFile.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                new Thread(new Runnable() {
-                    @Override
-                    public void run() {
-                        File inFile = new File(EncryptUtil.getExternalStoragePath() + "/entest.txt");
-                        File ouFile = new File(EncryptUtil.getExternalAppFilesPath(getApplicationContext()) + "/enresult.txt");
-                        try {
-//                            boolean result = SkfInterface.getSkfInstance().SKF_EncryptFile(KeyData, inFile, ouFile);
-//                            tvResult.setText("EncryptFile: " + result);
-                        } catch (Exception e) {
-                            e.printStackTrace();
-                        }
-                    }
-                }).start();
-            }
-        });
-        mDecryptFile = (Button) findViewById(R.id.btn_decrfile);
-        mDecryptFile.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                new Thread(new Runnable() {
-                    @Override
-                    public void run() {
-//                        File inFile = new File(EncryptUtil.getExternalStoragePath() + "/detest.txt");
-                        File inFile = new File(EncryptUtil.getExternalAppFilesPath(getApplicationContext()) + "/enresult.txt");
-                        File ouFile = new File(EncryptUtil.getExternalAppFilesPath(getApplicationContext()) + "/deresult.txt");
-                        try {
-//                            boolean result = SkfInterface.getSkfInstance().SKF_DecryptFile(KeyData, inFile, ouFile);
-//                            tvResult.setText("DecryptFile: " + result);
-                        } catch (Exception e) {
-                            e.printStackTrace();
-                        }
-                    }
-                }).start();
-            }
-        });
-        mDigestInit = (Button) findViewById(R.id.btn_digestinit);
-        mDigestInit.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-//                boolean result = SkfInterface.getSkfInstance().SKF_DigestInit(deviceName);
-//                tvResult.setText("DisconnectDev: " + result);
+                long result = AESEncrypt.DigestInit(deviceHandle);
+                tvResult.setText("DigestInit: " + result);
             }
         });
         mDigest = (Button) findViewById(R.id.btn_digest);
         mDigest.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                long result = AESEncrypt.Digest(deviceHandle);
+                tvResult.setText("Digest: " + result);
+            }
+        });
+        mDigestUpdate = (Button) findViewById(R.id.btn_digestupdate);
+        mDigestUpdate.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (TextUtils.isEmpty(DecrpytData)) {
+                    tvResult.setText("SKF_Decrypt: There is no decrypt data");
+                    return;
+                }
+                long result = AESEncrypt.DigestUpdate(deviceHandle);
+                tvResult.setText("DigestUpdate: " + result);
+            }
+        });
+        mDigestFinal = (Button) findViewById(R.id.btn_digestfinal);
+        mDigestFinal.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                long result = AESEncrypt.DigestFinal(deviceHandle);
+                tvResult.setText("DigestFinal: " + result);
+            }
+        });
+        mMacInit = (Button) findViewById(R.id.btn_MacInit);
+        mMacInit.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                long result = AESEncrypt.MacInit(deviceHandle);
+                tvResult.setText("MacInit: " + result);
+            }
+        });
+        mMacUpdate = (Button) findViewById(R.id.btn_MacUpdate);
+        mMacUpdate.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                long result = AESEncrypt.MacUpdate(deviceHandle);
+                tvResult.setText("MacUpdate: " + result);
+            }
+        });
+        mMacFinal = (Button) findViewById(R.id.btn_MacFinal);
+        mMacFinal.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
                 StringBuilder encbuilder = new StringBuilder(1024);
                 for (int i = 0; i < 28; i++) {
                     encbuilder.append("1122334455667788990011223344556677889900");
                 }
                 EncrpytData = encbuilder.toString();
-//                boolean result = SkfInterface.getSkfInstance().SKF_Digest(EncryptUtil.HexStringToByteArray(EncrpytData));
-//                tvResult.setText("DisconnectDev: " + result);
+                long result = AESEncrypt.MacFinal(deviceHandle);
+                tvResult.setText("MacFinal: " + result);
             }
         });
-        mECCKey = (Button) findViewById(R.id.btn_ecckey);
-        mECCKey.setOnClickListener(new View.OnClickListener() {
+        mGenerateKey = (Button) findViewById(R.id.btn_generatekey);
+        mGenerateKey.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-//                boolean result = SkfInterface.getSkfInstance().SKF_GenECCKeyPair(deviceName);
-//                tvResult.setText("DisconnectDev: " + result);
+                long result = AESEncrypt.GenerateKey(deviceHandle);
+                tvResult.setText("GenerateKey: " + result);
             }
         });
-        mECCSign = (Button) findViewById(R.id.btn_eccsign);
-        mECCSign.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                StringBuilder encbuilder = new StringBuilder(1024);
-                for (int i = 0; i < 28; i++) {
-                    encbuilder.append("1122334455667788990011223344556677889900");
-                }
-                EncrpytData = encbuilder.toString();
-//                boolean result = SkfInterface.getSkfInstance().SKF_ECCSignData(ECCKeyPair, EncryptUtil.HexStringToByteArray(EncrpytData));
-//                tvResult.setText("DisconnectDev: " + result);
-            }
-        });
-        mECCVerify = (Button) findViewById(R.id.btn_eccverify);
-        mECCVerify.setOnClickListener(new View.OnClickListener() {
+        mECCExportSessionKey = (Button) findViewById(R.id.btn_eccexportkey);
+        mECCExportSessionKey.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 StringBuilder encbuilder = new StringBuilder(1024);
@@ -286,24 +249,37 @@ public class SyncActivity extends AppCompatActivity {
                     encbuilder.append("1122334455667788990011223344556677889900");
                 }
                 EncrpytData = encbuilder.toString();
-//                boolean result = SkfInterface.getSkfInstance().SKF_ECCVerify(ECCKeyPair, mECCData, EncryptUtil.HexStringToByteArray(EncrpytData));
-//                tvResult.setText("DisconnectDev: " + result);
+                long result = AESEncrypt.ECCExportSessionKey(deviceHandle);
+                tvResult.setText("ECCExportSessionKey: " + result);
             }
         });
-        mSetPin = (Button) findViewById(R.id.btn_setpin);
-        mSetPin.setOnClickListener(new View.OnClickListener() {
+        mECCPrvKeyDecrypt = (Button) findViewById(R.id.btn_ecckeydecrypt);
+        mECCPrvKeyDecrypt.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-//                boolean result = SkfInterface.getSkfInstance().SKF_SetPIN(deviceName, EncryptUtil.HexStringToByteArray("112233445566778899001122334455667788990011223344556677889900112233445566"));
-//                tvResult.setText("DisconnectDev: " + result);
+                StringBuilder encbuilder = new StringBuilder(1024);
+                for (int i = 0; i < 28; i++) {
+                    encbuilder.append("1122334455667788990011223344556677889900");
+                }
+                EncrpytData = encbuilder.toString();
+                long result = AESEncrypt.ECCPrvKeyDecrypt(deviceHandle);
+                tvResult.setText("ECCPrvKeyDecrypt: " + result);
             }
         });
-        mGetPin = (Button) findViewById(R.id.btn_getpin);
-        mGetPin.setOnClickListener(new View.OnClickListener() {
+        mImportKeyPair = (Button) findViewById(R.id.btn_importkey);
+        mImportKeyPair.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-//                boolean result = SkfInterface.getSkfInstance().SKF_GetPIN(deviceName);
-//                tvResult.setText("DisconnectDev: " + result);
+                long result = AESEncrypt.ImportKeyPair(deviceHandle);
+                tvResult.setText("ImportKeyPair: " + result);
+            }
+        });
+        mCipher = (Button) findViewById(R.id.btn_cipher);
+        mCipher.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                long result = AESEncrypt.Cipher(deviceHandle);
+                tvResult.setText("Cipher: " + result);
             }
         });
     }
