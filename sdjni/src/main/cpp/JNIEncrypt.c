@@ -75,25 +75,35 @@ JNIEXPORT jlong JNICALL set_package(JNIEnv *env, jobject instance, jstring str_)
     return pkgresult;
 }
 
-JNIEXPORT jlong JNICALL get_func_list(JNIEnv *env, jobject instance, jlong handle, jstring str_) {
+JNIEXPORT jstring JNICALL get_func_list(JNIEnv *env, jobject instance, jstring str_) {
     char *szDrive = (char *) (*env)->GetStringUTFChars(env, str_, JNI_FALSE);
-    LOGI("init_params szDrive: %s\n", szDrive);
-    unsigned long baseResult = SDSCInitParams(handle, szDrive);
-    LOGI("init_params baseResult: %ld", baseResult);
+    LOGI("get_func_list szDrive: %s\n", szDrive);
+    char *func_list = (char *) malloc(SDSC_MAX_DEV_NAME_LEN * sizeof(char));
+    if (func_list == NULL) {
+        LOGE("get_func_list with null alloc.");
+        return (*env)->NewStringUTF(env, '\0');
+    }
+    memset(func_list, 0x00, SDSC_MAX_DEV_NAME_LEN * sizeof(char));
+    unsigned long funcLen = SDSC_MAX_DEV_NAME_LEN * sizeof(char);
+    unsigned long funcNum = 0;
+    unsigned long baseResult = SDSCListDevs(func_list, &funcLen, &funcNum);
+    LOGI("get_func_list baseResult: %ld", baseResult);
+    LOGI("get_func_list funcNum: %ld", funcNum);
+    LOGI("get_func_list func_list: %s\n", func_list);
     (*env)->ReleaseStringUTFChars(env, str_, szDrive);
-    return baseResult;
+    jstring  result = charToJstring(env, func_list);
+    free(func_list);
+    return result;
 }
 
-JNIEXPORT jlong JNICALL import_cert(JNIEnv *env, jobject instance) {
-    unsigned long baseResult = SDSCDestroyParams();
-    LOGI("destroy_params baseResult: %ld", baseResult);
-    return baseResult;
+JNIEXPORT jlong JNICALL import_cert(JNIEnv *env, jobject instance, jint handle) {
+    LOGI("import_cert baseResult: %ld", handle);
+    return handle;
 }
 
-JNIEXPORT jlong JNICALL export_cert(JNIEnv *env, jobject instance) {
-    unsigned long baseResult = SDSCDestroyParams();
-    LOGI("destroy_params baseResult: %ld", baseResult);
-    return baseResult;
+JNIEXPORT jlong JNICALL export_cert(JNIEnv *env, jobject instance, jint handle) {
+    LOGI("export_cert baseResult: %ld", handle);
+    return handle;
 }
 
 JNIEXPORT jstring JNICALL enum_dev(JNIEnv *env, jobject instance) {
@@ -141,201 +151,180 @@ JNIEXPORT jlong JNICALL disconnect_dev(JNIEnv *env, jobject instance, jint handl
 }
 
 JNIEXPORT jlong JNICALL gen_random(JNIEnv *env, jobject instance, jint handle) {
-    unsigned long baseResult = SDSCDisconnectDev(handle);
-    LOGI("disconnect_dev baseResult: %ld", baseResult);
-    return baseResult;
+    LOGI("gen_random baseResult: %ld", handle);
+    return handle;
 }
 
 JNIEXPORT jlong JNICALL gen_ecc_key(JNIEnv *env, jobject instance, jint handle) {
-    unsigned long baseResult = SDSCDisconnectDev(handle);
-    LOGI("disconnect_dev baseResult: %ld", baseResult);
-    return baseResult;
+    LOGI("gen_ecc_key baseResult: %ld", handle);
+    return handle;
 }
 
 JNIEXPORT jlong JNICALL import_ecc_key(JNIEnv *env, jobject instance, jint handle) {
-    unsigned long baseResult = SDSCDisconnectDev(handle);
-    LOGI("disconnect_dev baseResult: %ld", baseResult);
-    return baseResult;
+    LOGI("import_ecc_key baseResult: %ld", handle);
+    return handle;
 }
 
 JNIEXPORT jlong JNICALL ecc_sign_data(JNIEnv *env, jobject instance, jint handle) {
-    unsigned long baseResult = SDSCDisconnectDev(handle);
-    LOGI("disconnect_dev baseResult: %ld", baseResult);
-    return baseResult;
+    LOGI("export_cert baseResult: %ld", handle);
+    return handle;
 }
 
 JNIEXPORT jlong JNICALL ecc_verify(JNIEnv *env, jobject instance, jint handle) {
-    unsigned long baseResult = SDSCDisconnectDev(handle);
-    LOGI("disconnect_dev baseResult: %ld", baseResult);
-    return baseResult;
+    LOGI("ecc_sign_data baseResult: %ld", handle);
+    return handle;
 }
 
 JNIEXPORT jlong JNICALL gen_data_ecc(JNIEnv *env, jobject instance, jint handle) {
-    unsigned long baseResult = SDSCDisconnectDev(handle);
-    LOGI("disconnect_dev baseResult: %ld", baseResult);
-    return baseResult;
+    LOGI("gen_data_ecc baseResult: %ld", handle);
+    return handle;
 }
 
 JNIEXPORT jlong JNICALL gen_key_ecc(JNIEnv *env, jobject instance, jint handle) {
-    unsigned long baseResult = SDSCDisconnectDev(handle);
-    LOGI("disconnect_dev baseResult: %ld", baseResult);
-    return baseResult;
+    LOGI("gen_key_ecc baseResult: %ld", handle);
+    return handle;
 }
 
 JNIEXPORT jlong JNICALL gen_data_key_ecc(JNIEnv *env, jobject instance, jint handle) {
-    unsigned long baseResult = SDSCDisconnectDev(handle);
-    LOGI("disconnect_dev baseResult: %ld", baseResult);
-    return baseResult;
+    LOGI("gen_data_key_ecc baseResult: %ld", handle);
+    return handle;
 }
 
 JNIEXPORT jlong JNICALL export_public_key(JNIEnv *env, jobject instance, jint handle) {
-    unsigned long baseResult = SDSCDisconnectDev(handle);
-    LOGI("disconnect_dev baseResult: %ld", baseResult);
-    return baseResult;
+    LOGI("export_public_key baseResult: %ld", handle);
+    return handle;
 }
 
 JNIEXPORT jlong JNICALL import_session_key(JNIEnv *env, jobject instance, jint handle) {
-    unsigned long baseResult = SDSCDisconnectDev(handle);
-    LOGI("disconnect_dev baseResult: %ld", baseResult);
-    return baseResult;
+    LOGI("import_session_key baseResult: %ld", handle);
+    return handle;
 }
 
 JNIEXPORT jlong JNICALL set_sym_key(JNIEnv *env, jobject instance, jint handle) {
-    unsigned long baseResult = SDSCDisconnectDev(handle);
-    LOGI("disconnect_dev baseResult: %ld", baseResult);
-    return baseResult;
+    LOGI("set_sym_key baseResult: %ld", handle);
+    return handle;
 }
 
 JNIEXPORT jlong JNICALL close_handle(JNIEnv *env, jobject instance, jint handle) {
-    unsigned long baseResult = SDSCDisconnectDev(handle);
-    LOGI("disconnect_dev baseResult: %ld", baseResult);
-    return baseResult;
+    LOGI("close_handle baseResult: %ld", handle);
+    return handle;
 }
 
-JNIEXPORT jlong JNICALL get_dev_info(JNIEnv *env, jobject instance, jint handle) {
-    unsigned long baseResult = SDSCDisconnectDev(handle);
-    LOGI("disconnect_dev baseResult: %ld", baseResult);
-    return baseResult;
+JNIEXPORT jstring JNICALL get_dev_info(JNIEnv *env, jobject instance, jint handle) {
+    char *firmVer = (char *) malloc(SDSC_MAX_DEV_NAME_LEN * sizeof(char));
+    if (firmVer == NULL) {
+        LOGE("get_dev_info with null alloc.");
+        return (*env)->NewStringUTF(env, '\0');
+    }
+    memset(firmVer, 0x00, SDSC_FIRMWARE_VER_LEN * sizeof(char));
+    unsigned long firmLen = SDSC_FIRMWARE_VER_LEN * sizeof(char);
+    unsigned long baseResult = SDSCGetFirmwareVer(handle, firmVer, &firmLen);
+    LOGI("get_dev_info baseResult: %ld", baseResult);
+    LOGI("get_dev_info firmLen: %ld", firmLen);
+    jstring  result = charToJstring(env, firmVer);
+    // need free the memory
+    free(firmVer);
+    return result;
 }
 
 JNIEXPORT jlong JNICALL encrypt_init(JNIEnv *env, jobject instance, jint handle) {
-    unsigned long baseResult = SDSCDisconnectDev(handle);
-    LOGI("disconnect_dev baseResult: %ld", baseResult);
-    return baseResult;
+    LOGI("encrypt_init baseResult: %ld", handle);
+    return handle;
 }
 
 JNIEXPORT jlong JNICALL encrypt(JNIEnv *env, jobject instance, jint handle) {
-    unsigned long baseResult = SDSCDisconnectDev(handle);
-    LOGI("disconnect_dev baseResult: %ld", baseResult);
-    return baseResult;
+    LOGI("encrypt baseResult: %ld", handle);
+    return handle;
 }
 
 JNIEXPORT jlong JNICALL encrypt_update(JNIEnv *env, jobject instance, jint handle) {
-    unsigned long baseResult = SDSCDisconnectDev(handle);
-    LOGI("disconnect_dev baseResult: %ld", baseResult);
-    return baseResult;
+    LOGI("encrypt_update baseResult: %ld", handle);
+    return handle;
 }
 
 JNIEXPORT jlong JNICALL encrypt_final(JNIEnv *env, jobject instance, jint handle) {
-    unsigned long baseResult = SDSCDisconnectDev(handle);
-    LOGI("disconnect_dev baseResult: %ld", baseResult);
-    return baseResult;
+    LOGI("encrypt_final baseResult: %ld", handle);
+    return handle;
 }
 
 JNIEXPORT jlong JNICALL decrypt_init(JNIEnv *env, jobject instance, jint handle) {
-    unsigned long baseResult = SDSCDisconnectDev(handle);
-    LOGI("disconnect_dev baseResult: %ld", baseResult);
-    return baseResult;
+    LOGI("decrypt_init baseResult: %ld", handle);
+    return handle;
 }
 
 JNIEXPORT jlong JNICALL decrypt(JNIEnv *env, jobject instance, jint handle) {
-    unsigned long baseResult = SDSCDisconnectDev(handle);
-    LOGI("disconnect_dev baseResult: %ld", baseResult);
-    return baseResult;
+    LOGI("decrypt baseResult: %ld", handle);
+    return handle;
 }
 
 JNIEXPORT jlong JNICALL decrypt_update(JNIEnv *env, jobject instance, jint handle) {
-    unsigned long baseResult = SDSCDisconnectDev(handle);
-    LOGI("disconnect_dev baseResult: %ld", baseResult);
-    return baseResult;
+    LOGI("decrypt_update baseResult: %ld", handle);
+    return handle;
 }
 
 JNIEXPORT jlong JNICALL decrypt_final(JNIEnv *env, jobject instance, jint handle) {
-    unsigned long baseResult = SDSCDisconnectDev(handle);
-    LOGI("disconnect_dev baseResult: %ld", baseResult);
-    return baseResult;
+    LOGI("decrypt_final baseResult: %ld", handle);
+    return handle;
 }
 
 JNIEXPORT jlong JNICALL digest_init(JNIEnv *env, jobject instance, jint handle) {
-    unsigned long baseResult = SDSCDisconnectDev(handle);
-    LOGI("disconnect_dev baseResult: %ld", baseResult);
-    return baseResult;
+    LOGI("digest_init baseResult: %ld", handle);
+    return handle;
 }
 
 JNIEXPORT jlong JNICALL digest(JNIEnv *env, jobject instance, jint handle) {
-    unsigned long baseResult = SDSCDisconnectDev(handle);
-    LOGI("disconnect_dev baseResult: %ld", baseResult);
-    return baseResult;
+    LOGI("digest baseResult: %ld", handle);
+    return handle;
 }
 
 JNIEXPORT jlong JNICALL digest_update(JNIEnv *env, jobject instance, jint handle) {
-    unsigned long baseResult = SDSCDisconnectDev(handle);
-    LOGI("disconnect_dev baseResult: %ld", baseResult);
-    return baseResult;
+    LOGI("digest_update baseResult: %ld", handle);
+    return handle;
 }
 
 JNIEXPORT jlong JNICALL digest_final(JNIEnv *env, jobject instance, jint handle) {
-    unsigned long baseResult = SDSCDisconnectDev(handle);
-    LOGI("disconnect_dev baseResult: %ld", baseResult);
-    return baseResult;
+    LOGI("digest_final baseResult: %ld", handle);
+    return handle;
 }
 
 JNIEXPORT jlong JNICALL mac_init(JNIEnv *env, jobject instance, jint handle) {
-    unsigned long baseResult = SDSCDisconnectDev(handle);
-    LOGI("disconnect_dev baseResult: %ld", baseResult);
-    return baseResult;
+    LOGI("mac_init baseResult: %ld", handle);
+    return handle;
 }
 
 JNIEXPORT jlong JNICALL mac_update(JNIEnv *env, jobject instance, jint handle) {
-    unsigned long baseResult = SDSCDisconnectDev(handle);
-    LOGI("disconnect_dev baseResult: %ld", baseResult);
-    return baseResult;
+    LOGI("mac_update baseResult: %ld", handle);
+    return handle;
 }
 
 JNIEXPORT jlong JNICALL mac_final(JNIEnv *env, jobject instance, jint handle) {
-    unsigned long baseResult = SDSCDisconnectDev(handle);
-    LOGI("disconnect_dev baseResult: %ld", baseResult);
-    return baseResult;
+    LOGI("mac_final baseResult: %ld", handle);
+    return handle;
 }
 
 JNIEXPORT jlong JNICALL generate_key(JNIEnv *env, jobject instance, jint handle) {
-    unsigned long baseResult = SDSCDisconnectDev(handle);
-    LOGI("disconnect_dev baseResult: %ld", baseResult);
-    return baseResult;
+    LOGI("generate_key baseResult: %ld", handle);
+    return handle;
 }
 
 JNIEXPORT jlong JNICALL ecc_export_session_key(JNIEnv *env, jobject instance, jint handle) {
-    unsigned long baseResult = SDSCDisconnectDev(handle);
-    LOGI("disconnect_dev baseResult: %ld", baseResult);
-    return baseResult;
+    LOGI("ecc_export_session_key baseResult: %ld", handle);
+    return handle;
 }
 
 JNIEXPORT jlong JNICALL ecc_prv_key_decrypt(JNIEnv *env, jobject instance, jint handle) {
-    unsigned long baseResult = SDSCDisconnectDev(handle);
-    LOGI("disconnect_dev baseResult: %ld", baseResult);
-    return baseResult;
+    LOGI("ecc_prv_key_decrypt baseResult: %ld", handle);
+    return handle;
 }
 
 JNIEXPORT jlong JNICALL import_key_pair(JNIEnv *env, jobject instance, jint handle) {
-    unsigned long baseResult = SDSCDisconnectDev(handle);
-    LOGI("disconnect_dev baseResult: %ld", baseResult);
-    return baseResult;
+    LOGI("import_key_pair baseResult: %ld", handle);
+    return handle;
 }
 
 JNIEXPORT jlong JNICALL cipher(JNIEnv *env, jobject instance, jint handle) {
-    unsigned long baseResult = SDSCDisconnectDev(handle);
-    LOGI("disconnect_dev baseResult: %ld", baseResult);
-    return baseResult;
+    LOGI("cipher baseResult: %ld", handle);
+    return handle;
 }
 
 JNIEXPORT jlong JNICALL begin_transaction(JNIEnv *env, jobject instance, jint handle) {
