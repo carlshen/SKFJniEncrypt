@@ -1,9 +1,9 @@
 #include <jni.h>
-#include "aes.h"
 #include "logger.h"
-#include "checksignature.h"
-#include "check_emulator.h"
 #include <string.h>
+#include <stdlib.h>
+#include <stdint.h>
+#include "base64.h"
 #include <sys/ptrace.h>
 #include <SDSCErr.h>
 #include <SDSCDev.h>
@@ -505,15 +505,6 @@ JNIEXPORT jlong JNICALL get_scio_type(JNIEnv *env, jobject instance, jint handle
     LOGI("get_scio_type baseResult: %ld", baseResult);
     return baseResult;
 }
-
-/**
- * if rerurn 1 ,is check pass.
- */
-JNIEXPORT jint JNICALL
-check_jni(JNIEnv *env, jobject instance, jobject con) {
-    return check_signature(env, instance, con);
-}
-
 
 // Java和JNI函数的绑定表
 static JNINativeMethod method_table[] = {
