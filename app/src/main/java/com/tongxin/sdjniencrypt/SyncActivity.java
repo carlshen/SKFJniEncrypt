@@ -24,7 +24,6 @@ import com.tongxin.sdjni.AESEncrypt;
 public class SyncActivity extends AppCompatActivity {
 
     public static final String TAG = "SyncActivity";
-    private boolean mLogShown = false;
     private TextView tvResult = null;
     private TextView tvLog = null;
     // next 2nd page

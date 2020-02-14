@@ -240,8 +240,9 @@ public class MainActivity extends AppCompatActivity {
 
     private void callTongfang() {
         appsDir = getExternalFilesDirs("/");
-        long result = AESEncrypt.setPackageName(getPackageName());
-        Log.i(TAG, "getPackageName(): " + getPackageName());
+        String appPath = "Android/data/" + getPackageName();
+        long result = AESEncrypt.setPackageName(appPath);
+        Log.i(TAG, "appPath: " + appPath);
         Log.i(TAG, "setPackageName result: " + result);
     }
 

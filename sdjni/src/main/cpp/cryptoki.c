@@ -7,7 +7,7 @@
 #include <pthread.h>
 
 #include "sdk.h"
-#include "../../../../distribution/tongfang/include/skf_type.h"
+#include "skf_type.h"
 
 
 #ifndef MODULE_APP_NAME

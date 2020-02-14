@@ -8,6 +8,7 @@
 #include <SDSCErr.h>
 #include <SDSCDev.h>
 #include "transmit.h"
+#include "log.h"
 
 #define CBC 1
 #define ECB 1
@@ -69,6 +70,15 @@ JNIEXPORT jlong JNICALL set_package(JNIEnv *env, jobject instance, jstring str_)
     // set package name
     char *pkgname = (char *) (*env)->GetStringUTFChars(env, str_, JNI_FALSE);
     LOGI("set_package package name: %s\n", pkgname);
+    // set log path
+    memset(log_name, 0x00, log_len);
+    memcpy(log_name, pkgname, strlen(pkgname));
+    strcat(log_name, "/files/tmc_sdk.log");
+    memset(log_name_bak, 0x00, log_len);
+    memcpy(log_name_bak, pkgname, strlen(pkgname));
+    strcat(log_name_bak, "/files/tmc_sdk.log.0");
+    LOGI("set_package log_name: %s\n", log_name);
+    LOGI("set_package log_name_bak: %s\n", log_name_bak);
     unsigned long pkgresult = SDSCSetPackageName(pkgname);
     LOGI("setpackage result: %ld", pkgresult);
     (*env)->ReleaseStringUTFChars(env, str_, pkgname);
@@ -576,17 +586,9 @@ static int registerNativeMethods(JNIEnv *env, const char *className,
     return JNI_TRUE;
 }
 
-int register_ndk_load(JNIEnv *env) {
-    // 调用注册方法
-    return registerNativeMethods(env, JNIREG_CLASS,
-                                 method_table, NELEM(method_table));
-}
-
 JNIEXPORT jint JNI_OnLoad(JavaVM *vm, void *reserved) {
 
-    ptrace(PTRACE_TRACEME, 0, 0, 0);//反调试
-//这是一种比较简单的防止被调试的方案
-// 有更复杂更高明的方案，比如：不用这个ptrace而是每次执行加密解密签先去判断是否被trace,目前的版本不做更多的负载方案，您想做可以fork之后，自己去做
+//    ptrace(PTRACE_TRACEME, 0, 0, 0);
 
     JNIEnv *env = NULL;
     jint result = -1;
@@ -595,9 +597,12 @@ JNIEXPORT jint JNI_OnLoad(JavaVM *vm, void *reserved) {
         return result;
     }
 
-    register_ndk_load(env);
+    // call register method
+    if (registerNativeMethods(env, JNIREG_CLASS, method_table, NELEM(method_table)) <= 0) {
+        return result;
+    }
 
-// 返回jni的版本
+    // return jni version
     return JNI_VERSION_1_4;
 }
 

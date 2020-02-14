@@ -11,21 +11,12 @@
 #include <sys/stat.h>
 #include <sys/time.h>
 #include <unistd.h>
+#include "log.h"
 
 //1 1.重启仍然用原日志文件
 //1 2.日志每一句增加时间点
 //1 3.需要支持多线程
 //1 4.日志名称固定为tmc_sdk.log
-
-#define LOG_SIZE		(1024*1024*10)// 10M
-
-#ifndef DEBUG
-char log_name[] = "/sdcard/log/tmc_sdk.log";
-char log_name_bak[] = "/sdcard/log/tmc_sdk.log.0";
-#else
-char log_name[] = "/home/pi/log/tmc_sdk.log";
-char log_name_bak[] = "/home/pi/log/tmc_sdk.log.0";
-#endif
 
 FILE *fp = NULL;
 pthread_mutex_t m;
