@@ -30,6 +30,8 @@ public class SyncActivity extends AppCompatActivity {
     private Button mSetSymKey = null;
     private Button mCloseHandle = null;
     private Button mGetDevInfo = null;
+    private Button mGetZA = null;
+    // encrypt / decrypt
     private Button mEncryptInit = null;
     private Button mEncrypt = null;
     private Button mEncryptUpdate = null;
@@ -95,6 +97,14 @@ public class SyncActivity extends AppCompatActivity {
             public void onClick(View v) {
                 String result = AESEncrypt.GetDevInfo(deviceHandle);
                 tvResult.setText("GetDevInfo: " + result);
+            }
+        });
+        mGetZA = (Button) findViewById(R.id.btn_getza);
+        mGetZA.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                long result = AESEncrypt.GetZA(deviceHandle);
+                tvResult.setText("GetZA: " + result);
             }
         });
         mEncryptInit = (Button) findViewById(R.id.btn_encryptInit);

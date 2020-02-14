@@ -237,6 +237,11 @@ JNIEXPORT jstring JNICALL get_dev_info(JNIEnv *env, jobject instance, jint handl
     return result;
 }
 
+JNIEXPORT jlong JNICALL get_za(JNIEnv *env, jobject instance, jint handle) {
+    LOGI("get_za baseResult: %ld", handle);
+    return handle;
+}
+
 JNIEXPORT jlong JNICALL encrypt_init(JNIEnv *env, jobject instance, jint handle) {
     LOGI("encrypt_init baseResult: %ld", handle);
     return handle;
@@ -537,7 +542,8 @@ static JNINativeMethod method_table[] = {
         {"ImportSessionKey",  "(I)J",                                                   (void *) import_session_key},
         {"SetSymKey",         "(I)J",                                                   (void *) set_sym_key},
         {"CloseHandle",       "(I)J",                                                   (void *) close_handle},
-        {"GetDevInfo",        "(I)Ljava/lang/String;",                                   (void *) get_dev_info},
+        {"GetDevInfo",        "(I)Ljava/lang/String;",                                  (void *) get_dev_info},
+        {"GetZA",             "(I)J",                                                   (void *) get_za},
         {"EncryptInit",       "(I)J",                                                   (void *) encrypt_init},
         {"Encrypt",           "(I)J",                                                   (void *) encrypt},
         {"EncryptUpdate",     "(I)J",                                                   (void *) encrypt_update},
