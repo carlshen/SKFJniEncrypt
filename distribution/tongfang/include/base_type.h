@@ -24,9 +24,6 @@ typedef HANDLE	HDEV;
 typedef int		HDEV;
 typedef void*	HANDLE;
 
-#define _GNU_SOURCE
-#define __USE_GNU
-
 #endif
 
 #ifndef FALSE

@@ -1,5 +1,5 @@
-
-#pragma once
+#ifndef SKF_STATUS_H
+#define SKF_STATUS_H
 
 #define DEV_ABSENT_STATE     0x00000000
 #define DEV_PRESENT_STATE    0x00000001
@@ -45,4 +45,4 @@
 #define SECURE_USER_ACCOUNT              0x00000010  //用户权限
 #define SECURE_ANYONE_ACCOUNT            0x000000FF  //任何人权限
 
-
+#endif //SKF_STATUS_H

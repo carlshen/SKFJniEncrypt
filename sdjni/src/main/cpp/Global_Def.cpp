@@ -3,7 +3,6 @@
 //////////////////////////////////////////////////////////////////////
 
 //#include "stdafx.h"
-//#include <skf_type.h>
 #include "Global_Def.h"
 #include "APDUs.h"
 //#include "winscard.h"
@@ -216,8 +215,8 @@ ULONG sc_command(DEVHANDLE hDev, BYTE* inBuf, DWORD inLen, BYTE* retBuf, DWORD* 
 //DES/TDES，ECB模式，加密
 BYTE cryptoDESEcbEnc(BYTE *pbKey, BYTE bKeyLen, BYTE *pbDatIn, UINT16 usLen, BYTE *pbDatOut)
 {
-	des_context des_ctx;
-	des3_context des3_ctx;
+//	des_context des_ctx;
+//	des3_context des3_ctx;
 	int i, divider, remainder;
     
 	//包括1个KEY,2个KEY,3个KEY
@@ -306,7 +305,7 @@ BYTE cryptoDESMAC(BYTE *pbKey, BYTE *pbIv, BYTE * pbDatIn, BYTE bDatLen, BYTE *p
 	BYTE key[SIZE_BUFFER_32];
 	BYTE datIn[SIZE_BUFFER_1024];
 	BYTE initV[SIZE_BUFFER_8];
-	des_context des_ctx;
+//	des_context des_ctx;
 	BYTE ret;
 
 	memset(block, 0, sizeof(block));
@@ -376,7 +375,7 @@ BYTE crypto3DESMAC(BYTE *pbKey, BYTE *pbIv, BYTE * pbDatIn, BYTE bDatLen, BYTE *
 	unsigned char key[SIZE_BUFFER_32];
 	unsigned char datIn[SIZE_BUFFER_1024];
 	unsigned char initV[SIZE_BUFFER_8];
-	des_context des_ctx;
+//	des_context des_ctx;
 	BYTE ret;
 	
 	memset(block, 0, sizeof(block));
@@ -463,7 +462,7 @@ ULONG SV_SelectDFByFID( DEVHANDLE hDev, const BYTE appFID[2], CHAR *pszLog )
 	LONG nRet = 0;
 	memset( apdu, 0x00, sizeof(apdu) );
 	memset( response, 0x00, sizeof(response) );
-	memset( szLog, 0x0, sizeof(szLog) );
+	memset( szLog, 0x0, strlen(szLog) );
 
 	//--------选择DF
 	memcpy( apdu, apdu_selectDF, 0x07 );
@@ -552,7 +551,7 @@ ULONG FindDFByAppName( DEVHANDLE hDev, LPSTR szAppName, BYTE *appFID )
 	sv_IORequest.dwProtocol = 0;
 	sv_IORequest.cbPciLength = sizeof( SCARD_IO_REQUEST );
 #endif
-	memset( szLog, 0x0, sizeof(szLog) );
+	memset( szLog, 0x0, strlen(szLog) );
 
 	WriteLogToFile( pszLog );
 
@@ -661,7 +660,7 @@ ULONG OpenApplication( DEVHANDLE hDev, LPSTR szAppName )
 
 #endif
 
-    memset( szLog, 0x0, sizeof(szLog) );
+    memset( szLog, 0x0, strlen(szLog) );
 	
 	WriteLogToFile( pszLog );
 

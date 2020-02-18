@@ -5,9 +5,8 @@
 
 
 #include "SKF_TypeDef.h"
-//#include "HealthCard_PKI_DLL.h"
 #include "Global_Def.h"
-//#include "Algorithms.h"
+#include "Algorithms.h"
 //#include "winscard.h"
 
 
@@ -318,7 +317,7 @@ extern "C" {
 		sv_fEnd = FALSE;
 		memset( devName, '\0', sizeof(devName) );
 //		memset( response, 0, sizeof(response) );
-		memset( szLog, 0x0, sizeof(szLog) );
+		memset( szLog, 0x0, strlen(szLog) );
 
 
 #if 0
@@ -569,7 +568,7 @@ extern "C" {
 #endif
 
 		sv_fEnd = FALSE;
-		memset( szLog, 0x0, sizeof(szLog) );
+		memset( szLog, 0x0, strlen(szLog) );
 		WriteLogToFile( pszLog );
 
 #if 0
@@ -865,7 +864,7 @@ extern "C" {
 			return SAR_INVALIDHANDLEERR;
 		}
 
-		memset( szLog, 0x0, sizeof(szLog) );
+		memset( szLog, 0x0, strlen(szLog) );
 		memset( response, 0x00, sizeof(response) );
 		memset( szReader, 0, sizeof(szReader) );
 		memset( bATR, 0x00, sizeof(bATR) );

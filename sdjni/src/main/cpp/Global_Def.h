@@ -1,14 +1,13 @@
-
-#pragma once
+#ifndef SKF_GLOBAL_H
+#define SKF_GLOBAL_H
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <xchar.h>
 #include "SKF_StatusCode.h"
 #include "SKF_TypeDef.h"
-//#include "skf_type.h"
 #include "APDUs.h"
-#include "des.h"
+//#include "des.h"
 //#include <WinSCard.h>
 
 #ifdef READER_TYPE_HID
@@ -186,3 +185,5 @@ extern BYTE  sv_APDU[0x05];
 //extern BYTE sv_devAuth;
 extern INT sv_nStatus;
 extern BOOL sv_fEnd;
+
+#endif //SKF_GLOBAL_H

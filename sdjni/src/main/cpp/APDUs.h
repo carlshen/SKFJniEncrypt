@@ -1,5 +1,6 @@
 
-#pragma once
+#ifndef SKF_APDU_H
+#define SKF_APDU_H
 
 #include <base_type.h>
 
@@ -164,3 +165,4 @@ extern BYTE apdu_point_multadd[0x05];
 //ƒ£≥Àº”‘ÀÀ„
 extern BYTE apdu_mod_multadd[0x05];
 
+#endif //SKF_APDU_H

@@ -1,8 +1,7 @@
+#ifndef SKF_BASE_H
+#define SKF_BASE_H
 
-#pragma once
-
-
-#include "base_type.h"
+#include <base_type.h>
 
 //typedef char INT8;
 typedef short int INT16;
@@ -27,7 +26,7 @@ typedef HANDLE DEVHANDLE;
 typedef HANDLE HAPPLICATION;
 typedef HANDLE HCONTAINER;
 
-#define DEVAPI __stdcall
+//#define DEVAPI __stdcall
 
 
 //算法标识
@@ -114,7 +113,7 @@ typedef struct Struct_Version {
 //设备信息
 //注意，2字节对齐方式
 typedef struct Struct_DEVINFO {
-#pragma pack(2)
+//#pragma pack(2)
     VERSION Version;
 	CHAR    Manufacturer[64];
 	CHAR    Issuer[64];
@@ -223,4 +222,4 @@ typedef struct SKF_ENVELOPEDKEYBLOB {
     ECCCIPHERBLOB ECCCipherBlob;    // 用保护公钥加密的对称密钥密文。
 } ENVELOPEDKEYBLOB, *PENVELOPEDKEYBLOB;
 
-
+#endif //SKF_BASE_H
