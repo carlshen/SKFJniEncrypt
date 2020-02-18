@@ -29,9 +29,37 @@ typedef void*	HANDLE;
 
 #endif
 
+#ifndef FALSE
+#define FALSE               0
+#endif
+
+#ifndef TRUE
+#define TRUE                1
+#endif
 typedef unsigned char	u8;
 typedef unsigned short	u16;
 typedef unsigned long	u32;
+
+typedef char CHAR;
+typedef short SHORT;
+typedef long LONG;
+typedef unsigned long ULONG;
+
+typedef unsigned long       DWORD;
+typedef int                 BOOL;
+typedef unsigned char       BYTE;
+typedef unsigned short      WORD;
+typedef float               FLOAT;
+typedef int                 INT;
+typedef unsigned int        UINT;
+typedef char INT8;
+typedef short int INT16;
+typedef int INT32;
+typedef unsigned char UINT8;
+typedef unsigned short UINT16;
+typedef unsigned int UINT32;
+typedef int BOOL;
+typedef UINT8 BYTE;
 
 #include <xchar.h>
 

@@ -7,8 +7,8 @@
 #include <sys/ptrace.h>
 #include <SDSCErr.h>
 #include <SDSCDev.h>
+#include <base_type.h>
 #include "transmit.h"
-#include "log.h"
 
 #define CBC 1
 #define ECB 1
@@ -33,77 +33,42 @@ jstring charToJstring(JNIEnv *envPtr, char *src) {
     return (jstring) env->NewObject(envPtr, clsstring, mid, barr, strencode);
 }
 
-//__attribute__((section (".mytext")))//隐藏字符表 并没有什么卵用 只是针对初阶hacker的一个小方案而已
-char *getKey() {
-    int n = 0;
-    char s[23];//"NMTIzNDU2Nzg5MGFiY2RlZg";
-
-    s[n++] = 'N';
-    s[n++] = 'M';
-    s[n++] = 'T';
-    s[n++] = 'I';
-    s[n++] = 'z';
-    s[n++] = 'N';
-    s[n++] = 'D';
-    s[n++] = 'U';
-    s[n++] = '2';
-    s[n++] = 'N';
-    s[n++] = 'z';
-    s[n++] = 'g';
-    s[n++] = '5';
-    s[n++] = 'M';
-    s[n++] = 'G';
-    s[n++] = 'F';
-    s[n++] = 'i';
-    s[n++] = 'Y';
-    s[n++] = '2';
-    s[n++] = 'R';
-    s[n++] = 'l';
-    s[n++] = 'Z';
-    s[n++] = 'g';
-    char *encode_str = s + 1;
-    return b64_decode(encode_str, strlen(encode_str));
-
-}
-
 JNIEXPORT jlong JNICALL set_package(JNIEnv *env, jobject instance, jstring str_) {
     // set package name
     char *pkgname = (char *) (*env)->GetStringUTFChars(env, str_, JNI_FALSE);
     LOGI("set_package package name: %s\n", pkgname);
     // set log path
-    memset(log_name, 0x00, log_len);
-    memcpy(log_name, pkgname, strlen(pkgname));
-    strcat(log_name, "/files/tmc_sdk.log");
-    memset(log_name_bak, 0x00, log_len);
-    memcpy(log_name_bak, pkgname, strlen(pkgname));
-    strcat(log_name_bak, "/files/tmc_sdk.log.0");
-    LOGI("set_package log_name: %s\n", log_name);
-    LOGI("set_package log_name_bak: %s\n", log_name_bak);
+//    memset(log_name, 0x00, log_len);
+//    memcpy(log_name, pkgname, strlen(pkgname));
+//    strcat(log_name, "/files/tmc_sdk.log");
+//    memset(log_name_bak, 0x00, log_len);
+//    memcpy(log_name_bak, pkgname, strlen(pkgname));
+//    strcat(log_name_bak, "/files/tmc_sdk.log.0");
+//    LOGI("set_package log_name: %s\n", log_name);
+//    LOGI("set_package log_name_bak: %s\n", log_name_bak);
     unsigned long pkgresult = SDSCSetPackageName(pkgname);
     LOGI("setpackage result: %ld", pkgresult);
     (*env)->ReleaseStringUTFChars(env, str_, pkgname);
     return pkgresult;
 }
 
-JNIEXPORT jstring JNICALL get_func_list(JNIEnv *env, jobject instance, jstring str_) {
-    char *szDrive = (char *) (*env)->GetStringUTFChars(env, str_, JNI_FALSE);
-    LOGI("get_func_list szDrive: %s\n", szDrive);
-    char *func_list = (char *) malloc(SDSC_MAX_DEV_NAME_LEN * sizeof(char));
-    if (func_list == NULL) {
-        LOGE("get_func_list with null alloc.");
-        return (*env)->NewStringUTF(env, '\0');
-    }
-    memset(func_list, 0x00, SDSC_MAX_DEV_NAME_LEN * sizeof(char));
-    unsigned long funcLen = SDSC_MAX_DEV_NAME_LEN * sizeof(char);
-    unsigned long funcNum = 0;
-    unsigned long baseResult = SDSCListDevs(func_list, &funcLen, &funcNum);
-    LOGI("get_func_list baseResult: %ld", baseResult);
-    LOGI("get_func_list funcNum: %ld", funcNum);
-    LOGI("get_func_list func_list: %s\n", func_list);
-    (*env)->ReleaseStringUTFChars(env, str_, szDrive);
-    jstring  result = charToJstring(env, func_list);
-    free(func_list);
-    return result;
+JNIEXPORT jlong JNICALL get_func_list(JNIEnv *env, jobject instance, jstring str_) {
+    char *pkgname = (char *) (*env)->GetStringUTFChars(env, str_, JNI_FALSE);
+    LOGI("set_package external path: %s\n", pkgname);
+//    memset(log_name, 0x00, log_len);
+//    memcpy(log_name, pkgname, strlen(pkgname));
+//    strcat(log_name, "/files/tmc_sdk.log");
+//    memset(log_name_bak, 0x00, log_len);
+//    memcpy(log_name_bak, pkgname, strlen(pkgname));
+//    strcat(log_name_bak, "/files/tmc_sdk.log.0");
+//    LOGI("set_package log_name: %s\n", log_name);
+//    LOGI("set_package log_name_bak: %s\n", log_name_bak);
+//    CK_FUNCTION_LIST_PTR ck_ptr;
+//    CK_RV baseResult = C_GetFunctionList(&ck_ptr);
+//    LOGI("get_func_list baseResult: %ld", baseResult);
+//    LOGI("get_func_list version.major: %c", ck_ptr->version.major);
+//    LOGI("get_func_list version.minor: %c", ck_ptr->version.minor);
+    return 1;
 }
 
 JNIEXPORT jlong JNICALL import_cert(JNIEnv *env, jobject instance, jint handle) {
@@ -317,8 +282,14 @@ JNIEXPORT jlong JNICALL mac_final(JNIEnv *env, jobject instance, jint handle) {
     return handle;
 }
 
-JNIEXPORT jlong JNICALL generate_key(JNIEnv *env, jobject instance, jint handle) {
+JNIEXPORT jlong JNICALL gen_key(JNIEnv *env, jobject instance, jint handle) {
     LOGI("generate_key baseResult: %ld", handle);
+//    CK_SESSION_HANDLE hSession;	/* the session's handle */
+//    CK_MECHANISM_PTR pMechanism;	/* the key generation mechanism */
+//    CK_ATTRIBUTE_PTR pTemplate;	/* template for the new key */
+//    CK_ULONG ulCount;	/* number of attributes in template */
+//    CK_OBJECT_HANDLE_PTR phKey;
+//    C_GenerateKey(hSession, pMechanism, pTemplate, ulCount, phKey);
     return handle;
 }
 
@@ -524,7 +495,7 @@ JNIEXPORT jlong JNICALL get_scio_type(JNIEnv *env, jobject instance, jint handle
 // Java和JNI函数的绑定表
 static JNINativeMethod method_table[] = {
         {"setPackageName",  "(Ljava/lang/String;)J",                                   (void *) set_package},
-        {"GetFuncList",     "(Ljava/lang/String;)Ljava/lang/String;",                  (void *) get_func_list},
+        {"GetFuncList",     "(Ljava/lang/String;)J",                                   (void *) get_func_list},
         {"ImportCert",      "(I)J",                                                     (void *) import_cert},
         {"ExportCert",      "(I)J",                                                     (void *) export_cert},
         {"EnumDev",         "()Ljava/lang/String;",                                    (void *) enum_dev},
@@ -559,7 +530,7 @@ static JNINativeMethod method_table[] = {
         {"MacInit",           "(I)J",                                                   (void *) mac_init},
         {"MacUpdate",         "(I)J",                                                   (void *) mac_update},
         {"MacFinal",          "(I)J",                                                   (void *) mac_final},
-        {"GenerateKey",       "(I)J",                                                   (void *) generate_key},
+        {"GenerateKey",       "(I)J",                                                   (void *) gen_key},
         {"ECCExportSessionKey", "(I)J",                                                 (void *) ecc_export_session_key},
         {"ECCPrvKeyDecrypt",  "(I)J",                                                   (void *) ecc_prv_key_decrypt},
         {"ImportKeyPair",     "(I)J",                                                   (void *) import_key_pair},

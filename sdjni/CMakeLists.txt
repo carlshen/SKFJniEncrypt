@@ -15,25 +15,14 @@ add_library( # Sets the name of the library.
 
              # Provides a relative path to your source file(s).
              src/main/cpp/JNIEncrypt.c
-             src/main/cpp/debugger.h
-             src/main/cpp/debugger.c
              src/main/cpp/base64.h
              src/main/cpp/base64.c
              src/main/cpp/transmit.c
-             src/main/cpp/log.c
-             src/main/cpp/driver.c
-             src/main/cpp/gcm128.c
-             src/main/cpp/sm3.c
-             src/main/cpp/sha1.c
-             src/main/cpp/sha256.c
-             src/main/cpp/sha384.c
-             src/main/cpp/sha512.c
-             src/main/cpp/simclist.c
-             src/main/cpp/operation.c
-             src/main/cpp/tmc_spi.c
-             src/main/cpp/tmc_se_card.c
-			 src/main/cpp/cryptoki.c
-			 src/main/cpp/framework.c
+			 src/main/cpp/APDUs.cpp
+		src/main/cpp/Global_Def.cpp
+		src/main/cpp/SKF_TypeDef.cpp
+		src/main/cpp/SKF_StatusCode.cpp
+		     src/main/cpp/SKF_DeviceManager.cpp
              )
 
 # 搜索指定的预构建库并将路径存储为变量。 因为默认情况下，CMake在搜索路径中包含系统库，

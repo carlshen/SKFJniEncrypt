@@ -18,6 +18,7 @@ import android.widget.TextView;
 import com.tongxin.sdjni.AESEncrypt;
 
 import java.io.File;
+import java.util.ArrayList;
 
 /**
  * Created by carl on 20-02-06.
@@ -28,6 +29,7 @@ public class MainActivity extends AppCompatActivity {
 
     public static final String TAG = "MainActivity";
     private File[] appsDir;
+    private String extPath;
     private TextView tvResult = null;
     private TextView tvLog = null;
     // device management
@@ -54,7 +56,7 @@ public class MainActivity extends AppCompatActivity {
     private Button mNextPage = null;
     private String mECCData = null;
     private String ECCKeyPair = null;
-    private String deviceName = null;
+    private String deviceName = "dev";
     private int deviceHandle = -1;
     private String KeyData = null;
     private String EncrpytData = null;
@@ -120,7 +122,7 @@ public class MainActivity extends AppCompatActivity {
         mGetFuncList.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                String result = AESEncrypt.GetFuncList(deviceName);
+                long result = AESEncrypt.GetFuncList(extPath);
                 tvResult.setText("GetFuncList: " + result);
             }
         });
@@ -254,6 +256,23 @@ public class MainActivity extends AppCompatActivity {
                 ActivityCompat.requestPermissions(MainActivity.this,new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},1);
             }
         }
+        ArrayList<StorageBean> gg = StorageUtils.getStorageData(getApplicationContext());
+        StringBuilder cardBuilder = new StringBuilder(256);
+        for (StorageBean bean: gg) {
+            Log.d("MainActivity", "bean.getPath(): " + bean.getPath());
+            Log.d("MainActivity", "bean.getTotalSize(): " + bean.getTotalSize());
+            cardBuilder.append(bean.getPath() + "\n");
+            StorageUtils.EXTERNAL_SDCARD = bean.getPath();
+            if (!bean.getPath().toLowerCase().contains("emulated")) {
+//                extPath = bean.getPath();
+//                StorageUtils.EXTERNAL_SDCARD = bean.getPath();
+                break;
+            }
+        }
+        Log.i(TAG, "cardBuilder: " + cardBuilder.toString());
+        extPath = StorageUtils.EXTERNAL_SDCARD + "/Android/data/" + getPackageName();
+//        extPath = "/sdcard/Android/data/" + getPackageName();
+        tvLog.setText("ExternalFilesDir: " + extPath);
     }
 
     @Override
