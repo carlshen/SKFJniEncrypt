@@ -7,17 +7,6 @@
 #include "SKF_StatusCode.h"
 #include "SKF_TypeDef.h"
 #include "APDUs.h"
-//#include "des.h"
-//#include <WinSCard.h>
-
-#ifdef READER_TYPE_HID
-#include "dcrf32.h"
-#endif
-#ifdef READER_TYPE_CCID
-#include <WinSCard.h>
-#endif
-
-
 
 //定义缓冲区大小
 #define SIZE_BUFFER_4          4
@@ -43,17 +32,8 @@
 #define PARAM_A_EXIST		0x02
 #define PARAM_B_EXIST		0x04
 
-#ifdef READER_TYPE_HID
-extern CHAR*  sv_pszD8DevNameA;
-extern TCHAR* sv_pszD8DevName;
-#endif
-#ifdef READER_TYPE_CCID
-extern SCARDCONTEXT     sv_hContext;
-extern SCARD_IO_REQUEST	sv_IORequest;
-extern CHAR  sv_pszCCIDDevNameA[SIZE_BUFFER_1024];
-extern WCHAR* sv_pszCCIDDevName;
-#endif
-
+static int sv_Device = -1;
+static CHAR sv_pszCCIDDevNameA[SIZE_BUFFER_1024];
 // 
 extern DWORD ThreadSemiAutoProc( void* lpParam );
 extern HANDLE            g_hSemiAutoEvent[2];  //
@@ -113,9 +93,6 @@ extern  CONTAINERINFO    sv_stContainer;    //容器
 extern  DEVINFO          sv_stDevice;       //设备
 extern  DEVHANDLE        sv_hDev;           //设备句柄
 extern  HASHINFO         sv_stHash;         //哈希杂凑对象
-//extern SCARDCONTEXT hSC;
-//extern SCARDHANDLE     hCardHandle;
-//extern SCARD_IO_REQUEST	pioSendPci;
 
 //有关容器定义变量
 //注：
@@ -163,14 +140,6 @@ extern DWORD sv_randomLength;              //全局随机数缓冲区长度计数；
 extern ECCSIGNATUREBLOB sv_eccSignBlob;
 extern BYTE sv_signEF_FID[2];
 
-//外部函数
-#ifdef READER_TYPE_HID
-extern void PrintApduToFile( BYTE bFlag, BYTE* pbApdu, BYTE nLength );
-#endif
-
-#ifdef READER_TYPE_CCID
-extern void PrintApduToFile( BYTE bFlag, BYTE* pbApdu, DWORD bLength );
-#endif
 extern void WriteLogToFile( CHAR* szLog );
 extern void ResetLogFile( CHAR*  lpszName );
 extern void WriteLogToFile2( CHAR* szLog );

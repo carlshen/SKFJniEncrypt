@@ -2,7 +2,6 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-//#include "stdafx.h"
 #include "SKF_TypeDef.h"
 #include "Global_Def.h"
 #include "Algorithms.h"
@@ -2000,7 +1999,7 @@ ULONG SKF_SetSymmKey( DEVHANDLE hDev,  BYTE *pbKey, ULONG ulAlgID, HANDLE *phKey
 	}
 
 	keyLen = 16;
-	SESSIONKEY *pKey = new SESSIONKEY;
+	SESSIONKEY *pKey;
 
 	(* pKey).AlgID = ulAlgID;        //填充算法ID
 	(* pKey).KeyLen = (BYTE)keyLen;  //填充密钥长度，为固定值0x10 bytes
@@ -2863,6 +2862,7 @@ ULONG SKF_CloseHandle( HANDLE hHandle )
 
 	return SAR_OK;
 }
+
 #ifdef __cplusplus
 }
 #endif  /*__cplusplus*/

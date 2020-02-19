@@ -58,6 +58,9 @@ typedef union Data_Raw{
     unsigned char MsgRawData[DATA_TRANSMIT_BLOCK_SIZE];
 }unDataRaw;
 
+#ifdef __cplusplus
+extern "C" {
+#endif  /*__cplusplus*/
 static void big_intToByte(int i, int len, unsigned char * abyte) {
     memset(abyte,0, len);
     if (len == 1) {
@@ -869,3 +872,7 @@ Finished:
 
     return ret;
 }
+
+#ifdef __cplusplus
+}
+#endif  /*__cplusplus*/

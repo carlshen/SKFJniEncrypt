@@ -2,30 +2,10 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-//#include "stdafx.h"
 #include "Global_Def.h"
 #include "APDUs.h"
-//#include "winscard.h"
+#include "transmit.h"
 
-
-#ifdef READER_TYPE_HID
-#pragma comment( lib, "dcrf32.lib" )
-#endif
-#ifdef READER_TYPE_CCID
-#pragma comment( lib, "winscard.lib" )
-#endif
-
-
-#ifdef READER_TYPE_HID
-    CHAR*  sv_pszD8DevNameA = "HID_D8_TFHC";
-	TCHAR* sv_pszD8DevName = TEXT( "HID_D8_TFHC" );
-#endif
-#ifdef READER_TYPE_CCID
-    SCARDCONTEXT        sv_hContext;
-    SCARD_IO_REQUEST	sv_IORequest;
-	CHAR  sv_pszCCIDDevNameA[SIZE_BUFFER_1024];
-	WCHAR* sv_pszCCIDDevName = _T( "SCM Microsystems Inc. SDI011G Contactless Reader 0" );
-#endif
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
@@ -45,9 +25,6 @@ CONTAINERINFO    sv_stContainer;    //容器
 DEVINFO          sv_stDevice;       //设备
 DEVHANDLE        sv_hDev;           //设备句柄
 HASHINFO         sv_stHash;         //哈希杂凑对象
-//SCARDCONTEXT hSC = 0;
-//SCARDHANDLE     hCardHandle;
-//SCARD_IO_REQUEST	pioSendPci;
 
 
 //有关容器定义变量
@@ -120,6 +97,10 @@ DWORD sv_tmpDataLen = 0;
 INT sv_nStatus = -1;
 BOOL sv_fEnd = TRUE;
 //BYTE sv_devAuth = 0x00;    //设备是否认证，0x00：没有认证；0x01：已经认证。默认没有认证
+
+#ifdef __cplusplus
+extern "C" {
+#endif  /*__cplusplus*/
 #ifdef READER_TYPE_HID
 void PrintApduToFile( BYTE bFlag, BYTE* pbApdu, BYTE nLength )
 {
@@ -138,7 +119,7 @@ void PrintApduToFile( BYTE bFlag, BYTE* pbApdu, BYTE nLength )
 			_stprintf_s( szLog, _countof(szLog), TEXT("%02X"), pbApdu[bIndex] );
             _fputts( szLog, pFileLog );
 		}
-	
+
 		_fputts( TEXT("\n"), pFileLog );
 		fclose( pFileLog );
 	}
@@ -163,7 +144,7 @@ void PrintApduToFile( BYTE bFlag, BYTE* pbApdu, DWORD bLength )
 			_stprintf_s( szLog, _countof(szLog), TEXT("%02X"), pbApdu[dwIndex] );
             _fputts( szLog, pFileLog );
 		}
-	
+
 		_fputts( TEXT("\n"), pFileLog );
 		fclose( pFileLog );
 	}
@@ -207,7 +188,7 @@ void WriteLogToFile2( CHAR* szLog )
 
 ULONG sc_command(DEVHANDLE hDev, BYTE* inBuf, DWORD inLen, BYTE* retBuf, DWORD* pdwLen)
 {
-	return 0; //SCardTransmit(hDev, &pioSendPci, (LPCBYTE)inBuf, inLen, NULL, retBuf, pdwLen);
+	return TransmitData(1, inBuf, inLen, retBuf, pdwLen);
 }
 
 //DES/TDES，ECB模式，加密
@@ -452,7 +433,7 @@ ULONG SV_SelectDFByFID( DEVHANDLE hDev, const BYTE appFID[2], CHAR *pszLog )
 	CHAR szLog[SIZE_BUFFER_1024];
 	BYTE apdu[SIZE_BUFFER_1024];
 	BYTE response[SIZE_BUFFER_1024];
-	
+
 #ifdef READER_TYPE_CCID
 	sv_IORequest.dwProtocol = 0;
 	sv_IORequest.cbPciLength = sizeof( SCARD_IO_REQUEST );
@@ -653,13 +634,6 @@ ULONG OpenApplication( DEVHANDLE hDev, LPSTR szAppName )
 	CHAR szLog[SIZE_BUFFER_1024];
 	BYTE appFID[2] = { 0xDF, 0x00 };
 
-#ifdef READER_TYPE_HID
-
-#endif
-#ifdef READER_TYPE_CCID
-
-#endif
-
     memset( szLog, 0x0, strlen(szLog) );
 	
 	WriteLogToFile( pszLog );
@@ -671,7 +645,7 @@ ULONG OpenApplication( DEVHANDLE hDev, LPSTR szAppName )
 //	MultiByteToWideChar( CP_ACP, 0, szAppName, -1, pszUnicode, nRetUNI*sizeof(WCHAR) );
 //	_stprintf_s( szLog, _countof(szLog), TEXT("OpenApplication, 应用名称：%s\n"), pszUnicode );
 	WriteLogToFile( szLog );
-	delete pszUnicode;
+	free(pszUnicode);
 
 	//--------设备句柄不能为空
 	if( hDev == NULL )
@@ -682,7 +656,7 @@ ULONG OpenApplication( DEVHANDLE hDev, LPSTR szAppName )
 	//--------应用名称不能为空
 	if( szAppName == NULL )
 	{
-//		_stprintf_s( szLog, _countof(szLog), TEXT("应用名称无效，无法打开 \n") );
+		sprintf( szLog, "应用名称无效，无法打开 \n");
 		WriteLogToFile( szLog );
 		return SAR_APPLICATION_NAME_INVALID;
 	}
@@ -694,7 +668,7 @@ ULONG OpenApplication( DEVHANDLE hDev, LPSTR szAppName )
 	//--------根据应用名称找到应用的FID
 	if( SAR_OK != FindDFByAppName( hDev, szAppName, appFID ) )
 	{
-//		_stprintf_s( szLog, _countof(szLog), TEXT("应用查找失败，可能不存在该应用或应用名称错误 \n") );
+		sprintf( szLog, "应用查找失败，可能不存在该应用或应用名称错误 \n");
 		WriteLogToFile( szLog );
 		return SAR_FAIL;
 	}
@@ -706,3 +680,7 @@ ULONG OpenApplication( DEVHANDLE hDev, LPSTR szAppName )
     return SAR_OK;
 
 }
+
+#ifdef __cplusplus
+}
+#endif  /*__cplusplus*/

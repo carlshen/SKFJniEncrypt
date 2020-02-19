@@ -18,12 +18,11 @@ add_library( # Sets the name of the library.
              src/main/cpp/base64.h
              src/main/cpp/base64.c
              src/main/cpp/transmit.c
-		     src/main/cpp/Algorithms.cpp
-		     src/main/cpp/APDUs.cpp
-		     src/main/cpp/Global_Def.cpp
-		     src/main/cpp/SKF_StatusCode.cpp
-		     src/main/cpp/SKF_CryptoService.cpp
-		     src/main/cpp/SKF_DeviceManager.cpp
+		     src/main/cpp/Algorithms.c
+		     src/main/cpp/APDUs.c
+		     src/main/cpp/Global_Def.c
+		     src/main/cpp/SKF_CryptoService.c
+		     src/main/cpp/SKF_DeviceManager.c
              )
 
 # 搜索指定的预构建库并将路径存储为变量。 因为默认情况下，CMake在搜索路径中包含系统库，

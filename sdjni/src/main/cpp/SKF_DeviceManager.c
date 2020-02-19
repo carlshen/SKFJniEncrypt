@@ -2,13 +2,11 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-
-
 #include "SKF_TypeDef.h"
 #include "Global_Def.h"
 #include "Algorithms.h"
-//#include "winscard.h"
-
+#include "transmit.h"
+#include <SDSCDev.h>
 
 CHAR pManufacturer[64] = "Tongfang Microelectronics Company";
 CHAR pIssuer[64] = "Tongfang Microelectronics Company";
@@ -36,242 +34,6 @@ extern "C" {
 		}
 		return j;	
 	}
-	////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	/*
-	* 函数名称：SKF_WaitForDevEvent
-	* 函数功能：等待设备插入或拔出事件
-	* 参数列表：szDevName:     [OUT], 发生事件的设备名称
-	*           pulDevNameLen: [IN/OUT], 输入/输出，当输入时表示缓冲区长度，输出时表示设备名称的有效长度，包括字符串结束符
-	*           pulEvent:      [OUT], 事件类型，1表示插入；2表示拔出
-	* 返 回 值：SAR_OK: 成功
-	其他值: 错误码
-	*/
-	ULONG SKF_WaitForDevEvent( LPSTR szDevName, ULONG * pulDevNameLen, ULONG *pulEvent )
-	{
-		CHAR* pszLog = ( "**********Start to execute SKF_WaitForDevEvent ********** \n" );
-		CHAR devName[SIZE_BUFFER_1024];
-
-#ifdef READER_TYPE_HID
-		HANDLE hDev;
-		BYTE cardType = 0x00;
-		BYTE nResponseLen = 0;
-		SHORT nRet = 0;
-		BYTE response[SIZE_BUFFER_1024];
-		ULONG ulReq = 0;
-#endif
-#ifdef READER_TYPE_CCID
-		ULONG ulDevState;
-		DWORD nResponseLen = 0;
-		LONG nRet = 0;
-		SCARD_READERSTATE devState;
-		sv_IORequest.dwProtocol = 0;
-		sv_IORequest.cbPciLength = sizeof( SCARD_IO_REQUEST );
-		devState.szReader = sv_pszCCIDDevName;
-		devState.dwCurrentState = SCARD_STATE_UNAWARE;
-		devState.dwEventState = SCARD_STATE_UNAWARE;
-
-#endif
-
-		// 清除日志内容
-		//ResetLogFile( SV_PSZLOGTHREADPATH );
-		g_bWaitForDevice = TRUE;
-		memset( devName, '\0', sizeof(devName) );
-
-		*pulDevNameLen = 0;
-		*pulEvent = 0;
-		WriteLogToFile2( pszLog );
-
-#ifdef READER_TYPE_HID
-		while( 1 )
-		{
-			if( g_bPresent )
-			{
-				while( !sv_fEnd )
-				{
-					if( !g_bWaitForDevice )
-						break;
-					Sleep( 500 );
-					//WriteLogToFile2( _T("sv_fEnd：FALSE\n") );
-					if( sv_nStatus == 0 )
-						n1 = 0;
-					else
-					{
-						n1 = 1;
-						break;
-					}
-				}
-			}
-
-			hDev = dc_init( 100, 0 ); 
-			if( (int)hDev>0 )
-			{
-				if( nFirstC == 0 )
-				{
-					nRet = dc_cardAB( hDev, &nResponseLen, response, &cardType );
-					if( nRet == 0 )
-					{
-						*pulEvent = 1;
-						g_bPresent = TRUE;
-						WriteLogToFile2( _T("设备事件：插入事件First\n") );	
-						nA = 0;
-					}
-					if( nRet == 1 )
-					{
-						*pulEvent = 2;
-						g_bPresent = FALSE;
-						WriteLogToFile2( _T("设备事件：拔出事件First\n") );
-						nA = 1;
-					}
-					nB = nA;
-					nFirstC = 1;
-					break;
-				}
-				//--------寻卡
-				nRet = dc_cardAB( hDev, &nResponseLen, response, &cardType );
-				//_stprintf_s( szLog, _countof(szLog), TEXT("寻卡失败，错误码: %d \n"), snRet );
-				//WriteLogToFile2( szLog );
-				if( nRet == 0 )
-				{
-					nA = 0;
-				}
-				else if( nRet == 1 )
-				{
-					nA = 1;
-				}
-				else
-				{
-					WriteLogToFile2( _T("其他错误，非0，非1\n") );
-					nA = 1;
-				}
-
-				dc_exit( hDev );
-			}
-			else
-			{
-				nA = 1;
-			}
-
-			if( nA != nB )
-			{
-				if( nA == 1 )
-				{
-					*pulEvent = 2;
-					g_bPresent = FALSE;
-					WriteLogToFile2( _T("设备事件：拔出事件\n") );
-				}
-				else
-				{
-					*pulEvent = 1;
-					g_bPresent = TRUE;
-					WriteLogToFile2( _T("设备事件：插入事件\n") );	
-				}
-				nB = nA;
-				break;
-			}
-			if( !g_bWaitForDevice )
-				break;
-			Sleep( 500 );
-
-			*pulDevNameLen = strlen( sv_pszD8DevNameA );
-			if( szDevName != NULL )
-			{
-				memcpy( szDevName, devName, sizeof(devName) );
-			}
-		}
-
-#endif
-
-#ifdef READER_TYPE_CCID
-		while( 1 )
-		{
-			Sleep( 200 );
-			nRet = SCardGetStatusChange( sv_hContext, INFINITE, &devState, 1 );
-
-			if( nRet != SCARD_S_SUCCESS )
-			{ 
-				ulDevState = DEV_ABSENT_STATE;
-			}
-			else
-			{
-				if(  ( devState.dwEventState & SCARD_STATE_PRESENT ) != 0 )
-				{
-					ulDevState = DEV_PRESENT_STATE;
-				}
-				else
-				{
-					if( ( devState.dwEventState & SCARD_STATE_EMPTY) != 0 )
-					{
-						ulDevState = DEV_ABSENT_STATE;
-					}
-					else
-					{
-						ulDevState = DEV_UNKNOW_STATE;
-					}
-				}
-			}
-
-			if( ulDevState == DEV_PRESENT_STATE )
-				n1 = 0;
-			else
-				n1 = 1;
-
-
-			if( nFirst3 == 0 )
-			{
-				n2 = n1;
-				nFirst3 = 1;
-			}
-
-			if( n1 != n2 )
-			{
-				if( n1 == 1 )
-				{
-					*pulEvent = 2;
-					n2 = n1;
-					WriteLogToFile2( _T("设备事件：拔出事件\n") );
-				}
-				else
-				{
-					*pulEvent = 1;
-					n2 = n1;
-					WriteLogToFile2( _T("设备事件：插入事件\n") );
-				}
-
-				break;
-			}
-
-//			if( !g_waitForDevice )
-//				break;
-
-		}
-		*pulDevNameLen = strlen( sv_pszCCIDDevNameA );
-		if( szDevName != NULL )
-		{
-			memcpy( szDevName, sv_pszCCIDDevNameA, strlen(sv_pszCCIDDevNameA) );
-		}
-#endif
-
-		WriteLogToFile2( ("SKF_WaitForDevEvent, Over \n") );
-		return SAR_OK;
-	}
-
-	////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	/*
-	* 函数名称：SKF_CancelWaitForDevEvent
-	* 函数功能：取消等待设备插入或者拔出事件
-	* 参数列表：无
-	* 返 回 值：SAR_OK: 成功
-	其他值: 错误码
-	*/
-	ULONG SKF_CancelWaitForDevEvent( )
-	{
-		CHAR* pszLog = ( "**********Start to execute SKF_CancelWaitForDevEvent ********** \n" );
-		WriteLogToFile2( pszLog );
-
-		g_bWaitForDevice = FALSE;
-
-		return SAR_OK;
-	}
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/*
@@ -285,38 +47,26 @@ extern "C" {
 	*/
 	ULONG SKF_EnumDev( BOOL bPresent, LPSTR szNameList, ULONG * pulSize )
 	{
-		CHAR* pszLog = ( "**********Start to execute SKF_EnumDev ********** \n" );
+		CHAR* pszLog = "Start to execute SKF_EnumDev \n";
 		CHAR szLog[SIZE_BUFFER_1024];
 
 		DWORD dwStrLen = 0;
-		CHAR devName[SIZE_BUFFER_256];
+		BYTE devName[SIZE_BUFFER_256];
 		BYTE hasDevSupported = 0x00;
 		DWORD dwOff = 0;
 		DWORD dwLen = 0;
 
-#ifdef READER_TYPE_HID
-		BYTE nResponseLen = 0;
-		SHORT nRet = 0;
-		HANDLE hDev;
-		BYTE cardType = 0x00;
-		BYTE response[SIZE_BUFFER_2048];
-
-#endif
-#ifdef READER_TYPE_CCID
 		DWORD nResponseLen = 0;
 		LONG nRet = 0;
-		CHAR response[SIZE_BUFFER_2048];
+		BYTE response[SIZE_BUFFER_2048];
 		DWORD dwActiveProtocol = 0;
-		sv_IORequest.dwProtocol = 0;
-		sv_IORequest.cbPciLength = sizeof( SCARD_IO_REQUEST );
-#endif
 
 		// 清除日志内容
 		//ResetLogFile( SV_PSZLOGPATH );
 		sv_nStatus = 0;
 		sv_fEnd = FALSE;
 		memset( devName, '\0', sizeof(devName) );
-//		memset( response, 0, sizeof(response) );
+		memset( response, 0, sizeof(response) );
 		memset( szLog, 0x0, strlen(szLog) );
 
 
@@ -355,61 +105,15 @@ extern "C" {
 
 
 		WriteLogToFile( pszLog );
-
-#ifdef READER_TYPE_HID
-		hDev = dc_init( 100, 0 ); 
-		if( (int)hDev>0 )
-		{
-			sv_hDev = hDev;
-
-			//--------寻卡
-			nRet = dc_cardAB( sv_hDev, &nResponseLen, response, &cardType );
-			if( nRet == 0 )
-			{
-				if( szNameList != NULL )
-				{
-					memcpy( szNameList, sv_pszD8DevNameA, strlen(sv_pszD8DevNameA) );
-					szNameList[strlen(sv_pszD8DevNameA)] = '\0';
-					szNameList[strlen(sv_pszD8DevNameA)+1] = '\0';
-					WriteLogToFile( sv_pszD8DevName );
-					WriteLogToFile( TEXT("\n") );
-
-				}
-				*pulSize = strlen(sv_pszD8DevNameA)+2;
-				return SAR_OK;
-			}
-
-			dc_exit( hDev );
-		}
-		else
-		{
-			_stprintf_s( szLog, _countof(szLog), TEXT("初始化端口，错误码: %d \n"), nRet );
-			WriteLogToFile( szLog );
-		}
-
-#endif
-
-#ifdef READER_TYPE_CCID
-		SCardReleaseContext( sv_hContext );
-		nRet = SCardEstablishContext( SCARD_SCOPE_USER, NULL, NULL, &sv_hContext );
-
-		if( nRet != SCARD_S_SUCCESS )
-		{
-			_stprintf_s( szLog, _countof(szLog), TEXT("枚举设备失败(初始化Context)，错误码: %08X \n"), nRet );
-			WriteLogToFile( szLog );
-
-			return SAR_FAIL;
-		}
-
 		nResponseLen = sizeof( response );
 
 		if( bPresent ) //!bPresent ) //TRUE：列出所有设备
 		{
-			nRet = SCardListReadersA( sv_hContext, NULL, response, &nResponseLen );
+			nRet = SDSCListDevs( szNameList, pulSize, &nResponseLen );
 
-			if( nRet != SCARD_S_SUCCESS )
+			if( nRet != SAR_OK )
 			{
-				_stprintf_s( szLog, _countof(szLog), TEXT("枚举设备失败，错误码: 0x%08X \n"), nRet );
+				sprintf( szLog, "枚举设备失败，错误码: 0x%08X \n", nRet );
 				WriteLogToFile( szLog );
 
 				return SAR_FAIL;
@@ -436,11 +140,11 @@ extern "C" {
 		else  //FALSE：支持的设备
 		{
 
-			nRet = SCardListReadersA( sv_hContext, NULL, response, &nResponseLen );
+			nRet = SDSCListDevs( szNameList, pulSize, &nResponseLen );
 
-			if( nRet != SCARD_S_SUCCESS )
+			if( nRet != SAR_OK )
 			{
-				_stprintf_s( szLog, _countof(szLog), TEXT("枚举设备失败，错误码: 0x%08X \n"), nRet );
+				sprintf( szLog, "枚举设备失败，错误码: 0x%08X \n", nRet );
 				WriteLogToFile( szLog );
 
 			}
@@ -452,17 +156,16 @@ extern "C" {
 				while (nResponseLen > dwStrLen+1)
 				{
 					memset(sv_pszCCIDDevNameA,0,sizeof(sv_pszCCIDDevNameA));
-					strcpy_s( sv_pszCCIDDevNameA, response + dwStrLen );
+					strcpy( sv_pszCCIDDevNameA, (const char *)(response + dwStrLen) );
 					dwLen = strlen(sv_pszCCIDDevNameA);
 					dwStrLen += dwLen;
 					dwStrLen++;
-					
-					nRet = SCardConnectA( sv_hContext, sv_pszCCIDDevNameA, SCARD_SHARE_SHARED,
-											SCARD_PROTOCOL_T0 | SCARD_PROTOCOL_T1,( LPSCARDHANDLE )&sv_hDev, &dwActiveProtocol );
+					// need update the params later
+					nRet = SDSCConnectDev( sv_pszCCIDDevNameA, &sv_Device);
 
-					if( nRet != SCARD_S_SUCCESS )
+					if( nRet != SAR_OK )
 					{
-						_stprintf_s( szLog, _countof(szLog), TEXT("设备枚举失败： 0x%08X \n"), nRet );
+						sprintf( szLog, "设备枚举失败： 0x%08X \n", nRet );
 						WriteLogToFile( szLog );
 					}
 					else
@@ -528,9 +231,8 @@ extern "C" {
 			return SAR_OK;
 
 		}
-#endif
 
-//		_stprintf_s( szLog, _countof(szLog), TEXT("枚举设备失败，错误码: %d \n"), nRet );
+		sprintf( szLog, "枚举设备失败，错误码: %d \n", nRet );
 		WriteLogToFile( szLog );
 		sv_nStatus = 1;
 		sv_fEnd = TRUE;
@@ -551,21 +253,9 @@ extern "C" {
 		CHAR* pszLog = ( "**********Start to execute SKF_ConnectDev ********** \n" );
 		CHAR szLog[SIZE_BUFFER_1024];
 
-#ifdef READER_TYPE_HID
-		BYTE nResponseLen = 0;
-		SHORT nRet = 0;
-		HANDLE hDev;
-		BYTE cardType = 0x00;
-		BYTE response[SIZE_BUFFER_2048];
-#endif
-
-#ifdef READER_TYPE_CCID
 		DWORD nResponseLen = 0;
 		DWORD dwActiveProtocol = 0;
 		LONG nRet = 0;
-		sv_IORequest.dwProtocol = 0;
-		sv_IORequest.cbPciLength = sizeof( SCARD_IO_REQUEST );
-#endif
 
 		sv_fEnd = FALSE;
 		memset( szLog, 0x0, strlen(szLog) );
@@ -634,43 +324,13 @@ extern "C" {
 		return SAR_OK;
 
 #endif
-
-#ifdef READER_TYPE_HID
-		hDev = dc_init( 100, 0 ); 
-		if( (int)hDev>0 )
+		nRet = SDSCConnectDev(szName, &sv_Device);
+		if( nRet != SAR_OK )
 		{
-			sv_hDev = hDev;
-
-			//--------寻卡
-			nRet = dc_cardAB( sv_hDev, &nResponseLen, response, &cardType );
-			if( nRet != 0 )
-			{
-				_stprintf_s( szLog, _countof(szLog), TEXT("设备连接错误，错误码: %d \n"), nRet );
-				WriteLogToFile( szLog );
-				return SAR_FAIL;
-			}
-		}
-		else
-		{
-			_stprintf_s( szLog, _countof(szLog), TEXT("初始化端口，错误码: %d \n"), nRet );
+			sprintf( szLog, "设备连接失败： %d \n", nRet );
 			WriteLogToFile( szLog );
 			return SAR_FAIL;
 		}
-#endif
-#ifdef READER_TYPE_CCID
-		nRet = SCardConnectA( sv_hContext, 
-			szName,
-			SCARD_SHARE_SHARED,
-			SCARD_PROTOCOL_T0 | SCARD_PROTOCOL_T1,
-			( LPSCARDHANDLE )&sv_hDev,
-			&dwActiveProtocol);
-		if( nRet != SCARD_S_SUCCESS )
-		{
-			_stprintf_s( szLog, _countof(szLog), TEXT("设备连接失败： %d \n"), nRet );
-			WriteLogToFile( szLog );
-			return SAR_FAIL;
-		}
-#endif
 
 		//--------选择CA环境DDF3
 		if( SV_SelectDFByFID( sv_hDev, APDU_CA_FID, "选择CA环境") != SAR_OK )
@@ -735,15 +395,8 @@ extern "C" {
 		BYTE response[SIZE_BUFFER_1024];
 		BYTE apdu[SIZE_BUFFER_1024];
 
-#ifdef READER_TYPE_HID
-		BYTE nResponseLen = 0;
-		SHORT nRet = 0;
-#endif
-
-#ifdef READER_TYPE_CCID
 		DWORD nResponseLen = 0;
 		LONG nRet = 0;
-#endif
 		sv_fEnd = FALSE;
 		WriteLogToFile( pLog );
 		memset( apdu, 0x00, sizeof(apdu) );
@@ -780,13 +433,7 @@ extern "C" {
 		sv_stDevice.MaxBufferSize         = 0x00000100;    //能够处理的分组运算和杂凑运算的数据大小
 		memset( sv_stDevice.Reserved, 0x00, sizeof(sv_stDevice.Reserved) );          //保留扩展
 
-#ifdef READER_TYPE_HID
-#endif
-#ifdef READER_TYPE_CCID
-		sv_IORequest.dwProtocol = 0;
-		sv_IORequest.cbPciLength = sizeof( SCARD_IO_REQUEST );
 		nResponseLen = sizeof( response );
-#endif
 		//--------选择MF
 		//--------选择CA环境
 
@@ -799,75 +446,32 @@ extern "C" {
 		apdu[4] = 0x21;         //大小为0x21
 
 //		PrintApduToFile( 0, apdu, 0x05 );
-#ifdef READER_TYPE_HID
-		nRet = dc_pro_command( hDev, 0x05, apdu, &nResponseLen, response, 7 );
-		if( nRet != 0 )
-#endif
-#ifdef READER_TYPE_CCID
-			nRet = SCardTransmit( (SCARDHANDLE )hDev, &sv_IORequest, apdu, 0x05, NULL, response, &nResponseLen );
-		if( nRet != SCARD_S_SUCCESS )
-#endif
+		nRet = TransmitData( 1, apdu, 0x05, response, &nResponseLen );
+		if( nRet != SAR_OK )
 		{
-//			_stprintf_s( szLog, _countof(szLog), TEXT("读1E（设备标签）文件失败，错误码: %d \n"), nRet );
+			sprintf( szLog, "读1E（设备标签）文件失败，错误码: %d \n", nRet );
 			WriteLogToFile( szLog );
 			sv_nStatus = 1;
 			return SAR_FAIL;
 		}
 
 //		PrintApduToFile( 1, response, nResponseLen );
-//		if( (response[nResponseLen-2] == 0x90) && (response[nResponseLen-1] == 0x00) )
-//		{
-//			for( int n=0; n<response[0]; n++ )
-//			{
-//				pLabel[n] = response[n+1];
-//			}
-//			memcpy( sv_stDevice.Label, pLabel, response[0] );  //设备标签
-//		}
-//		else
-//		{
-//			_stprintf_s( szLog, _countof(szLog), TEXT("读1E（设备标签）文件失败，状态码: %02X%02X \n"),
-//				response[nResponseLen-2], response[nResponseLen-1] );
-//			WriteLogToFile( szLog );
-//			return SAR_FAIL;
-//		}
-
-		* pDevInfo = sv_stDevice;
-
-		return SAR_OK;
-	}
-
-	////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	/*
-	* 函数名称：SKF_Transmit
-	* 函数功能：设备传输
-	* 参数列表：hDev:         [IN], 设备句柄
-	*           pbCommand:    [IN], 设备命令
-	*           ulCommandLen: [IN], 命令长度
-	*           pbData:       [OUT], 结果数据
-	*           pulDataLen:   [IN/OUT], 结果缓存区长度或结果的实际长度
-	* 返 回 值：SAR_OK: 成功
-	其他值: 错误码
-	*/
-	ULONG SKF_Transmit( DEVHANDLE hDev, BYTE *pbCommand, ULONG ulCommandLen,
-		BYTE *pbData, ULONG *pulDataLen )
-	{
-		CHAR* pszLog = ( "**********Start to execute SKF_Transmit ********** \n" );
-		CHAR szLog[SIZE_BUFFER_1024];
-		CHAR szReader[SIZE_BUFFER_1024];
-		BYTE response[1024];
-		DWORD dwReaderBufLen = SIZE_BUFFER_1024;
-		BYTE bATR[SIZE_BUFFER_32];
-
-
-		if( hDev == NULL )
+		if( (response[nResponseLen-2] == 0x90) && (response[nResponseLen-1] == 0x00) )
 		{
-			return SAR_INVALIDHANDLEERR;
+			for( int n=0; n<response[0]; n++ )
+			{
+				pLabel[n] = response[n+1];
+			}
+			memcpy( sv_stDevice.Label, pLabel, response[0] );  //设备标签
+		}
+		else
+		{
+			sprintf( szLog, "读1E（设备标签）文件失败，状态码: %02X%02X \n", response[nResponseLen-2], response[nResponseLen-1] );
+			WriteLogToFile( szLog );
+			return SAR_FAIL;
 		}
 
-		memset( szLog, 0x0, strlen(szLog) );
-		memset( response, 0x00, sizeof(response) );
-		memset( szReader, 0, sizeof(szReader) );
-		memset( bATR, 0x00, sizeof(bATR) );
+		* pDevInfo = sv_stDevice;
 
 		return SAR_OK;
 	}
@@ -875,7 +479,3 @@ extern "C" {
 #ifdef __cplusplus
 }
 #endif  /*__cplusplus*/
-
-
-
-

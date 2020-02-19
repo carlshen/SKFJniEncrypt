@@ -9,6 +9,7 @@
 #include <SDSCDev.h>
 #include <base_type.h>
 #include "transmit.h"
+#include "Global_Def.h"
 
 #define CBC 1
 #define ECB 1
@@ -111,6 +112,7 @@ JNIEXPORT jint JNICALL connect_dev(JNIEnv *env, jobject instance, jstring str_) 
     unsigned long baseResult = SDSCConnectDev(szDrive, &pulDriveNum);
     LOGI("connect_dev baseResult: %ld", baseResult);
     LOGI("connect_dev pulDriveNum: %d", pulDriveNum);
+    sv_Device = pulDriveNum;
     (*env)->ReleaseStringUTFChars(env, str_, szDrive);
     if (baseResult == 0) {
         return pulDriveNum;
