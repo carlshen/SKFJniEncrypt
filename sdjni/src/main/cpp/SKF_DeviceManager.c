@@ -8,6 +8,7 @@
 #include "Algorithms.h"
 #include "transmit.h"
 #include <SDSCDev.h>
+#include "SKF_DeviceManager.h"
 
 CHAR pManufacturer[64] = "Tongfang Microelectronics Company";
 CHAR pIssuer[64] = "Tongfang Microelectronics Company";
@@ -447,7 +448,7 @@ extern "C" {
 		apdu[4] = 0x21;         //大小为0x21
 
 //		PrintApduToFile( 0, apdu, 0x05 );
-		nRet = TransmitData( 1, apdu, 0x05, response, &nResponseLen );
+		nRet = TransmitData( hDev, apdu, 0x05, response, &nResponseLen );
 		if( nRet != SAR_OK )
 		{
 			sprintf( szLog, "读1E（设备标签）文件失败，错误码: %d \n", nRet );

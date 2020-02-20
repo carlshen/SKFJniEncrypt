@@ -33,11 +33,6 @@
 
 static int sv_Device = -1;
 static CHAR sv_pszCCIDDevNameA[SIZE_BUFFER_1024];
-// 
-extern DWORD ThreadSemiAutoProc( void* lpParam );
-extern HANDLE            g_hSemiAutoEvent[2];  //
-extern HANDLE            g_hSemiAutoThread;        // 线程句柄
-extern DWORD             g_dwSemiAutoThreadID;     // 线程ID
 
 // 有关日志变量
 static CHAR SV_PSZLOGPATH[SIZE_BUFFER_128];
@@ -82,51 +77,51 @@ static CHAR SV_PSZLOGTHREADPATH[SIZE_BUFFER_128];
 #define  SIZE_CA_EF1E  240
 
 //全局数据缓冲区
-extern BYTE  sv_tmpData[1024000];  //1000K
-extern DWORD sv_tmpDataLen;
+BYTE  sv_tmpData[1024000];  //1000K
+DWORD sv_tmpDataLen;
 
 //全局结构体变量
-extern  APPLICATIONINFO  sv_stApplication;  //应用
-extern  CONTAINERINFO    sv_stContainer;    //容器
-extern  DEVINFO          sv_stDevice;       //设备
-extern  DEVHANDLE        sv_hDev;           //设备句柄
-extern  HASHINFO         sv_stHash;         //哈希杂凑对象
+APPLICATIONINFO  sv_stApplication;  //应用
+CONTAINERINFO    sv_stContainer;    //容器
+DEVINFO          sv_stDevice;       //设备
+DEVHANDLE        sv_hDev;           //设备句柄
+HASHINFO         sv_stHash;         //哈希杂凑对象
 
 //有关容器定义变量
 //注：
 //--容器名称
-extern BYTE sv_containerNameInfo[MAX_CONTAINER_NUM][SIZE_CONTAINER_ITEM];
-extern BYTE sv_containerCurrentIndex;
+BYTE sv_containerNameInfo[MAX_CONTAINER_NUM][SIZE_CONTAINER_ITEM];
+BYTE sv_containerCurrentIndex;
 //--容器内密钥文件SFI
-extern const BYTE SV_CONTAINER_SFI[MAX_CONTAINER_NUM][6];
+const BYTE SV_CONTAINER_SFI[MAX_CONTAINER_NUM][6];
 //--容器全局类型
-extern ULONG sv_containerType;
+ULONG sv_containerType;
 
 
 //有关文件定义变量
 //--文件名称
-extern BYTE sv_fileNameInfo[MAX_FILE_NUM][SIZE_FILE_ITEM];
-extern BYTE sv_fileCurrentIndex;
+BYTE sv_fileNameInfo[MAX_FILE_NUM][SIZE_FILE_ITEM];
+BYTE sv_fileCurrentIndex;
 //--文件FID和SFI
-extern const BYTE SV_EF_FID[MAX_FILE_NUM][2];
+const BYTE SV_EF_FID[MAX_FILE_NUM][2];
 
 
 //有关应用定义变量
 //--应用名称
-extern BYTE sv_appNameInfo[MAX_APPLICATION_NUM][SIZE_APPLICATION_ITEM];
-extern BYTE sv_appCurrentIndex;
-extern CHAR sv_appName[33];
+BYTE sv_appNameInfo[MAX_APPLICATION_NUM][SIZE_APPLICATION_ITEM];
+BYTE sv_appCurrentIndex;
+CHAR sv_appName[33];
 //--应用FID
-extern const BYTE SV_ADF_FID[MAX_APPLICATION_NUM][2];
+const BYTE SV_ADF_FID[MAX_APPLICATION_NUM][2];
 
 
 //有关PIN定义变量
-extern BYTE sv_pinIndex[2];
+BYTE sv_pinIndex[2];
 
 //有关设备认证定义变量
-extern int sv_nAuth;   //外部认证，设备认证
-extern int sv_nUser;   //用户PIN
-extern int sv_nAdmin;  //管理员PIN
+int sv_nAuth;   //外部认证，设备认证
+int sv_nUser;   //用户PIN
+int sv_nAdmin;  //管理员PIN
 
 //有关随机数定义变量
 //取随机数的BLOCK长度 

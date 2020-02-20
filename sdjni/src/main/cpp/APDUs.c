@@ -4,17 +4,11 @@
 
 #include "APDUs.h"
 
-//////////////////////////////////////////////////////////////////////
-// Construction/Destruction
-//////////////////////////////////////////////////////////////////////
-
-//常量定义
-
 //CA环境FID
-const BYTE APDU_CA_FID[2] = { 0xDD, 0xF5 };    //CA环境FID
-const BYTE APDU_MF_FID[2] = { 0x3F, 0x00 };    //MF FID
-const BYTE APDU_EF01_FID[2] = { 0xEF, 0x01 };
-const BYTE APDU_EF02_FID[2] = { 0xEF, 0x02 };
+BYTE APDU_CA_FID[2] = { 0xDD, 0xF5 };    //CA环境FID
+BYTE APDU_MF_FID[2] = { 0x3F, 0x00 };    //MF FID
+BYTE APDU_EF01_FID[2] = { 0xEF, 0x01 };
+BYTE APDU_EF02_FID[2] = { 0xEF, 0x02 };
 //设备管理
 
 

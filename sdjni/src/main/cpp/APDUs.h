@@ -4,15 +4,11 @@
 
 #include "SKF_TypeDef.h"
 
-//常量定义
-#define  APDU_ENCRYPT_SFI  0x16
-#define  APDU_SIGN_SFI     0x19
-
 //CA环境FID
-const BYTE APDU_CA_FID[2];
-const BYTE APDU_MF_FID[2];
-const BYTE APDU_EF01_FID[2];
-const BYTE APDU_EF02_FID[2];
+BYTE APDU_CA_FID[2];
+BYTE APDU_MF_FID[2];
+BYTE APDU_EF01_FID[2];
+BYTE APDU_EF02_FID[2];
 //设备管理
 
 

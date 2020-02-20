@@ -5,7 +5,8 @@
 #include "SKF_TypeDef.h"
 #include "Global_Def.h"
 #include "Algorithms.h"
-//#include "SKF_ApplicationManager.h"
+#include "transmit.h"
+#include "SKF_CryptoService.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -41,16 +42,8 @@ ULONG SKF_GenRandom( DEVHANDLE hDev, BYTE *pbRandom, ULONG ulRandomLen )
 	INT nDivider = 0;
 	INT nRemainder = 0;
 	INT nIndex = 0;
-#ifdef READER_TYPE_HID
-    BYTE nResponseLen = 0;
-	SHORT nRet = 0;
-#endif
-#ifdef READER_TYPE_CCID
 	DWORD nResponseLen = 0;
 	LONG nRet = 0;
-	sv_IORequest.dwProtocol = 0;
-	sv_IORequest.cbPciLength = sizeof( SCARD_IO_REQUEST );
-#endif
 	sv_fEnd = FALSE;
     memset( response, 0x00, sizeof(response) );
 	memset( szLog, 0x0, strlen(szLog) );
@@ -82,37 +75,31 @@ ULONG SKF_GenRandom( DEVHANDLE hDev, BYTE *pbRandom, ULONG ulRandomLen )
 		//--------È¡Ëæ»úÊý
 //		PrintApduToFile( 0, apdu, 0x05 );
 
-#ifdef READER_TYPE_HID
-		nRet = dc_pro_command( hDev, 0x05, apdu, &nResponseLen, response, 7 );
-		if( nRet != 0 )
-#endif
-#ifdef READER_TYPE_CCID
 	    nResponseLen = sizeof( response );
-	    nRet = SCardTransmit( (SCARDHANDLE)hDev, &sv_IORequest, apdu, 0x05, NULL, response, &nResponseLen );
-        if( nRet != SCARD_S_SUCCESS )
-#endif
+	    nRet = TransmitData( hDev, apdu, 0x05, response, &nResponseLen );
+        if( nRet != SAR_OK )
 		{
-//			_stprintf_s( szLog, _countof(szLog), TEXT("È¡Ëæ»úÊýÊ§°Ü£¬´íÎóÂë: %d \n"), nRet );
+			sprintf( szLog, "È¡Ëæ»úÊýÊ§°Ü£¬´íÎóÂë: %d \n", nRet );
 			WriteLogToFile( szLog );
 			sv_nStatus = 1;
 			return SAR_GENRANDERR;
 		}
 
 //		PrintApduToFile( 1, response, nResponseLen );
-//
-//		if( (response[nResponseLen-2] == 0x90) && (response[nResponseLen-1] == 0x00 ) )
-//		{
-//			if( pbRandom != NULL )
-//			{
-//				memcpy( pbRandom+(nIndex*RANDOM_BLOCK_SIZE), response, RANDOM_BLOCK_SIZE );
-//			}
-//		}
-//		else
-//		{
-//			_stprintf_s( szLog, _countof(szLog), TEXT("È¡Ëæ»úÊ§°Ü£¬×´Ì¬Âë: %02x%02x \n"), response[nResponseLen-2], response[nResponseLen-1] );
-//			WriteLogToFile( szLog );
-//			return SAR_GENRANDERR;
-//		}
+
+		if( (response[nResponseLen-2] == 0x90) && (response[nResponseLen-1] == 0x00 ) )
+		{
+			if( pbRandom != NULL )
+			{
+				memcpy( pbRandom+(nIndex*RANDOM_BLOCK_SIZE), response, RANDOM_BLOCK_SIZE );
+			}
+		}
+		else
+		{
+            sprintf( szLog, "È¡Ëæ»úÊ§°Ü£¬×´Ì¬Âë: %02x%02x \n", response[nResponseLen-2], response[nResponseLen-1] );
+			WriteLogToFile( szLog );
+			return SAR_GENRANDERR;
+		}
 	} 
 
 	if( nRemainder != 0 )
@@ -123,17 +110,11 @@ ULONG SKF_GenRandom( DEVHANDLE hDev, BYTE *pbRandom, ULONG ulRandomLen )
 
 //		PrintApduToFile( 0, apdu, 0x05 );
 
-#ifdef READER_TYPE_HID
-		nRet = dc_pro_command( hDev, 0x05, apdu, &nResponseLen, response, 7 );
-		if( nRet != 0 )
-#endif
-#ifdef READER_TYPE_CCID	
 		nResponseLen = sizeof( response );
-        nRet = SCardTransmit( (SCARDHANDLE)hDev, &sv_IORequest, apdu, 0x05, NULL, response, &nResponseLen );
-        if( nRet != SCARD_S_SUCCESS )
-#endif
+        nRet = TransmitData( hDev, apdu, 0x05, response, &nResponseLen );
+        if( nRet != SAR_OK )
 		{
-//			_stprintf_s( szLog, _countof(szLog), TEXT("È¡Ëæ»úÊýÊ§°Ü£¬´íÎóÂë: %d \n"), nRet );
+			sprintf( szLog, "È¡Ëæ»úÊýÊ§°Ü£¬´íÎóÂë: %d \n", nRet );
 			WriteLogToFile( szLog );
 			sv_nStatus = 1;
 			return SAR_GENRANDERR;
@@ -141,19 +122,19 @@ ULONG SKF_GenRandom( DEVHANDLE hDev, BYTE *pbRandom, ULONG ulRandomLen )
 
 //		PrintApduToFile( 1, response, nResponseLen );
 
-//		if( (response[nResponseLen-2] == 0x90) && (response[nResponseLen-1] == 0x00) )
-//		{
-//			if( pbRandom != NULL )
-//			{
-//				memcpy( pbRandom+(nDivider*RANDOM_BLOCK_SIZE), response, nRemainder );
-//			}
-//		}
-//		else
-//		{
-//			_stprintf_s( szLog, _countof(szLog), TEXT("È¡Ëæ»úÊýÊ§°Ü£¬×´Ì¬Âë: %02x%02x \n"), response[nResponseLen-2], response[nResponseLen-1] );
-//			WriteLogToFile( szLog );
-//			return SAR_GENRANDERR;
-//		}
+		if( (response[nResponseLen-2] == 0x90) && (response[nResponseLen-1] == 0x00) )
+		{
+			if( pbRandom != NULL )
+			{
+				memcpy( pbRandom+(nDivider*RANDOM_BLOCK_SIZE), response, nRemainder );
+			}
+		}
+		else
+		{
+            sprintf( szLog, "È¡Ëæ»úÊýÊ§°Ü£¬×´Ì¬Âë: %02x%02x \n", response[nResponseLen-2], response[nResponseLen-1] );
+			WriteLogToFile( szLog );
+			return SAR_GENRANDERR;
+		}
 	}
  
 	//--------Ëæ»úÊý´æ´¢µ½È«¾Ö»º³åÇøÄÚ
@@ -347,16 +328,8 @@ ULONG SKF_GenECCKeyPair( HCONTAINER hContainer, ULONG ulAlgId, ECCPUBLICKEYBLOB*
 	ECCPUBLICKEYBLOB eccPubKeyBlob;
 	PCONTAINERINFO pContainer;
 	DEVHANDLE hDev;
-#ifdef READER_TYPE_HID
-    BYTE nResponseLen = 0;
-	SHORT nRet = 0;
-#endif
-#ifdef READER_TYPE_CCID
 	DWORD nResponseLen = 0;
 	LONG nRet = 0;
-	sv_IORequest.dwProtocol = 0;
-	sv_IORequest.cbPciLength = sizeof( SCARD_IO_REQUEST );
-#endif
 	sv_fEnd = FALSE;
 	sv_containerType = CONTAINER_SM2;
 	
@@ -396,15 +369,9 @@ ULONG SKF_GenECCKeyPair( HCONTAINER hContainer, ULONG ulAlgId, ECCPUBLICKEYBLOB*
 
 //	PrintApduToFile( 0, apdu, 0x05 );
 
-#ifdef READER_TYPE_HID
-	nRet = dc_pro_command( hDev, 0x05, apdu, &nResponseLen, response, 7 );
-	if( nRet != 0 )
-#endif
-#ifdef READER_TYPE_CCID	
 	nResponseLen = sizeof( response );
-    nRet = SCardTransmit( (SCARDHANDLE)hDev, &sv_IORequest, apdu, 0x05, NULL, response, &nResponseLen );
-    if( nRet != SCARD_S_SUCCESS )
-#endif
+    nRet = TransmitData( hDev, apdu, 0x05, response, &nResponseLen );
+    if( nRet != SAR_OK )
 	{
 //        _stprintf_s( szLog, _countof(szLog), TEXT("Éú³ÉECCÇ©ÃûÃÜÔ¿¶ÔÊ§°Ü£¬´íÎóÂë: %d \n"), nRet );
 		WriteLogToFile( szLog );
@@ -414,14 +381,14 @@ ULONG SKF_GenECCKeyPair( HCONTAINER hContainer, ULONG ulAlgId, ECCPUBLICKEYBLOB*
 	
 //	PrintApduToFile( 1, response, nResponseLen );
 
-	if( 1 ) //(response[nResponseLen-2] == 0x90) && (response[nResponseLen-1] == 0x00) )
+	if( (response[nResponseLen-2] == 0x90) && (response[nResponseLen-1] == 0x00) )
 	{
 #ifdef _DEBUG
 		BYTE m = 0;
 		WriteLogToFile( TEXT("SKF_GenECCKeyPair: \n") );
 		for( m=0; m<nResponseLen-2; m++ )
 		{
-			_stprintf_s( szLog, _countof(szLog), TEXT("%02X"), response[m] );
+			sprintf( szLog, "%02X", response[m] );
 			WriteLogToFile( szLog );
 		}
 		WriteLogToFile( TEXT("\n") );
@@ -436,7 +403,7 @@ ULONG SKF_GenECCKeyPair( HCONTAINER hContainer, ULONG ulAlgId, ECCPUBLICKEYBLOB*
 	}
 	else
 	{
-//		_stprintf_s( szLog, _countof(szLog), TEXT("Éú³ÉECCÇ©ÃûÃÜÔ¿¶ÔÊ§°Ü£¬×´Ì¬Âë: %02x%02x \n"), response[nResponseLen-2], response[nResponseLen-1] );
+		sprintf( szLog, "Éú³ÉECCÇ©ÃûÃÜÔ¿¶ÔÊ§°Ü£¬×´Ì¬Âë: %02x%02x \n", response[nResponseLen-2], response[nResponseLen-1] );
 		WriteLogToFile( szLog );
 		return SAR_FAIL;	
 	}
@@ -475,16 +442,8 @@ ULONG SKF_ImportECCKeyPair( HCONTAINER hContainer, PENVELOPEDKEYBLOB pEnvelopedK
 	INT nIndex = 0;
 	ULONG dwOffset = 0;
 	DEVHANDLE hDev;
-#ifdef READER_TYPE_HID
-    BYTE nResponseLen = 0;
-	SHORT nRet = 0;
-#endif
-#ifdef READER_TYPE_CCID
 	DWORD nResponseLen = 0;
 	LONG nRet = 0;
-	sv_IORequest.dwProtocol = 0;
-	sv_IORequest.cbPciLength = sizeof( SCARD_IO_REQUEST );
-#endif
 	//--------ÈÝÆ÷¾ä±ú²»ÄÜÎª¿Õ
 	if( hContainer == NULL )
 	{
@@ -519,33 +478,27 @@ ULONG SKF_ImportECCKeyPair( HCONTAINER hContainer, PENVELOPEDKEYBLOB pEnvelopedK
 	memcpy( apdu+0x05+SIZE_BUFFER_64, (pEnvelopedKeyBlob->ECCCipherBlob.HASH), SIZE_BUFFER_32 );
 	memcpy( apdu+0x05+SIZE_BUFFER_96, pEnvelopedKeyBlob->ECCCipherBlob.Cipher, pEnvelopedKeyBlob->ECCCipherBlob.CipherLen);
 
-#ifdef READER_TYPE_HID
-	nRet = dc_pro_command( hDev, (BYTE)(0x05+(BYTE)pEnvelopedKeyBlob->ECCCipherBlob.CipherLen + SIZE_BUFFER_96), apdu, &nResponseLen, response, 7 );
-	if( nRet != 0 )
-#endif
-#ifdef READER_TYPE_CCID	
     nResponseLen = sizeof( response );
-    nRet = SCardTransmit( (SCARDHANDLE)hDev, &sv_IORequest, apdu, (BYTE)(0x05+(BYTE)pEnvelopedKeyBlob->ECCCipherBlob.CipherLen + SIZE_BUFFER_96), NULL, response, &nResponseLen );
-    if( nRet != SCARD_S_SUCCESS )
-#endif
+    nRet = TransmitData( hDev, apdu, (BYTE)(0x05+(BYTE)pEnvelopedKeyBlob->ECCCipherBlob.CipherLen + SIZE_BUFFER_96), response, &nResponseLen );
+    if( nRet != SAR_OK )
 	{
-//        _stprintf_s( szLog, _countof(szLog), TEXT("ECC½âÃÜÊ§°Ü£¬´íÎóÂë: %d \n"), nRet );
+        sprintf( szLog, "ECC½âÃÜÊ§°Ü£¬´íÎóÂë: %d \n", nRet );
 		WriteLogToFile( szLog );
 		sv_nStatus = 1;
 		return SAR_FAIL;
 	}
 	
-//	if( (response[nResponseLen-2] == 0x90) && (response[nResponseLen-1] == 0x00) )
-//	{
-//		memcpy( tempbuf, response, nResponseLen-2 );
-//		length = nResponseLen-2;
-//	}
-//	else
-//	{
-//		_stprintf_s( szLog, _countof(szLog), TEXT("ECC½âÃÜÊ§°Ü£¬×´Ì¬Âë: %02x%02x \n"), response[nResponseLen-2], response[nResponseLen-1] );
-//		WriteLogToFile( szLog );
-//		return SAR_FAIL;
-//	}
+	if( (response[nResponseLen-2] == 0x90) && (response[nResponseLen-1] == 0x00) )
+	{
+		memcpy( tempbuf, response, nResponseLen-2 );
+		length = nResponseLen-2;
+	}
+	else
+	{
+        sprintf( szLog, "ECC½âÃÜÊ§°Ü£¬×´Ì¬Âë: %02x%02x \n", response[nResponseLen-2], response[nResponseLen-1] );
+		WriteLogToFile( szLog );
+		return SAR_FAIL;
+	}
 
 	if(length != 16)
 	{
@@ -576,32 +529,26 @@ ULONG SKF_ImportECCKeyPair( HCONTAINER hContainer, PENVELOPEDKEYBLOB pEnvelopedK
 	
 //	PrintApduToFile( 0, apdu, 21+SIZE_BUFFER_32 );
 
-#ifdef READER_TYPE_HID
-	nRet = dc_pro_command( hDev, 21+SIZE_BUFFER_32, apdu, &nResponseLen, response, 7 );
-	if( nRet != 0 )
-#endif
-#ifdef READER_TYPE_CCID	
     nResponseLen = sizeof( response );
-    nRet = SCardTransmit( (SCARDHANDLE)hDev, &sv_IORequest, apdu, 21+SIZE_BUFFER_32, NULL, response, &nResponseLen );
-    if( nRet != SCARD_S_SUCCESS )
-#endif
+    nRet = TransmitData( hDev, apdu, 21+SIZE_BUFFER_32, response, &nResponseLen );
+    if( nRet != SAR_OK )
 	{
-//		_stprintf_s( szLog, _countof(szLog), TEXT("½âÃÜË½Ô¿Ê§°Ü£¬´íÎóÂë: %d \n"), nRet );
+		sprintf( szLog, "½âÃÜË½Ô¿Ê§°Ü£¬´íÎóÂë: %d \n", nRet );
 		WriteLogToFile( szLog );
 		sv_nStatus = 1;
 		return SAR_FAIL;
 	}
 
-//	if( (response[nResponseLen-2] == 0x90) && (response[nResponseLen-1] == 0x00) )
-//	{
-//		memcpy( tempbuf, response, nResponseLen-2 );
-//	}
-//	else
-//	{
-//		_stprintf_s( szLog, _countof(szLog), TEXT("½âÃÜË½Ô¿Ê§°Ü£¬×´Ì¬Âë: %02X%02X \n"), response[nResponseLen-2], response[nResponseLen-1] );
-//		WriteLogToFile( szLog );
-//		return SAR_FAIL;
-//	}
+	if( (response[nResponseLen-2] == 0x90) && (response[nResponseLen-1] == 0x00) )
+	{
+		memcpy( tempbuf, response, nResponseLen-2 );
+	}
+	else
+	{
+        sprintf( szLog, "½âÃÜË½Ô¿Ê§°Ü£¬×´Ì¬Âë: %02X%02X \n", response[nResponseLen-2], response[nResponseLen-1] );
+		WriteLogToFile( szLog );
+		return SAR_FAIL;
+	}
 
 
 	//--------¸üÐÂADFÏÂµÄ¼ÓÃÜÃÜÔ¿¶ÔÎÄ¼þ
@@ -618,28 +565,22 @@ ULONG SKF_ImportECCKeyPair( HCONTAINER hContainer, PENVELOPEDKEYBLOB pEnvelopedK
 
 //	PrintApduToFile( 0, apdu, 0x05+SIZE_BUFFER_96 );
 
-#ifdef READER_TYPE_HID
-	nRet = dc_pro_command( hDev, 0x05+SIZE_BUFFER_96, apdu, &nResponseLen, response, 7 );
-	if( nRet != 0 )
-#endif
-#ifdef READER_TYPE_CCID	
     nResponseLen = sizeof( response );
-    nRet = SCardTransmit( (SCARDHANDLE)hDev, &sv_IORequest, apdu, 0x05+SIZE_BUFFER_96, NULL, response, &nResponseLen );
-    if( nRet != SCARD_S_SUCCESS )
-#endif
+    nRet = TransmitData( hDev, apdu, 0x05+SIZE_BUFFER_96, response, &nResponseLen );
+    if( nRet != SAR_OK )
 	{
-//		_stprintf_s( szLog, _countof(szLog), TEXT("µ¼ÈëECC¼ÓÃÜÃÜÔ¿¶ÔÊ§°Ü£¬´íÎóÂë: %d \n"), nRet );
+		sprintf( szLog, "µ¼ÈëECC¼ÓÃÜÃÜÔ¿¶ÔÊ§°Ü£¬´íÎóÂë: %d \n", nRet );
 		WriteLogToFile( szLog );
 		sv_nStatus = 1;
 		return SAR_FAIL;
 	}
 
-//	if( (response[nResponseLen-2] != 0x90) || (response[nResponseLen-1] != 0x00) )
-//	{
-//		_stprintf_s( szLog, _countof(szLog), TEXT("µ¼ÈëECC¼ÓÃÜÃÜÔ¿¶ÔÊ§°Ü£¬×´Ì¬Âë: %02X%02X \n"), response[nResponseLen-2], response[nResponseLen-1] );
-//		WriteLogToFile( szLog );
-//		return SAR_FAIL;
-//	}
+	if( (response[nResponseLen-2] != 0x90) || (response[nResponseLen-1] != 0x00) )
+	{
+        sprintf( szLog, "µ¼ÈëECC¼ÓÃÜÃÜÔ¿¶ÔÊ§°Ü£¬×´Ì¬Âë: %02X%02X \n", response[nResponseLen-2], response[nResponseLen-1] );
+		WriteLogToFile( szLog );
+		return SAR_FAIL;
+	}
 
 	return SAR_OK;
 }
@@ -669,17 +610,8 @@ ULONG SKF_ECCSignData( HCONTAINER hContainer, BYTE *pbData, ULONG ulDataLen,
 	DEVHANDLE hDev;
 	HAPPLICATION hApplication;
 	PAPPLICATIONINFO pApplication;
-
-#ifdef READER_TYPE_HID
-    BYTE nResponseLen = 0;
-	SHORT nRet = 0;
-#endif
-#ifdef READER_TYPE_CCID
 	DWORD nResponseLen = 0;
 	LONG nRet = 0;
-	sv_IORequest.dwProtocol = 0;
-	sv_IORequest.cbPciLength = sizeof( SCARD_IO_REQUEST );
-#endif	
 	sv_fEnd = FALSE;
     memset( szLog, 0x0, strlen(szLog) );
 	memset( apdu, 0x00, sizeof(apdu) );
@@ -717,17 +649,11 @@ ULONG SKF_ECCSignData( HCONTAINER hContainer, BYTE *pbData, ULONG ulDataLen,
 
 //	PrintApduToFile( 0, apdu, (BYTE)(0x05+ulDataLen) );
 
-#ifdef READER_TYPE_HID
-	nRet = dc_pro_command( hDev, 0x05+(BYTE)ulDataLen, apdu, &nResponseLen, response, 7 );
-	if( nRet != 0 )
-#endif
-#ifdef READER_TYPE_CCID	
     nResponseLen = sizeof( response );
-    nRet = SCardTransmit( (SCARDHANDLE)hDev, &sv_IORequest, apdu, 0x05+ulDataLen, NULL, response, &nResponseLen );
-    if( nRet != SCARD_S_SUCCESS )
-#endif
+    nRet = TransmitData( hDev, apdu, 0x05+ulDataLen, response, &nResponseLen );
+    if( nRet != SAR_OK )
 	{
-//        _stprintf_s( szLog, _countof(szLog), TEXT("ECCÇ©ÃûÊ§°Ü£¬´íÎóÂë: %d \n"), nRet );
+        sprintf( szLog, "ECCÇ©ÃûÊ§°Ü£¬´íÎóÂë: %d \n", nRet );
 		WriteLogToFile( szLog );
 		sv_nStatus = 1;
 		return SAR_FAIL;
@@ -735,7 +661,7 @@ ULONG SKF_ECCSignData( HCONTAINER hContainer, BYTE *pbData, ULONG ulDataLen,
 	
 //	PrintApduToFile( 1, response, nResponseLen );
 
-	if( 1 )//(response[nResponseLen-2] == 0x90) && (response[nResponseLen-1] == 0x00) )
+	if( (response[nResponseLen-2] == 0x90) && (response[nResponseLen-1] == 0x00) )
 	{
 		memcpy( sv_eccSignBlob.r, response, SIZE_BUFFER_32 );
 		memcpy( sv_eccSignBlob.s, response+SIZE_BUFFER_32, SIZE_BUFFER_32 );
@@ -747,7 +673,7 @@ ULONG SKF_ECCSignData( HCONTAINER hContainer, BYTE *pbData, ULONG ulDataLen,
 		WriteLogToFile( TEXT("Signature: \n") );
 		for( m=0; m<nResponseLen-2; m++ )
 		{
-			_stprintf_s( szLog, _countof(szLog), TEXT("%02X"), response[m] );
+			sprintf( szLog, "%02X", response[m] );
 			WriteLogToFile( szLog );
 		}
 		WriteLogToFile( TEXT("\n") );
@@ -755,7 +681,7 @@ ULONG SKF_ECCSignData( HCONTAINER hContainer, BYTE *pbData, ULONG ulDataLen,
 	}
 	else
 	{
-//		_stprintf_s( szLog, _countof(szLog), TEXT("ECCÇ©ÃûÊ§°Ü£¬×´Ì¬Âë: %02x%02x \n"), response[nResponseLen-2], response[nResponseLen-1] );
+		sprintf( szLog, "ECCÇ©ÃûÊ§°Ü£¬×´Ì¬Âë: %02x%02x \n", response[nResponseLen-2], response[nResponseLen-1] );
 		WriteLogToFile( szLog );
 		return SAR_FAIL;	
 	}
@@ -783,17 +709,8 @@ ULONG SKF_ECCVerify( DEVHANDLE hDev, ECCPUBLICKEYBLOB* pECCPubKeyBlob, BYTE* pbD
 	CHAR szLog[SIZE_BUFFER_1024];
 	BYTE response[SIZE_BUFFER_1024];
 	BYTE apdu[SIZE_BUFFER_1024];
-
-#ifdef READER_TYPE_HID
-    BYTE nResponseLen = 0;
-	SHORT nRet = 0;
-#endif
-#ifdef READER_TYPE_CCID
 	DWORD nResponseLen = 0;
 	LONG nRet = 0;
-	sv_IORequest.dwProtocol = 0;
-	sv_IORequest.cbPciLength = sizeof( SCARD_IO_REQUEST );
-#endif
 	sv_fEnd = FALSE;
     memset( szLog, 0x0, strlen(szLog) );
 	memset( apdu, 0x00, sizeof(apdu) );
@@ -824,17 +741,11 @@ ULONG SKF_ECCVerify( DEVHANDLE hDev, ECCPUBLICKEYBLOB* pECCPubKeyBlob, BYTE* pbD
 
 //	PrintApduToFile( 0, apdu, (BYTE)(0x05+SIZE_BUFFER_128+ulDataLen) );
 
-#ifdef READER_TYPE_HID
-	nRet = dc_pro_command( hDev, 0x05+SIZE_BUFFER_128+(BYTE)ulDataLen, apdu, &nResponseLen, response, 7 );
-	if( nRet != 0 )
-#endif
-#ifdef READER_TYPE_CCID	
 	nResponseLen = sizeof( response );
-    nRet = SCardTransmit( (SCARDHANDLE)hDev, &sv_IORequest, apdu, 0x05+SIZE_BUFFER_128+ulDataLen, NULL, response, &nResponseLen );
-    if( nRet != SCARD_S_SUCCESS )
-#endif
+    nRet = TransmitData( hDev, apdu, 0x05+SIZE_BUFFER_128+ulDataLen, response, &nResponseLen );
+    if( nRet != SAR_OK )
 	{
-//        _stprintf_s( szLog, _countof(szLog), TEXT("ECCÑéÇ©Ê§°Ü£¬´íÎóÂë: %d \n"), nRet );
+        sprintf( szLog, "ECCÑéÇ©Ê§°Ü£¬´íÎóÂë: %d \n", nRet );
 		WriteLogToFile( szLog );
 		sv_nStatus = 1;
 		return SAR_FAIL;
@@ -842,12 +753,12 @@ ULONG SKF_ECCVerify( DEVHANDLE hDev, ECCPUBLICKEYBLOB* pECCPubKeyBlob, BYTE* pbD
 	
 //	PrintApduToFile( 1, response, nResponseLen );
 //
-//	if( (response[nResponseLen-2] != 0x90) || (response[nResponseLen-1] != 0x00) )
-//	{
-//		_stprintf_s( szLog, _countof(szLog), TEXT("ECCÑéÇ©Ê§°Ü£¬×´Ì¬Âë: %02x%02x \n"), response[nResponseLen-2], response[nResponseLen-1] );
-//		WriteLogToFile( szLog );
-//		return SAR_FAIL;
-//	}
+	if( (response[nResponseLen-2] != 0x90) || (response[nResponseLen-1] != 0x00) )
+	{
+        sprintf( szLog, "ECCÑéÇ©Ê§°Ü£¬×´Ì¬Âë: %02x%02x \n", response[nResponseLen-2], response[nResponseLen-1] );
+		WriteLogToFile( szLog );
+		return SAR_FAIL;
+	}
 
 	return SAR_OK;
 }
@@ -880,16 +791,8 @@ ULONG SKF_ECCExportSessionKey( HCONTAINER hContainer, ULONG ulAlgId, ECCPUBLICKE
 	PAPPLICATIONINFO pApplication;
     PCONTAINERINFO pContainer;
 	DEVHANDLE hDev;
-#ifdef READER_TYPE_HID
-    BYTE nResponseLen = 0;
-	SHORT nRet = 0;
-#endif
-#ifdef READER_TYPE_CCID
 	DWORD nResponseLen = 0;
 	LONG nRet = 0;
-	sv_IORequest.dwProtocol = 0;
-	sv_IORequest.cbPciLength = sizeof( SCARD_IO_REQUEST );
-#endif
 	sv_fEnd = FALSE;
 	memset( sessionBuf, 0x00, sizeof(sessionBuf) );
 	memset( apdu, 0x00, sizeof(apdu) );
@@ -914,33 +817,26 @@ ULONG SKF_ECCExportSessionKey( HCONTAINER hContainer, ULONG ulAlgId, ECCPUBLICKE
 	//--------È¡16×Ö½ÚËæ»úÊý
 	memcpy( apdu, apdu_random, 0x05 );
 	apdu[4] = 0x10;  //³¤¶È×Ö½Ú
-#ifdef READER_TYPE_HID
-	nRet = dc_pro_command( hDev, 0x05, apdu, &nResponseLen, response, 7 );
-	if( nRet != 0 )
-#endif
-#ifdef READER_TYPE_CCID	
     nResponseLen = sizeof( response );
-    nRet = SCardTransmit( (SCARDHANDLE)hDev, &sv_IORequest, apdu, 0x05, NULL, response, &nResponseLen );
-    if( nRet != SCARD_S_SUCCESS )
-#endif
+    nRet = TransmitData( hDev, apdu, 0x05, response, &nResponseLen );
+    if( nRet != SAR_OK )
 	{
-//        _stprintf_s( szLog, _countof(szLog), TEXT("È¡Ëæ»úÊýÊ§°Ü£¬´íÎóÂë: %d \n"), nRet );
+        sprintf( szLog, "È¡Ëæ»úÊýÊ§°Ü£¬´íÎóÂë: %d \n", nRet );
 		WriteLogToFile( szLog );
 		sv_nStatus = 1;
 		return SAR_FAIL;
 	}
 	
-//	if( (response[nResponseLen-2] == 0x90) && (response[nResponseLen-1] == 0x00) )
-//	{
-//
-//		memcpy( sessionBuf, response, 0x10 );
-//	}
-//	else
-//	{
-//		_stprintf_s( szLog, _countof(szLog), TEXT("È¡Ëæ»úÊýÊ§°Ü£¬×´Ì¬Âë: %02x%02x \n"), response[nResponseLen-2], response[nResponseLen-1] );
-//		WriteLogToFile( szLog );
-//		return SAR_FAIL;
-//	}
+	if( (response[nResponseLen-2] == 0x90) && (response[nResponseLen-1] == 0x00) )
+	{
+		memcpy( sessionBuf, response, 0x10 );
+	}
+	else
+	{
+        sprintf( szLog, "È¡Ëæ»úÊýÊ§°Ü£¬×´Ì¬Âë: %02x%02x \n", response[nResponseLen-2], response[nResponseLen-1] );
+		WriteLogToFile( szLog );
+		return SAR_FAIL;
+	}
 
 	//--------µ÷ÓÃSKF_ExtECCEncrypt¶ÔÆä¼ÓÃÜ
 	//if( SKF_ExtECCEncrypt( hDev, pPubKey, sessionBuf, 0x10, pData) != SAR_OK )
@@ -979,16 +875,8 @@ ULONG SKF_ExtECCEncrypt( DEVHANDLE hDev, ECCPUBLICKEYBLOB* pECCPubKeyBlob, BYTE*
 	//ECCCIPHERBLOB eccCiperBlob;
 	BYTE apdu[SIZE_BUFFER_1024];
 	BYTE response[SIZE_BUFFER_1024];
-#ifdef READER_TYPE_HID
-    BYTE nResponseLen = 0;
-	SHORT nRet = 0;
-#endif
-#ifdef READER_TYPE_CCID
 	DWORD nResponseLen = 0;
 	LONG nRet = 0;
-	sv_IORequest.dwProtocol = 0;
-	sv_IORequest.cbPciLength = sizeof( SCARD_IO_REQUEST );
-#endif
 #ifdef _DEBUG
 	ULONG m = 0;
 #endif
@@ -1003,7 +891,7 @@ ULONG SKF_ExtECCEncrypt( DEVHANDLE hDev, ECCPUBLICKEYBLOB* pECCPubKeyBlob, BYTE*
 	WriteLogToFile( TEXT("SKF_ExtECCEncrypt: \n") );
 	for( m=0; m<ulPlainTextLen; m++ )
 	{
-		_stprintf_s( szLog, _countof(szLog), TEXT("%02X"), pbPlainText[m] );
+		sprintf( szLog, "%02X", pbPlainText[m] );
 		WriteLogToFile( szLog );
 	}
 	WriteLogToFile( TEXT("\n") );
@@ -1013,7 +901,7 @@ ULONG SKF_ExtECCEncrypt( DEVHANDLE hDev, ECCPUBLICKEYBLOB* pECCPubKeyBlob, BYTE*
 	WriteLogToFile( TEXT("SKF_ExtECCEncrypt: \n") );
 	for( m=0; m<64; m++ )
 	{
-		_stprintf_s( szLog, _countof(szLog), TEXT("%02X"), pECCPubKeyBlob->XCoordinate[m] );
+		sprintf( szLog, "%02X", pECCPubKeyBlob->XCoordinate[m] );
 		WriteLogToFile( szLog );
 	}
 	WriteLogToFile( TEXT("\n") );
@@ -1023,7 +911,7 @@ ULONG SKF_ExtECCEncrypt( DEVHANDLE hDev, ECCPUBLICKEYBLOB* pECCPubKeyBlob, BYTE*
 	WriteLogToFile( TEXT("SKF_ExtECCEncrypt: \n") );
 	for( m=0; m<64; m++ )
 	{
-		_stprintf_s( szLog, _countof(szLog), TEXT("%02X"), pECCPubKeyBlob->YCoordinate[m] );
+		sprintf( szLog, "%02X", pECCPubKeyBlob->YCoordinate[m] );
 		WriteLogToFile( szLog );
 	}
 	WriteLogToFile( TEXT("\n") );
@@ -1036,23 +924,17 @@ ULONG SKF_ExtECCEncrypt( DEVHANDLE hDev, ECCPUBLICKEYBLOB* pECCPubKeyBlob, BYTE*
 	memcpy( apdu+0x05, (pECCPubKeyBlob->XCoordinate) +SIZE_BUFFER_32 , SIZE_BUFFER_32 );
 	memcpy( apdu+0x05+SIZE_BUFFER_32, (pECCPubKeyBlob->YCoordinate) +SIZE_BUFFER_32 , SIZE_BUFFER_32 );
 	memcpy( apdu+0x05+SIZE_BUFFER_64, pbPlainText, ulPlainTextLen );
-#ifdef READER_TYPE_HID
-	nRet = dc_pro_command( hDev, 0x05+SIZE_BUFFER_64+(BYTE)ulPlainTextLen, apdu, &nResponseLen, response, 7 );
-	if( nRet != 0 )
-#endif
-#ifdef READER_TYPE_CCID	
     nResponseLen = sizeof( response );
-    nRet = SCardTransmit( (SCARDHANDLE)hDev, &sv_IORequest, apdu, 0x05+SIZE_BUFFER_64+(BYTE)ulPlainTextLen, NULL, response, &nResponseLen );
-    if( nRet != SCARD_S_SUCCESS )
-#endif
+    nRet = TransmitData( hDev, apdu, 0x05+SIZE_BUFFER_64+(BYTE)ulPlainTextLen, response, &nResponseLen );
+    if( nRet != SAR_OK )
 	{
-//        _stprintf_s( szLog, _countof(szLog), TEXT("ECCÍâÀ´¹«Ô¿¼ÓÃÜÊ§°Ü£¬´íÎóÂë: %d \n"), nRet );
+        sprintf( szLog, "ECCÍâÀ´¹«Ô¿¼ÓÃÜÊ§°Ü£¬´íÎóÂë: %d \n", nRet );
 		WriteLogToFile( szLog );
 		sv_nStatus = 1;
 		return SAR_FAIL;
 	}
 	
-	if( 1)//(response[nResponseLen-2] == 0x90) && (response[nResponseLen-1] == 0x00) )
+	if( (response[nResponseLen-2] == 0x90) && (response[nResponseLen-1] == 0x00) )
 	{
 		memcpy( eccCiperBlob.XCoordinate+SIZE_BUFFER_32, response, SIZE_BUFFER_32 );
 		memcpy( eccCiperBlob.YCoordinate+SIZE_BUFFER_32, response+SIZE_BUFFER_32, SIZE_BUFFER_32 );
@@ -1064,7 +946,7 @@ ULONG SKF_ExtECCEncrypt( DEVHANDLE hDev, ECCPUBLICKEYBLOB* pECCPubKeyBlob, BYTE*
 	}
 	else
 	{
-//		_stprintf_s( szLog, _countof(szLog), TEXT("ECCÍâÀ´¹«Ô¿¼ÓÃÜÊ§°Ü£¬×´Ì¬Âë: %02x%02x \n"), response[nResponseLen-2], response[nResponseLen-1] );
+		sprintf( szLog, "ECCÍâÀ´¹«Ô¿¼ÓÃÜÊ§°Ü£¬×´Ì¬Âë: %02x%02x \n", response[nResponseLen-2], response[nResponseLen-1] );
 		WriteLogToFile( szLog );
 		return SAR_FAIL;	
 	}
@@ -1129,16 +1011,8 @@ ULONG SKF_GenECCKeyPairEx( HCONTAINER hContainer, ULONG ulAlgId, ECCPUBLICKEYBLO
 	ECCPRIVATEKEYBLOB eccPriKeyBlob = {0};
 	PCONTAINERINFO pContainer;
 	DEVHANDLE hDev;
-#ifdef READER_TYPE_HID
-    BYTE nResponseLen = 0;
-	SHORT nRet = 0;
-#endif
-#ifdef READER_TYPE_CCID
 	DWORD nResponseLen = 0;
 	LONG nRet = 0;
-	sv_IORequest.dwProtocol = 0;
-	sv_IORequest.cbPciLength = sizeof( SCARD_IO_REQUEST );
-#endif
 	sv_fEnd = FALSE;
 	sv_containerType = CONTAINER_SM2;
 	
@@ -1176,17 +1050,11 @@ ULONG SKF_GenECCKeyPairEx( HCONTAINER hContainer, ULONG ulAlgId, ECCPUBLICKEYBLO
 
 //	PrintApduToFile( 0, apdu, 0x05 );
 
-#ifdef READER_TYPE_HID
-	nRet = dc_pro_command( hDev, 0x05, apdu, &nResponseLen, response, 7 );
-	if( nRet != 0 )
-#endif
-#ifdef READER_TYPE_CCID	
 	nResponseLen = sizeof( response );
-    nRet = SCardTransmit( (SCARDHANDLE)hDev, &sv_IORequest, apdu, 0x05, NULL, response, &nResponseLen );
-    if( nRet != SCARD_S_SUCCESS )
-#endif
+    nRet = TransmitData( hDev, apdu, 0x05, response, &nResponseLen );
+    if( nRet != SAR_OK )
 	{
-//        _stprintf_s( szLog, _countof(szLog), TEXT("Éú³ÉECCÃÜÔ¿¶ÔÊ§°Ü£¬´íÎóÂë: %d \n"), nRet );
+        sprintf( szLog, "Éú³ÉECCÃÜÔ¿¶ÔÊ§°Ü£¬´íÎóÂë: %d \n", nRet );
 		WriteLogToFile( szLog );
 		sv_nStatus = 1;
 		return SAR_FAIL;
@@ -1194,14 +1062,14 @@ ULONG SKF_GenECCKeyPairEx( HCONTAINER hContainer, ULONG ulAlgId, ECCPUBLICKEYBLO
 	
 //	PrintApduToFile( 1, response, nResponseLen );
 
-	if( 1)//(response[nResponseLen-2] == 0x90) && (response[nResponseLen-1] == 0x00) )
+	if( (response[nResponseLen-2] == 0x90) && (response[nResponseLen-1] == 0x00) )
 	{
 #ifdef _DEBUG
 		BYTE m = 0;
 		WriteLogToFile( TEXT("SKF_GenECCKeyPairEx: \n") );
 		for( m=0; m<nResponseLen-2; m++ )
 		{
-			_stprintf_s( szLog, _countof(szLog), TEXT("%02X"), response[m] );
+			sprintf( szLog, "%02X", response[m] );
 			WriteLogToFile( szLog );
 		}
 		WriteLogToFile( TEXT("\n") );
@@ -1221,7 +1089,7 @@ ULONG SKF_GenECCKeyPairEx( HCONTAINER hContainer, ULONG ulAlgId, ECCPUBLICKEYBLO
 	}
 	else
 	{
-//		_stprintf_s( szLog, _countof(szLog), TEXT("Éú³ÉECCÃÜÔ¿¶ÔÊ§°Ü£¬×´Ì¬Âë: %02x%02x \n"), response[nResponseLen-2], response[nResponseLen-1] );
+        sprintf( szLog, "Éú³ÉECCÃÜÔ¿¶ÔÊ§°Ü£¬×´Ì¬Âë: %02x%02x \n", response[nResponseLen-2], response[nResponseLen-1] );
 		WriteLogToFile( szLog );
 		return SAR_FAIL;	
 	}
@@ -1258,16 +1126,8 @@ ULONG SKF_ImportECCKeyPair2( HCONTAINER hContainer, PENVELOPEDKEYBLOB pEnveloped
 	INT nIndex = 0;
 	ULONG dwOffset = 0;
 	DEVHANDLE hDev;
-#ifdef READER_TYPE_HID
-    BYTE nResponseLen = 0;
-	SHORT nRet = 0;
-#endif
-#ifdef READER_TYPE_CCID
 	DWORD nResponseLen = 0;
 	LONG nRet = 0;
-	sv_IORequest.dwProtocol = 0;
-	sv_IORequest.cbPciLength = sizeof( SCARD_IO_REQUEST );
-#endif
 	//--------ÈÝÆ÷¾ä±ú²»ÄÜÎª¿Õ
 	if( hContainer == NULL )
 	{
@@ -1302,33 +1162,27 @@ ULONG SKF_ImportECCKeyPair2( HCONTAINER hContainer, PENVELOPEDKEYBLOB pEnveloped
 	memcpy( apdu+0x05+SIZE_BUFFER_64, (pEnvelopedKeyBlob->ECCCipherBlob.HASH), SIZE_BUFFER_32 );
 	memcpy( apdu+0x05+SIZE_BUFFER_96, pEnvelopedKeyBlob->ECCCipherBlob.Cipher, pEnvelopedKeyBlob->ECCCipherBlob.CipherLen);
 
-#ifdef READER_TYPE_HID
-	nRet = dc_pro_command( hDev, (BYTE)(0x05+(BYTE)pEnvelopedKeyBlob->ECCCipherBlob.CipherLen + SIZE_BUFFER_96), apdu, &nResponseLen, response, 7 );
-	if( nRet != 0 )
-#endif
-#ifdef READER_TYPE_CCID	
     nResponseLen = sizeof( response );
-    nRet = SCardTransmit( (SCARDHANDLE)hDev, &sv_IORequest, apdu, (BYTE)(0x05+(BYTE)pEnvelopedKeyBlob->ECCCipherBlob.CipherLen + SIZE_BUFFER_96), NULL, response, &nResponseLen );
-    if( nRet != SCARD_S_SUCCESS )
-#endif
+    nRet = TransmitData( hDev, apdu, (BYTE)(0x05+(BYTE)pEnvelopedKeyBlob->ECCCipherBlob.CipherLen + SIZE_BUFFER_96), response, &nResponseLen );
+    if( nRet != SAR_OK )
 	{
-//        _stprintf_s( szLog, _countof(szLog), TEXT("ECC½âÃÜÊ§°Ü£¬´íÎóÂë: %d \n"), nRet );
+        sprintf( szLog, "ECC½âÃÜÊ§°Ü£¬´íÎóÂë: %d \n", nRet );
 		WriteLogToFile( szLog );
 		sv_nStatus = 1;
 		return SAR_FAIL;
 	}
 	
-//	if( (response[nResponseLen-2] == 0x90) && (response[nResponseLen-1] == 0x00) )
-//	{
-//		memcpy( tempbuf, response, nResponseLen-2 );
-//		length = nResponseLen-2;
-//	}
-//	else
-//	{
-//		_stprintf_s( szLog, _countof(szLog), TEXT("ECC½âÃÜÊ§°Ü£¬×´Ì¬Âë: %02x%02x \n"), response[nResponseLen-2], response[nResponseLen-1] );
-//		WriteLogToFile( szLog );
-//		return SAR_FAIL;
-//	}
+	if( (response[nResponseLen-2] == 0x90) && (response[nResponseLen-1] == 0x00) )
+	{
+		memcpy( tempbuf, response, nResponseLen-2 );
+		length = nResponseLen-2;
+	}
+	else
+	{
+        sprintf( szLog, "ECC½âÃÜÊ§°Ü£¬×´Ì¬Âë: %02x%02x \n", response[nResponseLen-2], response[nResponseLen-1] );
+		WriteLogToFile( szLog );
+		return SAR_FAIL;
+	}
 
 	if(length != 16)
 	{
@@ -1358,32 +1212,26 @@ ULONG SKF_ImportECCKeyPair2( HCONTAINER hContainer, PENVELOPEDKEYBLOB pEnveloped
 	
 //	PrintApduToFile( 0, apdu, 21+SIZE_BUFFER_32 );
 
-#ifdef READER_TYPE_HID
-	nRet = dc_pro_command( hDev, 21+SIZE_BUFFER_32, apdu, &nResponseLen, response, 7 );
-	if( nRet != 0 )
-#endif
-#ifdef READER_TYPE_CCID	
     nResponseLen = sizeof( response );
-    nRet = SCardTransmit( (SCARDHANDLE)hDev, &sv_IORequest, apdu, 21+SIZE_BUFFER_32, NULL, response, &nResponseLen );
-    if( nRet != SCARD_S_SUCCESS )
-#endif
+    nRet = TransmitData( hDev, apdu, 21+SIZE_BUFFER_32, response, &nResponseLen );
+    if( nRet != SAR_OK )
 	{
-//		_stprintf_s( szLog, _countof(szLog), TEXT("½âÃÜË½Ô¿Ê§°Ü£¬´íÎóÂë: %d \n"), nRet );
+        sprintf( szLog, "½âÃÜË½Ô¿Ê§°Ü£¬´íÎóÂë: %d \n", nRet );
 		WriteLogToFile( szLog );
 		sv_nStatus = 1;
 		return SAR_FAIL;
 	}
 
-//	if( (response[nResponseLen-2] == 0x90) && (response[nResponseLen-1] == 0x00) )
-//	{
-//		memcpy( tempbuf, response, nResponseLen-2 );
-//	}
-//	else
-//	{
-//		_stprintf_s( szLog, _countof(szLog), TEXT("½âÃÜË½Ô¿Ê§°Ü£¬×´Ì¬Âë: %02X%02X \n"), response[nResponseLen-2], response[nResponseLen-1] );
-//		WriteLogToFile( szLog );
-//		return SAR_FAIL;
-//	}
+	if( (response[nResponseLen-2] == 0x90) && (response[nResponseLen-1] == 0x00) )
+	{
+		memcpy( tempbuf, response, nResponseLen-2 );
+	}
+	else
+	{
+        sprintf( szLog, "½âÃÜË½Ô¿Ê§°Ü£¬×´Ì¬Âë: %02X%02X \n", response[nResponseLen-2], response[nResponseLen-1] );
+		WriteLogToFile( szLog );
+		return SAR_FAIL;
+	}
 
 	//--------µ¼ÈëÇ©ÃûÃÜÔ¿¶Ô
 	memcpy( apdu, apdu_import_sm2_keypair, 0x05 );
@@ -1396,28 +1244,22 @@ ULONG SKF_ImportECCKeyPair2( HCONTAINER hContainer, PENVELOPEDKEYBLOB pEnveloped
 
 //	PrintApduToFile( 0, apdu, 0x05+SIZE_BUFFER_96 );
 
-#ifdef READER_TYPE_HID
-	nRet = dc_pro_command( hDev, 0x05+SIZE_BUFFER_96, apdu, &nResponseLen, response, 7 );
-	if( nRet != 0 )
-#endif
-#ifdef READER_TYPE_CCID	
     nResponseLen = sizeof( response );
-    nRet = SCardTransmit( (SCARDHANDLE)hDev, &sv_IORequest, apdu, 0x05+SIZE_BUFFER_96, NULL, response, &nResponseLen );
-    if( nRet != SCARD_S_SUCCESS )
-#endif
+    nRet = TransmitData( hDev, apdu, 0x05+SIZE_BUFFER_96, response, &nResponseLen );
+    if( nRet != SAR_OK )
 	{
-//		_stprintf_s( szLog, _countof(szLog), TEXT("µ¼ÈëSM2Ç©ÃûÃÜÔ¿¶ÔÊ§°Ü£¬´íÎóÂë: %d \n"), nRet );
+        sprintf( szLog, "µ¼ÈëSM2Ç©ÃûÃÜÔ¿¶ÔÊ§°Ü£¬´íÎóÂë: %d \n", nRet );
 		WriteLogToFile( szLog );
 		sv_nStatus = 1;
 		return SAR_FAIL;
 	}
 
-//	if( (response[nResponseLen-2] != 0x90) && (response[nResponseLen-1] != 0x00) )
-//	{
-//		_stprintf_s( szLog, _countof(szLog), TEXT("µ¼ÈëSM2Ç©ÃûÃÜÔ¿¶ÔÊ§°Ü£¬×´Ì¬Âë: %02x%02x \n"), response[nResponseLen-2], response[nResponseLen-1] );
-//		WriteLogToFile( szLog );
-//		return SAR_FAIL;
-//	}
+	if( (response[nResponseLen-2] != 0x90) && (response[nResponseLen-1] != 0x00) )
+	{
+        sprintf( szLog, "µ¼ÈëSM2Ç©ÃûÃÜÔ¿¶ÔÊ§°Ü£¬×´Ì¬Âë: %02x%02x \n", response[nResponseLen-2], response[nResponseLen-1] );
+		WriteLogToFile( szLog );
+		return SAR_FAIL;
+	}
 
 	return SAR_OK;
 }
@@ -1443,16 +1285,8 @@ ULONG SKF_ECCDecrypt( HCONTAINER hContainer, PECCCIPHERBLOB pCipherText, BYTE* p
 	BYTE apdu[SIZE_BUFFER_1024];
 	BYTE response[SIZE_BUFFER_1024];
 	DEVHANDLE hDev;
-#ifdef READER_TYPE_HID
-    BYTE nResponseLen = 0;
-	SHORT nRet = 0;
-#endif
-#ifdef READER_TYPE_CCID
 	DWORD nResponseLen = 0;
 	LONG nRet = 0;
-	sv_IORequest.dwProtocol = 0;
-	sv_IORequest.cbPciLength = sizeof( SCARD_IO_REQUEST );
-#endif
 #ifdef _DEBUG
 	ULONG m = 0;
 #endif
@@ -1491,36 +1325,30 @@ ULONG SKF_ECCDecrypt( HCONTAINER hContainer, PECCCIPHERBLOB pCipherText, BYTE* p
 	memcpy( apdu+0x05+SIZE_BUFFER_64, (pCipherText->HASH), SIZE_BUFFER_32 );
 	memcpy( apdu+0x05+SIZE_BUFFER_96, pCipherText->Cipher, pCipherText->CipherLen);
 
-#ifdef READER_TYPE_HID
-	nRet = dc_pro_command( hDev, (BYTE)(0x05+(BYTE)pCipherText->CipherLen + SIZE_BUFFER_96), apdu, &nResponseLen, response, 7 );
-	if( nRet != 0 )
-#endif
-#ifdef READER_TYPE_CCID	
     nResponseLen = sizeof( response );
-    nRet = SCardTransmit( (SCARDHANDLE)hDev, &sv_IORequest, apdu, (BYTE)(0x05+(BYTE)pCipherText->CipherLen + SIZE_BUFFER_96), NULL, response, &nResponseLen );
-    if( nRet != SCARD_S_SUCCESS )
-#endif
+    nRet = TransmitData( hDev, apdu, (BYTE)(0x05+(BYTE)pCipherText->CipherLen + SIZE_BUFFER_96), response, &nResponseLen );
+    if( nRet != SAR_OK )
 	{
-//        _stprintf_s( szLog, _countof(szLog), TEXT("ECC½âÃÜÊ§°Ü£¬´íÎóÂë: %d \n"), nRet );
+        sprintf( szLog, "ECC½âÃÜÊ§°Ü£¬´íÎóÂë: %d \n", nRet );
 		WriteLogToFile( szLog );
 		sv_nStatus = 1;
 		return SAR_FAIL;
 	}
 	
-//	if( (response[nResponseLen-2] == 0x90) && (response[nResponseLen-1] == 0x00) )
-//	{
-//		if (pbPlainText != NULL)
-//		{
-//			memcpy( pbPlainText, response, nResponseLen-2 );
-//		}
-//		*pulPlainTextLen = nResponseLen-2;
-//	}
-//	else
-//	{
-//		_stprintf_s( szLog, _countof(szLog), TEXT("ECC½âÃÜÊ§°Ü£¬×´Ì¬Âë: %02x%02x \n"), response[nResponseLen-2], response[nResponseLen-1] );
-//		WriteLogToFile( szLog );
-//		return SAR_FAIL;
-//	}
+	if( (response[nResponseLen-2] == 0x90) && (response[nResponseLen-1] == 0x00) )
+	{
+		if (pbPlainText != NULL)
+		{
+			memcpy( pbPlainText, response, nResponseLen-2 );
+		}
+		*pulPlainTextLen = nResponseLen-2;
+	}
+	else
+	{
+        sprintf( szLog, "ECC½âÃÜÊ§°Ü£¬×´Ì¬Âë: %02x%02x \n", response[nResponseLen-2], response[nResponseLen-1] );
+		WriteLogToFile( szLog );
+		return SAR_FAIL;
+	}
 
 	return SAR_OK;
 }
@@ -1555,16 +1383,8 @@ ULONG SKF_ECCMultAdd(HCONTAINER hContainer, unsigned int k, ECCPRIVATEKEYBLOB *e
 	BYTE Param2 = 0;
 	BYTE offset = 5;
 	DEVHANDLE hDev;
-#ifdef READER_TYPE_HID
-    BYTE nResponseLen = 0;
-	SHORT nRet = 0;
-#endif
-#ifdef READER_TYPE_CCID
 	DWORD nResponseLen = 0;
 	LONG nRet = 0;
-	sv_IORequest.dwProtocol = 0;
-	sv_IORequest.cbPciLength = sizeof( SCARD_IO_REQUEST );
-#endif
 	sv_fEnd = FALSE;
 	memset( apdu, 0x00, sizeof(apdu) );
 	memset( response, 0x00, sizeof(response) );
@@ -1628,34 +1448,28 @@ ULONG SKF_ECCMultAdd(HCONTAINER hContainer, unsigned int k, ECCPRIVATEKEYBLOB *e
 	apdu[3] = Param2;
 	apdu[4] = (BYTE)(offset-5);  //³¤¶È×Ö½Ú
 
-#ifdef READER_TYPE_HID
-	nRet = dc_pro_command( hDev, (BYTE)offset, apdu, &nResponseLen, response, 7 );
-	if( nRet != 0 )
-#endif
-#ifdef READER_TYPE_CCID	
     nResponseLen = sizeof( response );
-    nRet = SCardTransmit( (SCARDHANDLE)hDev, &sv_IORequest, apdu, (BYTE)offset, NULL, response, &nResponseLen );
-    if( nRet != SCARD_S_SUCCESS )
-#endif
+    nRet = TransmitData( hDev, apdu, (BYTE)offset, response, &nResponseLen );
+    if( nRet != SAR_OK )
 	{
-//        _stprintf_s( szLog, _countof(szLog), TEXT("µã³Ë¼ÓÔËËãÊ§°Ü£¬´íÎóÂë: %d \n"), nRet );
+        sprintf( szLog, "µã³Ë¼ÓÔËËãÊ§°Ü£¬´íÎóÂë: %d \n", nRet );
 		WriteLogToFile( szLog );
 		sv_nStatus = 1;
 		return SAR_FAIL;
 	}
 	
-//	if( (response[nResponseLen-2] == 0x90) && (response[nResponseLen-1] == 0x00) )
-//	{
-//		C->BitLen = 256;
-//		memcpy( (C->XCoordinate)+SIZE_BUFFER_32, response, SIZE_BUFFER_32 );
-//		memcpy( (C->YCoordinate)+SIZE_BUFFER_32, response+SIZE_BUFFER_32, SIZE_BUFFER_32 );
-//	}
-//	else
-//	{
-//		_stprintf_s( szLog, _countof(szLog), TEXT("µã³Ë¼ÓÔËËãÊ§°Ü£¬×´Ì¬Âë: %02x%02x \n"), response[nResponseLen-2], response[nResponseLen-1] );
-//		WriteLogToFile( szLog );
-//		return SAR_FAIL;
-//	}
+	if( (response[nResponseLen-2] == 0x90) && (response[nResponseLen-1] == 0x00) )
+	{
+		C->BitLen = 256;
+		memcpy( (C->XCoordinate)+SIZE_BUFFER_32, response, SIZE_BUFFER_32 );
+		memcpy( (C->YCoordinate)+SIZE_BUFFER_32, response+SIZE_BUFFER_32, SIZE_BUFFER_32 );
+	}
+	else
+	{
+        sprintf( szLog, "µã³Ë¼ÓÔËËãÊ§°Ü£¬×´Ì¬Âë: %02x%02x \n", response[nResponseLen-2], response[nResponseLen-1] );
+		WriteLogToFile( szLog );
+		return SAR_FAIL;
+	}
 
 	return SAR_OK;
 }
@@ -1686,16 +1500,8 @@ ULONG SKF_ECCModMultAdd(HCONTAINER hContainer, ECCPRIVATEKEYBLOB *k, ECCPRIVATEK
 	BYTE Param2 = 0;
 	BYTE offset = 5;
 	DEVHANDLE hDev;
-#ifdef READER_TYPE_HID
-    BYTE nResponseLen = 0;
-	SHORT nRet = 0;
-#endif
-#ifdef READER_TYPE_CCID
 	DWORD nResponseLen = 0;
 	LONG nRet = 0;
-	sv_IORequest.dwProtocol = 0;
-	sv_IORequest.cbPciLength = sizeof( SCARD_IO_REQUEST );
-#endif
 	sv_fEnd = FALSE;
 	memset( apdu, 0x00, sizeof(apdu) );
 	memset( response, 0x00, sizeof(response) );
@@ -1738,33 +1544,27 @@ ULONG SKF_ECCModMultAdd(HCONTAINER hContainer, ECCPRIVATEKEYBLOB *k, ECCPRIVATEK
 	apdu[3] = Param2;
 	apdu[4] = (BYTE)(offset-5);  //³¤¶È×Ö½Ú
 
-#ifdef READER_TYPE_HID
-	nRet = dc_pro_command( hDev, (BYTE)offset, apdu, &nResponseLen, response, 7 );
-	if( nRet != 0 )
-#endif
-#ifdef READER_TYPE_CCID	
     nResponseLen = sizeof( response );
-    nRet = SCardTransmit( (SCARDHANDLE)hDev, &sv_IORequest, apdu, (BYTE)offset, NULL, response, &nResponseLen );
-    if( nRet != SCARD_S_SUCCESS )
-#endif
+    nRet = TransmitData( hDev, apdu, (BYTE)offset, response, &nResponseLen );
+    if( nRet != SAR_OK )
 	{
-//        _stprintf_s( szLog, _countof(szLog), TEXT("Ä£³Ë¼ÓÔËËãÊ§°Ü£¬´íÎóÂë: %d \n"), nRet );
+        sprintf( szLog, "Ä£³Ë¼ÓÔËËãÊ§°Ü£¬´íÎóÂë: %d \n", nRet );
 		WriteLogToFile( szLog );
 		sv_nStatus = 1;
 		return SAR_FAIL;
 	}
 	
-//	if( (response[nResponseLen-2] == 0x90) && (response[nResponseLen-1] == 0x00) )
-//	{
-//		c->BitLen = 256;
-//		memcpy( (c->PrivateKey)+SIZE_BUFFER_32, response, SIZE_BUFFER_32 );
-//	}
-//	else
-//	{
-//		_stprintf_s( szLog, _countof(szLog), TEXT("Ä£³Ë¼ÓÔËËãÊ§°Ü£¬×´Ì¬Âë: %02x%02x \n"), response[nResponseLen-2], response[nResponseLen-1] );
-//		WriteLogToFile( szLog );
-//		return SAR_FAIL;
-//	}
+	if( (response[nResponseLen-2] == 0x90) && (response[nResponseLen-1] == 0x00) )
+	{
+		c->BitLen = 256;
+		memcpy( (c->PrivateKey)+SIZE_BUFFER_32, response, SIZE_BUFFER_32 );
+	}
+	else
+	{
+        sprintf( szLog, "Ä£³Ë¼ÓÔËËãÊ§°Ü£¬×´Ì¬Âë: %02x%02x \n", response[nResponseLen-2], response[nResponseLen-1] );
+		WriteLogToFile( szLog );
+		return SAR_FAIL;
+	}
 
 	return SAR_OK;
 }
@@ -1840,17 +1640,8 @@ ULONG SKF_ExportPublicKey( HCONTAINER hContainer, BOOL bSignFlag, BYTE* pbBlob, 
 	DEVHANDLE hDev;
 
 	eccPubKeyBlob.BitLen = 256;
-
-#ifdef READER_TYPE_HID
-    BYTE nResponseLen = 0;
-	SHORT nRet = 0;
-#endif
-#ifdef READER_TYPE_CCID
 	DWORD nResponseLen = 0;
 	LONG nRet = 0;
-	sv_IORequest.dwProtocol = 0;
-	sv_IORequest.cbPciLength = sizeof( SCARD_IO_REQUEST );
-#endif
 	sv_fEnd = FALSE;
 	memset( apdu, 0x00, sizeof(apdu) );
 	memset( response, 0x00, sizeof(response) );
@@ -1893,23 +1684,17 @@ ULONG SKF_ExportPublicKey( HCONTAINER hContainer, BOOL bSignFlag, BYTE* pbBlob, 
     apdu[2] |= bSFI;
 	apdu[3] = 0x00;
 	apdu[4] = 0x40;  //¶ÔÓÚ¼ÓÃÜ/Ç©ÃûÃÜÔ¿¹«Ô¿À´Ëµ£¬¹«Ô¿³¤¶ÈÎª64×Ö½Ú
-#ifdef READER_TYPE_HID
-	nRet = dc_pro_command( hDev, 0x05, apdu, &nResponseLen, response, 7 );
-	if( nRet != 0 )
-#endif
-#ifdef READER_TYPE_CCID	
     nResponseLen = sizeof( response );
-    nRet = SCardTransmit( (SCARDHANDLE)hDev, &sv_IORequest, apdu, 0x05, NULL, response, &nResponseLen );
-    if( nRet != SCARD_S_SUCCESS )
-#endif
+    nRet = TransmitData( hDev, apdu, 0x05, response, &nResponseLen );
+    if( nRet != SAR_OK )
 	{
-//		_stprintf_s( szLog, _countof(szLog), TEXT("µ¼³ö¼ÓÃÜ/Ç©Ãû¹«Ô¿Ê§°Ü£¬´íÎóÂë: %d \n"), nRet );
+		sprintf( szLog, "µ¼³ö¼ÓÃÜ/Ç©Ãû¹«Ô¿Ê§°Ü£¬´íÎóÂë: %d \n", nRet );
 		WriteLogToFile( szLog );
 		sv_nStatus = 1;
 		return SAR_FAIL;
 	}
 
-	if( 1)//(response[nResponseLen-2] == 0x90) && (response[nResponseLen-1] == 0x00) )
+	if( (response[nResponseLen-2] == 0x90) && (response[nResponseLen-1] == 0x00) )
 	{
 		eccPubKeyBlob.BitLen = 256;
 		memcpy( eccPubKeyBlob.XCoordinate+SIZE_BUFFER_32, response, SIZE_BUFFER_32 );
@@ -1918,15 +1703,15 @@ ULONG SKF_ExportPublicKey( HCONTAINER hContainer, BOOL bSignFlag, BYTE* pbBlob, 
 		if( pbBlob != NULL )
 		{
 			memcpy( pbBlob, &eccPubKeyBlob, sizeof(eccPubKeyBlob) );
-			//memcpy( pbBlob, response, nResponseLen-2 );
+			memcpy( pbBlob, response, nResponseLen-2 );
 		}
 
 		*pulBlobLen = sizeof(eccPubKeyBlob);	
-		//*pulBlobLen = (nResponseLen-2);
+		*pulBlobLen = (nResponseLen-2);
 	}
 	else
 	{
-//		_stprintf_s( szLog, _countof(szLog), TEXT("µ¼³ö¼ÓÃÜ/Ç©Ãû¹«Ô¿Ê§°Ü£¬×´Ì¬Âë: %02X%02X \n"), response[nResponseLen-2], response[nResponseLen-1] );
+		sprintf( szLog, "µ¼³ö¼ÓÃÜ/Ç©Ãû¹«Ô¿Ê§°Ü£¬×´Ì¬Âë: %02X%02X \n", response[nResponseLen-2], response[nResponseLen-1] );
 	    WriteLogToFile( szLog );
 		return SAR_FAIL;
 	}
@@ -2066,16 +1851,8 @@ ULONG SKF_Encrypt( HANDLE hKey, BYTE *pbData, ULONG ulDataLen,
 	ULONG ulAlgID = 0;
 	PSESSIONKEY sessionKey;
 	DEVHANDLE hDev;
-#ifdef READER_TYPE_HID
-    BYTE nResponseLen = 0;
-	SHORT nRet = 0;
-#endif
-#ifdef READER_TYPE_CCID
 	DWORD nResponseLen = 0;
 	LONG nRet = 0;
-	sv_IORequest.dwProtocol = 0;
-	sv_IORequest.cbPciLength = sizeof( SCARD_IO_REQUEST );
-#endif
 
 #ifdef _DEBUG
     ULONG m = 0;
@@ -2090,7 +1867,7 @@ ULONG SKF_Encrypt( HANDLE hKey, BYTE *pbData, ULONG ulDataLen,
 	//--------ÅÐ¶Ï¾ä±úÊÇ·ñÎª¿Õ
 	if( hKey == NULL )
 	{
-//        _stprintf_s( szLog, _countof(szLog), TEXT("¼ÓÃÜÊ§°Ü£¬ÃÜÔ¿¾ä±úÎª¿Õ£¡\n") );
+        sprintf( szLog, "¼ÓÃÜÊ§°Ü£¬ÃÜÔ¿¾ä±úÎª¿Õ£¡\n" );
 		WriteLogToFile( szLog );
 		return SAR_INVALIDHANDLEERR;
 	}
@@ -2098,18 +1875,18 @@ ULONG SKF_Encrypt( HANDLE hKey, BYTE *pbData, ULONG ulDataLen,
 	//--------ÊäÈëÊý¾Ý²»ÄÜÎª¿Õ
 	if( pbData == NULL )
 	{
-//		_stprintf_s( szLog, _countof(szLog), TEXT("´ý¼ÓÃÜµÄÊäÈëÊý¾Ý´íÎó \n") );
+		sprintf( szLog, "´ý¼ÓÃÜµÄÊäÈëÊý¾Ý´íÎó \n" );
 		WriteLogToFile( szLog );
 		return SAR_INDATAERR;
 	}
 
 #ifdef _DEBUG
 	WriteLogToFile( TEXT("SKF_Encrypt, plaintText: \n") );
-	_stprintf_s( szLog, _countof(szLog), TEXT("%d \n"), ulDataLen );
+	sprintf( szLog, "%d \n", ulDataLen );
 	WriteLogToFile( szLog );
 	for( m=0; m<ulDataLen; m++ )
 	{
-		_stprintf_s( szLog, _countof(szLog), TEXT("%02X"), pbData[m] );
+		sprintf( szLog, "%02X", pbData[m] );
 		WriteLogToFile( szLog );
 	}
 	WriteLogToFile( TEXT("\n") );
@@ -2293,16 +2070,8 @@ ULONG SKF_Decrypt( HANDLE hKey, BYTE *pbEncryptedData, ULONG ulEncryptedLen,
     PSESSIONKEY sessionKey;
 	DEVHANDLE hDev;
 	ULONG ulAlgID = 0;
-#ifdef READER_TYPE_HID
-    BYTE nResponseLen = 0;
-	SHORT nRet = 0;
-#endif
-#ifdef READER_TYPE_CCID
 	DWORD nResponseLen = 0;
 	LONG nRet = 0;
-	sv_IORequest.dwProtocol = 0;
-	sv_IORequest.cbPciLength = sizeof( SCARD_IO_REQUEST );
-#endif
 #ifdef _DEBUG
 	ULONG m = 0;
 #endif
@@ -2314,7 +2083,7 @@ ULONG SKF_Decrypt( HANDLE hKey, BYTE *pbEncryptedData, ULONG ulEncryptedLen,
 	//--------ÅÐ¶Ï¾ä±úÊÇ·ñÎª¿Õ
 	if( hKey == NULL )
 	{
-//        _stprintf_s( szLog, _countof(szLog), TEXT("½âÃÜÊ§°Ü£¬ÃÜÔ¿¾ä±úÎª¿Õ£¡\n") );
+        sprintf( szLog, "½âÃÜÊ§°Ü£¬ÃÜÔ¿¾ä±úÎª¿Õ£¡\n" );
 		WriteLogToFile( szLog );
 		return SAR_INVALIDHANDLEERR;
 	}
@@ -2322,18 +2091,18 @@ ULONG SKF_Decrypt( HANDLE hKey, BYTE *pbEncryptedData, ULONG ulEncryptedLen,
 	//--------ÊäÈëÊý¾Ý²»ÄÜÎª¿Õ
 	if( pbEncryptedData == NULL )
 	{
-//		_stprintf_s( szLog, _countof(szLog), TEXT("´ý½âÃÜµÄÊäÈëÊý¾Ý´íÎó \n") );
+        sprintf( szLog, "´ý½âÃÜµÄÊäÈëÊý¾Ý´íÎó \n" );
 		WriteLogToFile( szLog );
 		return SAR_INDATAERR;
 	}
 
 #ifdef _DEBUG
 	WriteLogToFile( TEXT("SKF_Encrypt, cipherText: \n") );
-	_stprintf_s( szLog, _countof(szLog), TEXT("%d \n"), ulEncryptedLen );
+	sprintf( szLog, "%d \n", ulEncryptedLen );
 	WriteLogToFile( szLog );
 	for( m=0; m<ulEncryptedLen; m++ )
 	{
-		_stprintf_s( szLog, _countof(szLog), TEXT("%02X"), pbEncryptedData[m] );
+		sprintf( szLog, "%02X", pbEncryptedData[m] );
 		WriteLogToFile( szLog );
 	}
 	WriteLogToFile( TEXT("\n") );
@@ -2348,17 +2117,11 @@ ULONG SKF_Decrypt( HANDLE hKey, BYTE *pbEncryptedData, ULONG ulEncryptedLen,
 	memcpy( apdu, apdu_selectDF, 0x07 );
 	apdu[5] = APDU_CA_FID[0];
 	apdu[6] = APDU_CA_FID[1];
-#ifdef READER_TYPE_HID	
-	nRet = dc_pro_command( hDev, 0x07, apdu, &nResponseLen, response, 7 );
-	if( nRet != 0 )
-#endif
-#ifdef READER_TYPE_CCID	
     nResponseLen = sizeof( response );
-    nRet = SCardTransmit( (SCARDHANDLE)hDev, &sv_IORequest, apdu, 0x07, NULL, response, &nResponseLen );
-    if( nRet != SCARD_S_SUCCESS )
-#endif
+    nRet = TransmitData( hDev, apdu, 0x07, response, &nResponseLen );
+    if( nRet != SAR_OK )
 	{
-//        _stprintf_s( szLog, _countof(szLog), TEXT("Ñ¡ÔñCA»·¾³Ê§°Ü£¬´íÎóÂë: %d \n"), nRet );
+        sprintf( szLog, "Ñ¡ÔñCA»·¾³Ê§°Ü£¬´íÎóÂë: %d \n", nRet );
 		WriteLogToFile( szLog );
 		sv_nStatus = 1;
 		return SAR_FAIL;
@@ -2366,12 +2129,12 @@ ULONG SKF_Decrypt( HANDLE hKey, BYTE *pbEncryptedData, ULONG ulEncryptedLen,
 	
 //	PrintApduToFile( 1, response, nResponseLen );
 
-//	if( (response[nResponseLen-2] != 0x90) || (response[nResponseLen-1] != 0x00) )
-//	{
-//		_stprintf_s( szLog, _countof(szLog), TEXT("Ñ¡ÔñCA»·¾³Ê§°Ü£¬×´Ì¬Âë: %02x%02x \n"), response[nResponseLen-2], response[nResponseLen-1] );
-//		WriteLogToFile( szLog );
-//		return SAR_FAIL;
-//	}
+	if( (response[nResponseLen-2] != 0x90) || (response[nResponseLen-1] != 0x00) )
+	{
+        sprintf( szLog, "Ñ¡ÔñCA»·¾³Ê§°Ü£¬×´Ì¬Âë: %02x%02x \n", response[nResponseLen-2], response[nResponseLen-1] );
+		WriteLogToFile( szLog );
+		return SAR_FAIL;
+	}
 
 	 //--------¸ù¾ÝËã·¨ÀàÐÍ£¬µ÷ÓÃ¼Ó½âÃÜº¯Êý
 	switch( ulAlgID )
@@ -2495,16 +2258,8 @@ ULONG SKF_DigestInit1( DEVHANDLE hDev, ULONG ulAlgID, ECCPUBLICKEYBLOB* pPubKey,
 	CHAR szLog[SIZE_BUFFER_1024];
 	BYTE apdu[SIZE_BUFFER_1024];
 	BYTE response[SIZE_BUFFER_1024];
-#ifdef READER_TYPE_HID
-    BYTE nResponseLen = 0;
-	SHORT nRet = 0;
-#endif
-#ifdef READER_TYPE_CCID
 	DWORD nResponseLen = 0;
 	LONG nRet = 0;
-	sv_IORequest.dwProtocol = 0;
-	sv_IORequest.cbPciLength = sizeof( SCARD_IO_REQUEST );
-#endif	
 	memset( apdu, 0x00, sizeof(apdu) );
 	memset( response, 0x00, sizeof(response) );
 	memset( szLog, 0x0, strlen(szLog) );
@@ -2535,26 +2290,20 @@ ULONG SKF_DigestInit1( DEVHANDLE hDev, ULONG ulAlgID, ECCPUBLICKEYBLOB* pPubKey,
 	memcpy( apdu, apdu_selectDF, 0x07 );
 	apdu[5] = APDU_CA_FID[0];
 	apdu[6] = APDU_CA_FID[1];
-#ifdef READER_TYPE_HID
-    nRet = dc_pro_command( hDev, 0x07, apdu, &nResponseLen, response, 7 );
-	if( nRet != 0 )
-#endif
-#ifdef READER_TYPE_CCID	
     nResponseLen = sizeof( response );
-    nRet = SCardTransmit( (SCARDHANDLE)hDev, &sv_IORequest, apdu, 0x07, NULL, response, &nResponseLen );
-    if( nRet != SCARD_S_SUCCESS )
-#endif
+    nRet = TransmitData( hDev, apdu, 0x07, response, &nResponseLen );
+    if( nRet != SAR_OK )
 	{
-//		_stprintf_s( szLog, _countof(szLog), TEXT("Ñ¡ÔñCA»·¾³Ê§°Ü£¬´íÎóÂë£º%d \n"), nRet );
+        sprintf( szLog, "Ñ¡ÔñCA»·¾³Ê§°Ü£¬´íÎóÂë£º%d \n", nRet );
 		WriteLogToFile( szLog );
 		return SAR_FAIL;
 	}
 
 //	PrintApduToFile( 1, response, nResponseLen );
 
-	if( 1)//(response[nResponseLen-2] != 0x90) || (response[nResponseLen-1] != 0x00) )
+	if( (response[nResponseLen-2] != 0x90) || (response[nResponseLen-1] != 0x00) )
 	{
-//		_stprintf_s( szLog, _countof(szLog), TEXT("Ñ¡ÔñCA»·¾³Ê§°Ü£¬×´Ì¬Âë: %02X%02X \n"), response[nResponseLen-2], response[nResponseLen-1] );
+        sprintf( szLog, "Ñ¡ÔñCA»·¾³Ê§°Ü£¬×´Ì¬Âë: %02X%02X \n", response[nResponseLen-2], response[nResponseLen-1] );
 		WriteLogToFile( szLog );
 		return SAR_FAIL;
 	}
@@ -2605,16 +2354,8 @@ ULONG SKF_Digest( HANDLE hHash, BYTE* pbData, ULONG ulDataLen, BYTE* pbHashData,
 	INT nRemainder = 0;
 	PHASHINFO pHash;
     DEVHANDLE hDev;
-#ifdef READER_TYPE_HID
-    BYTE nResponseLen = 0;
-	SHORT nRet = 0;
-#endif
-#ifdef READER_TYPE_CCID
 	DWORD nResponseLen = 0;
 	LONG nRet = 0;
-	sv_IORequest.dwProtocol = 0;
-	sv_IORequest.cbPciLength = sizeof( SCARD_IO_REQUEST );
-#endif
 	//--------¹þÏ£¾ä±ú²»ÄÜÎª¿Õ
 	if( hHash == NULL )
 	{
@@ -2663,17 +2404,11 @@ ULONG SKF_Digest( HANDLE hHash, BYTE* pbData, ULONG ulDataLen, BYTE* pbHashData,
 
 //		PrintApduToFile( 0, apdu, 0x05+SIZE_BUFFER_64 );
 
-#ifdef READER_TYPE_HID
-		nRet = dc_pro_command( hDev, 0x05+SIZE_BUFFER_64, apdu, &nResponseLen, response, 7 );
-		if( nRet != 0 )
-#endif
-#ifdef READER_TYPE_CCID	
         nResponseLen = sizeof( response );
-        nRet = SCardTransmit( (SCARDHANDLE)hDev, &sv_IORequest, apdu, 0x05+SIZE_BUFFER_64, NULL, response, &nResponseLen );
-        if( nRet != SCARD_S_SUCCESS )
-#endif
+        nRet = TransmitData( hDev, apdu, 0x05+SIZE_BUFFER_64, response, &nResponseLen );
+        if( nRet != SAR_OK )
 		{
-//            _stprintf_s( szLog, _countof(szLog), TEXT("SM3ÔÓ´ÕÊ§°Ü£¬´íÎóÂë: %d \n"), nRet );
+            sprintf( szLog, "SM3ÔÓ´ÕÊ§°Ü£¬´íÎóÂë: %d \n", nRet );
 			WriteLogToFile( szLog );
 			sv_nStatus = 1;
 			return SAR_FAIL;
@@ -2681,20 +2416,20 @@ ULONG SKF_Digest( HANDLE hHash, BYTE* pbData, ULONG ulDataLen, BYTE* pbHashData,
 	
 //		PrintApduToFile( 1, response, nResponseLen );
 
-		if( 1)//(response[nResponseLen-2] == 0x90) && (response[nResponseLen-1] == 0x00) )
+		if( (response[nResponseLen-2] == 0x90) && (response[nResponseLen-1] == 0x00) )
 		{
 			if( pbHashData != NULL )  //×¢Òâ£¬Ã¿×éÔÓ´ÕµÄ½á¹ûÎª32×Ö½Ú
 			{
 				memcpy( pbHashData, ss, 32 );
-				//memcpy( pbHashData, response, nResponseLen-2 );
+				memcpy( pbHashData, response, nResponseLen-2 );
 			}
 			
-//			dwTotalLen += (nResponseLen-2);
+			dwTotalLen += (nResponseLen-2);
 
 		}
 		else
 		{
-//			_stprintf_s( szLog, _countof(szLog), TEXT("SM4ÔÓ´ÕÊ§°Ü£¬×´Ì¬Âë: %02x%02x \n"), response[nResponseLen-2], response[nResponseLen-1] );
+			sprintf( szLog, "SM4ÔÓ´ÕÊ§°Ü£¬×´Ì¬Âë: %02x%02x \n", response[nResponseLen-2], response[nResponseLen-1] );
 			WriteLogToFile( szLog );
 			return SAR_FAIL;	
 		}
@@ -2706,17 +2441,11 @@ ULONG SKF_Digest( HANDLE hHash, BYTE* pbData, ULONG ulDataLen, BYTE* pbHashData,
 
 //		PrintApduToFile( 0, apdu, 0x05+nRemainder );
 
-#ifdef READER_TYPE_HID
-		nRet = dc_pro_command(hDev, 0x05+nRemainder, apdu, &nResponseLen, response, 7 );
-		if( nRet != 0 )
-#endif
-#ifdef READER_TYPE_CCID	
         nResponseLen = sizeof( response );
-        nRet = SCardTransmit( (SCARDHANDLE)hDev, &sv_IORequest, apdu, 0x05+nRemainder, NULL, response, &nResponseLen );
-        if( nRet != SCARD_S_SUCCESS )
-#endif
+        nRet = TransmitData( hDev, apdu, 0x05+nRemainder, response, &nResponseLen );
+        if( nRet != SAR_OK )
 		{
-//            _stprintf_s( szLog, _countof(szLog), TEXT("SM3ÔÓ´ÕÊ§°Ü£¬´íÎóÂë: %d \n"), nRet );
+            sprintf( szLog, "SM3ÔÓ´ÕÊ§°Ü£¬´íÎóÂë: %d \n", nRet );
 			WriteLogToFile( szLog );
 			sv_nStatus = 1;
 			return SAR_FAIL;
@@ -2724,18 +2453,18 @@ ULONG SKF_Digest( HANDLE hHash, BYTE* pbData, ULONG ulDataLen, BYTE* pbHashData,
 
 //		PrintApduToFile( 1, response, nResponseLen );
 
-		if( 1)//(response[nResponseLen-2] == 0x90) && (response[nResponseLen-1] == 0x00) )
+		if( (response[nResponseLen-2] == 0x90) && (response[nResponseLen-1] == 0x00) )
 		{
 			if( pbHashData != NULL )
 			{
-//				memcpy( pbHashData, response, nResponseLen-2 );
+				memcpy( pbHashData, response, nResponseLen-2 );
 			}
-//			dwTotalLen += (nResponseLen-2);
+			dwTotalLen += (nResponseLen-2);
 
 		}
 		else
 		{
-//			_stprintf_s( szLog, _countof(szLog), TEXT("SM3ÔÓ´ÕÊ§°Ü£¬×´Ì¬Âë: %02x%02x \n"), response[nResponseLen-2], response[nResponseLen-1] );
+			sprintf( szLog, "SM3ÔÓ´ÕÊ§°Ü£¬×´Ì¬Âë: %02x%02x \n", response[nResponseLen-2], response[nResponseLen-1] );
 			WriteLogToFile( szLog );
 			return SAR_FAIL;
 		}
@@ -2743,11 +2472,11 @@ ULONG SKF_Digest( HANDLE hHash, BYTE* pbData, ULONG ulDataLen, BYTE* pbHashData,
 
 	if( pbHashData != NULL )
 	{
-//		_stprintf_s( szLog, _countof(szLog), TEXT("Hash size: %d \n"), dwTotalLen );
+		sprintf( szLog, "Hash size: %d \n", dwTotalLen );
 		WriteLogToFile( szLog );
 		for( DWORD mm=0; mm<dwTotalLen; mm++ )
 		{
-//		    _stprintf_s( szLog, _countof(szLog), TEXT("%02x"), pbHashData[mm] );
+		    sprintf( szLog, "%02x", pbHashData[mm] );
 			WriteLogToFile( szLog );
 		}
 	}

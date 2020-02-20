@@ -10,9 +10,11 @@
 #include "SKF_TypeDef.h"
 #include "transmit.h"
 #include "Global_Def.h"
+#include "SKF_DeviceManager.h"
+#include "SKF_CryptoService.h"
 
-#define CBC 1
-#define ECB 1
+// just test flag for skf source
+#define SKF_SOURCE 1
 
 // 获取数组的大小
 # define NELEM(x) ((int) (sizeof(x) / sizeof((x)[0])))
@@ -89,7 +91,12 @@ JNIEXPORT jstring JNICALL enum_dev(JNIEnv *env, jobject instance) {
     memset(pszDrives, 0x00, SDSC_MAX_DEV_NUM * SDSC_MAX_DEV_NAME_LEN * sizeof(char));
     unsigned long pulDrivesLen = SDSC_MAX_DEV_NUM * SDSC_MAX_DEV_NAME_LEN * sizeof(char);
     unsigned long pulDriveNum = 0;
-    unsigned long baseResult = SDSCListDevs(pszDrives, &pulDrivesLen, &pulDriveNum);
+    unsigned long baseResult = 0;
+    if (SKF_SOURCE) {
+        baseResult = SKF_EnumDev(pszDrives, &pulDrivesLen, &pulDriveNum);
+    } else {
+        baseResult = SDSCListDevs(pszDrives, &pulDrivesLen, &pulDriveNum);
+    }
     LOGI("EnumDev result: %ld", baseResult);
     LOGI("EnumDev pulDriveNum: %ld", pulDriveNum);
     LOGI("EnumDev pszDrives: %s\n", pszDrives);
@@ -107,7 +114,12 @@ JNIEXPORT jint JNICALL connect_dev(JNIEnv *env, jobject instance, jstring str_) 
     }
     LOGI("connect_dev szDrive: %s\n", szDrive);
     int pulDriveNum = 0;
-    unsigned long baseResult = SDSCConnectDev(szDrive, &pulDriveNum);
+    unsigned long baseResult = 0;
+    if (SKF_SOURCE) {
+        baseResult = SKF_ConnectDev(szDrive, &pulDriveNum);
+    } else {
+        baseResult = SDSCConnectDev(szDrive, &pulDriveNum);
+    }
     LOGI("connect_dev baseResult: %ld", baseResult);
     LOGI("connect_dev pulDriveNum: %d", pulDriveNum);
     sv_Device = pulDriveNum;
@@ -120,7 +132,12 @@ JNIEXPORT jint JNICALL connect_dev(JNIEnv *env, jobject instance, jstring str_) 
 }
 
 JNIEXPORT jlong JNICALL disconnect_dev(JNIEnv *env, jobject instance, jint handle) {
-    unsigned long baseResult = SDSCDisconnectDev(handle);
+    unsigned long baseResult = 0;
+    if (SKF_SOURCE) {
+        baseResult = SKF_DisConnectDev(sv_Device);
+    } else {
+        baseResult = SDSCDisconnectDev(handle);
+    }
     LOGI("disconnect_dev baseResult: %ld", baseResult);
     return baseResult;
 }
@@ -192,10 +209,8 @@ JNIEXPORT jstring JNICALL get_dev_info(JNIEnv *env, jobject instance, jint handl
         return (*env)->NewStringUTF(env, '\0');
     }
     memset(firmVer, 0x00, SDSC_FIRMWARE_VER_LEN * sizeof(char));
-    unsigned long firmLen = SDSC_FIRMWARE_VER_LEN * sizeof(char);
-    unsigned long baseResult = SDSCGetFirmwareVer(handle, firmVer, &firmLen);
+    unsigned long baseResult = SKF_GetDevInfo( sv_Device, firmVer );
     LOGI("get_dev_info baseResult: %ld", baseResult);
-    LOGI("get_dev_info firmLen: %ld", firmLen);
     jstring  result = charToJstring(env, firmVer);
     // need free the memory
     free(firmVer);
