@@ -7,7 +7,7 @@
 #include <sys/ptrace.h>
 #include <SDSCErr.h>
 #include <SDSCDev.h>
-#include <base_type.h>
+#include "SKF_TypeDef.h"
 #include "transmit.h"
 #include "Global_Def.h"
 
@@ -18,8 +18,6 @@
 # define NELEM(x) ((int) (sizeof(x) / sizeof((x)[0])))
 // 指定要注册的类，对应完整的java类名
 #define JNIREG_CLASS "com/tongxin/sdjni/AESEncrypt"
-
-const char *UNSIGNATURE = "UNSIGNATURE";
 
 jstring charToJstring(JNIEnv *envPtr, char *src) {
     JNIEnv env = *envPtr;
@@ -39,14 +37,14 @@ JNIEXPORT jlong JNICALL set_package(JNIEnv *env, jobject instance, jstring str_)
     char *pkgname = (char *) (*env)->GetStringUTFChars(env, str_, JNI_FALSE);
     LOGI("set_package package name: %s\n", pkgname);
     // set log path
-//    memset(log_name, 0x00, log_len);
-//    memcpy(log_name, pkgname, strlen(pkgname));
-//    strcat(log_name, "/files/tmc_sdk.log");
-//    memset(log_name_bak, 0x00, log_len);
-//    memcpy(log_name_bak, pkgname, strlen(pkgname));
-//    strcat(log_name_bak, "/files/tmc_sdk.log.0");
-//    LOGI("set_package log_name: %s\n", log_name);
-//    LOGI("set_package log_name_bak: %s\n", log_name_bak);
+    memset(SV_PSZLOGPATH, 0x00, SIZE_BUFFER_128);
+    memcpy(SV_PSZLOGPATH, pkgname, strlen(pkgname));
+    strcat(SV_PSZLOGPATH, "/files/tmc_sdk.log");
+    memset(SV_PSZLOGTHREADPATH, 0x00, SIZE_BUFFER_128);
+    memcpy(SV_PSZLOGTHREADPATH, pkgname, strlen(pkgname));
+    strcat(SV_PSZLOGTHREADPATH, "/files/tmc_sdk.log.0");
+    LOGI("set_package log_name: %s\n", SV_PSZLOGPATH);
+    LOGI("set_package log_name_bak: %s\n", SV_PSZLOGTHREADPATH);
     unsigned long pkgresult = SDSCSetPackageName(pkgname);
     LOGI("setpackage result: %ld", pkgresult);
     (*env)->ReleaseStringUTFChars(env, str_, pkgname);
@@ -56,14 +54,14 @@ JNIEXPORT jlong JNICALL set_package(JNIEnv *env, jobject instance, jstring str_)
 JNIEXPORT jlong JNICALL get_func_list(JNIEnv *env, jobject instance, jstring str_) {
     char *pkgname = (char *) (*env)->GetStringUTFChars(env, str_, JNI_FALSE);
     LOGI("set_package external path: %s\n", pkgname);
-//    memset(log_name, 0x00, log_len);
-//    memcpy(log_name, pkgname, strlen(pkgname));
-//    strcat(log_name, "/files/tmc_sdk.log");
-//    memset(log_name_bak, 0x00, log_len);
-//    memcpy(log_name_bak, pkgname, strlen(pkgname));
-//    strcat(log_name_bak, "/files/tmc_sdk.log.0");
-//    LOGI("set_package log_name: %s\n", log_name);
-//    LOGI("set_package log_name_bak: %s\n", log_name_bak);
+    memset(SV_PSZLOGPATH, 0x00, SIZE_BUFFER_128);
+    memcpy(SV_PSZLOGPATH, pkgname, strlen(pkgname));
+    strcat(SV_PSZLOGPATH, "/files/tmc_sdk.log");
+    memset(SV_PSZLOGTHREADPATH, 0x00, SIZE_BUFFER_128);
+    memcpy(SV_PSZLOGTHREADPATH, pkgname, strlen(pkgname));
+    strcat(SV_PSZLOGTHREADPATH, "/files/tmc_sdk.log.0");
+    LOGI("set_package log_name: %s\n", SV_PSZLOGPATH);
+    LOGI("set_package log_name_bak: %s\n", SV_PSZLOGTHREADPATH);
 //    CK_FUNCTION_LIST_PTR ck_ptr;
 //    CK_RV baseResult = C_GetFunctionList(&ck_ptr);
 //    LOGI("get_func_list baseResult: %ld", baseResult);

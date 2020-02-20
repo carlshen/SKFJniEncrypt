@@ -1,3 +1,4 @@
+#include <string.h>
 #include "transmit.h"
 #include "Global_Def.h"
 
@@ -63,7 +64,7 @@ ULONG Algo_Group_ECB( HANDLE hKey, BYTE *pbInData, ULONG ulInDataLen, BYTE *pbOu
 //		PrintApduToFile( 0, apdu, 0x15+SIZE_ECB_BLOCK );
 
 		DWORD nResponseLen = sizeof( response );
-        nRet = TransmitData( 1, apdu, 0x15+SIZE_ECB_BLOCK, response, &nResponseLen );
+        nRet = TransmitData( hKey, apdu, 0x15+SIZE_ECB_BLOCK, response, &nResponseLen );
         if( nRet != SAR_OK )
 		{
 			sprintf( szLog, "分组ECB加密/解密失败，第%d组，错误码: %d \n", nIndex, nRet );
@@ -103,7 +104,7 @@ ULONG Algo_Group_ECB( HANDLE hKey, BYTE *pbInData, ULONG ulInDataLen, BYTE *pbOu
 //		PrintApduToFile( 0, apdu, 0x15+nRemainder );
 
 		nResponseLen = sizeof( response );
-        nRet = TransmitData( 1,  apdu, 0x15+nRemainder, response, &nResponseLen );
+        nRet = TransmitData( hKey,  apdu, 0x15+nRemainder, response, &nResponseLen );
         if( nRet != SAR_OK )
 		{
 			sprintf( szLog, "分组ECB加密/解密失败，错误码: %d \n", nRet );
@@ -204,7 +205,7 @@ ULONG Algo_Group_CBC( HANDLE hKey, BYTE *pbInData, ULONG ulInDataLen, BYTE *pbOu
 //		PrintApduToFile( 0, apdu, 0x15 );
 
 		nResponseLen = sizeof( response );
-        nRet = TransmitData( 1, apdu, 0x15, response, &nResponseLen );
+        nRet = TransmitData( hKey, apdu, 0x15, response, &nResponseLen );
         if( nRet != SAR_OK )
 		{
 			sprintf( szLog, "CBC模式下发送IV字节失败，错误码: %d \n", nRet );
@@ -232,7 +233,7 @@ ULONG Algo_Group_CBC( HANDLE hKey, BYTE *pbInData, ULONG ulInDataLen, BYTE *pbOu
 //		PrintApduToFile( 0, apdu, 0x15+SIZE_CBC_BLOCK );
 
 		nResponseLen = sizeof( response );
-        nRet = TransmitData( 1, apdu, 0x15+SIZE_CBC_BLOCK, response, &nResponseLen );
+        nRet = TransmitData( hKey, apdu, 0x15+SIZE_CBC_BLOCK, response, &nResponseLen );
         if( nRet != SAR_OK )
 		{
 			sprintf( szLog, "分组CBC加密/解密失败，错误码: %d \n", nRet );
@@ -270,7 +271,7 @@ ULONG Algo_Group_CBC( HANDLE hKey, BYTE *pbInData, ULONG ulInDataLen, BYTE *pbOu
 //		PrintApduToFile( 0, apdu, 0x15 );
 
 		nResponseLen = sizeof( response );
-        nRet = TransmitData( 1, apdu, 0x15, response, &nResponseLen );
+        nRet = TransmitData( hKey, apdu, 0x15, response, &nResponseLen );
         if( nRet != SAR_OK )
 		{
 			sprintf( szLog, "CBC模式下发送IV字节失败，错误码: %d \n", nRet );
@@ -296,7 +297,7 @@ ULONG Algo_Group_CBC( HANDLE hKey, BYTE *pbInData, ULONG ulInDataLen, BYTE *pbOu
 //		PrintApduToFile( 0, apdu, 0x15+nRemainder );
 
 		nResponseLen = sizeof( response );
-        nRet = TransmitData( 1, apdu, 0x15+nRemainder, response, &nResponseLen );
+        nRet = TransmitData( hKey, apdu, 0x15+nRemainder, response, &nResponseLen );
         if( nRet != SAR_OK )
 		{
             sprintf( szLog, "分组CBC加密/解密失败，错误码: %d \n", nRet );

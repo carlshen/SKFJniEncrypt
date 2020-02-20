@@ -3,7 +3,6 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <xchar.h>
 #include "SKF_StatusCode.h"
 #include "SKF_TypeDef.h"
 #include "APDUs.h"
@@ -37,13 +36,12 @@ static CHAR sv_pszCCIDDevNameA[SIZE_BUFFER_1024];
 // 
 extern DWORD ThreadSemiAutoProc( void* lpParam );
 extern HANDLE            g_hSemiAutoEvent[2];  //
-//extern CRITICAL_SECTION  g_criticalSect;     //
 extern HANDLE            g_hSemiAutoThread;        // 线程句柄
 extern DWORD             g_dwSemiAutoThreadID;     // 线程ID
 
 // 有关日志变量
-extern const CHAR* SV_PSZLOGPATH;
-extern const CHAR* SV_PSZLOGTHREADPATH;
+static CHAR SV_PSZLOGPATH[SIZE_BUFFER_128];
+static CHAR SV_PSZLOGTHREADPATH[SIZE_BUFFER_128];
 
 //容器类型
 #define  CONTAINER_NULL  0  //未知容器
@@ -133,26 +131,26 @@ extern int sv_nAdmin;  //管理员PIN
 //有关随机数定义变量
 //取随机数的BLOCK长度 
 #define RANDOM_BLOCK_SIZE SIZE_BUFFER_16 
-extern BYTE sv_random[SIZE_BUFFER_1024];   //全局随机数缓冲区，最大长度1024字节
-extern DWORD sv_randomLength;              //全局随机数缓冲区长度计数；
+BYTE sv_random[SIZE_BUFFER_1024];   //全局随机数缓冲区，最大长度1024字节
+DWORD sv_randomLength;              //全局随机数缓冲区长度计数；
 
 //有关签名定义变量
-extern ECCSIGNATUREBLOB sv_eccSignBlob;
-extern BYTE sv_signEF_FID[2];
+ECCSIGNATUREBLOB sv_eccSignBlob;
+BYTE sv_signEF_FID[2];
 
-extern void WriteLogToFile( CHAR* szLog );
-extern void ResetLogFile( CHAR*  lpszName );
-extern void WriteLogToFile2( CHAR* szLog );
-extern ULONG sc_command(DEVHANDLE hDev, BYTE* inBuf, DWORD inLen, BYTE* retBuf, DWORD* pdwLen);
-extern BYTE cryptoDESMAC(BYTE *pbKey, BYTE *pbIv, BYTE * pbDatIn, BYTE bDatLen, BYTE *pbDatOut);
-extern BYTE cryptoDESEcbEnc(BYTE *pbKey, BYTE bKeyLen, BYTE *pbDatIn, UINT16 usLen, BYTE *pbDatOut);
-extern ULONG SV_SelectDFByFID( DEVHANDLE hDev, const BYTE appFID[2], CHAR *pszLog );
-extern ULONG FindDFByAppName( DEVHANDLE hDev, LPSTR szAppName, BYTE *appFID );
-extern ULONG OpenApplication( DEVHANDLE hDev, LPSTR szAppName );
+void WriteLogToFile( CHAR* szLog );
+void ResetLogFile( CHAR*  lpszName );
+void WriteLogToFile2( CHAR* szLog );
+ULONG sc_command(DEVHANDLE hDev, BYTE* inBuf, DWORD inLen, BYTE* retBuf, DWORD* pdwLen);
+BYTE cryptoDESMAC(BYTE *pbKey, BYTE *pbIv, BYTE * pbDatIn, BYTE bDatLen, BYTE *pbDatOut);
+BYTE cryptoDESEcbEnc(BYTE *pbKey, BYTE bKeyLen, BYTE *pbDatIn, UINT16 usLen, BYTE *pbDatOut);
+ULONG SV_SelectDFByFID( DEVHANDLE hDev, const BYTE appFID[2], CHAR *pszLog );
+ULONG FindDFByAppName( DEVHANDLE hDev, LPSTR szAppName, BYTE *appFID );
+ULONG OpenApplication( DEVHANDLE hDev, LPSTR szAppName );
 
-extern BYTE  sv_APDU[0x05];
+BYTE  sv_APDU[0x05];
 //extern BYTE sv_devAuth;
-extern INT sv_nStatus;
-extern BOOL sv_fEnd;
+INT sv_nStatus;
+BOOL sv_fEnd;
 
 #endif //SKF_GLOBAL_H

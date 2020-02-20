@@ -1,33 +1,32 @@
 #ifndef SKF_BASE_H
 #define SKF_BASE_H
 
-#include <base_type.h>
+#ifndef FALSE
+#define FALSE               0
+#endif
 
-//typedef char INT8;
-typedef short int INT16;
-typedef int INT32;
+#ifndef TRUE
+#define TRUE                1
+#endif
+
+typedef char CHAR;
+typedef short SHORT;
+typedef long LONG;
+typedef unsigned long ULONG;
+typedef unsigned long       DWORD;
+typedef int                 BOOL;
+typedef unsigned char       BYTE;
+typedef int                 INT;
 typedef unsigned char UINT8;
 typedef unsigned short UINT16;
 typedef unsigned int UINT32;
 typedef int BOOL;
 typedef UINT8 BYTE;
-//typedef INT8 CHAR;
-typedef INT16 SHORT;
-typedef UINT16 USHORT;
-//typedef INT32 LONG;
-//typedef UINT32 ULONG;
-typedef UINT32 UINT;
-typedef UINT16 WORD;
-//typedef UINT32 DWORD;
-typedef UINT32 FLAGS;
 typedef CHAR * LPSTR;
-typedef void * HANDLE;
+typedef int HANDLE;
 typedef HANDLE DEVHANDLE;
 typedef HANDLE HAPPLICATION;
 typedef HANDLE HCONTAINER;
-
-//#define DEVAPI __stdcall
-
 
 //算法标识
 //分组密码算法标识

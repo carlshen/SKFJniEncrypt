@@ -3,9 +3,7 @@
 
 #include "Global_Def.h"
 
-ULONG Algo_Group_ECB( HANDLE hKey, BYTE* pbInData, ULONG ulInDataLen, 
-							BYTE* pbOutData, ULONG* pulOutDataLen );
-ULONG Algo_Group_CBC( HANDLE hKey, BYTE* pbInData, ULONG ulInDataLen,
-							BYTE* pbOutData, ULONG* pulOutDataLen );
+ULONG Algo_Group_ECB( HANDLE hKey, BYTE* pbInData, ULONG ulInDataLen, BYTE* pbOutData, ULONG* pulOutDataLen );
+ULONG Algo_Group_CBC( HANDLE hKey, BYTE* pbInData, ULONG ulInDataLen, BYTE* pbOutData, ULONG* pulOutDataLen );
 
 #endif //SKF_ALGORITHM_H

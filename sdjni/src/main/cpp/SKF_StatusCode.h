@@ -1,14 +1,6 @@
 #ifndef SKF_STATUS_H
 #define SKF_STATUS_H
 
-#define DEV_ABSENT_STATE     0x00000000
-#define DEV_PRESENT_STATE    0x00000001
-#define DEV_UNKNOW_STATE     0x00000002
-
-#define PIN_ADMIN_TYPE       0x00000000
-#define PIN_USER_TYPE        0x00000001
-
-
 
 #define SAR_OK                           0x00000000  //³É¹¦
 #define SAR_FAIL                         0x0A000001  //Ê§°Ü

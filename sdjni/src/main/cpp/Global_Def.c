@@ -1,7 +1,7 @@
 // SharedVariables.cpp: implementation of the SharedVariables class.
 //
 //////////////////////////////////////////////////////////////////////
-
+#include <string.h>
 #include "Global_Def.h"
 #include "APDUs.h"
 #include "transmit.h"
@@ -14,10 +14,6 @@ ULONG sv_containerType = CONTAINER_NULL;
 CONTAINERINFO sv_containerInfo[MAX_CONTAINER_NUM] = {
 };
 */
-
-// 有关日志变量
-const CHAR* SV_PSZLOGPATH =  ("D://TMC_HealthCard_CA.log");
-const CHAR* SV_PSZLOGTHREADPATH = ("D://TMC_HealthCard_CA_Thread.log");
 
 //全局结构体变量
 APPLICATIONINFO  sv_stApplication;  //应用
@@ -101,55 +97,28 @@ BOOL sv_fEnd = TRUE;
 #ifdef __cplusplus
 extern "C" {
 #endif  /*__cplusplus*/
-#ifdef READER_TYPE_HID
-void PrintApduToFile( BYTE bFlag, BYTE* pbApdu, BYTE nLength )
-{
-	FILE* pFileLog;
-	errno_t nErr = -1;
-	TCHAR szLog[1024];
-	nErr = _tfopen_s( &pFileLog, SV_PSZLOGPATH, TEXT("a+") );
-	if( nErr == 0 )
-	{
-		if( bFlag == 0 )
-			_fputts( TEXT("Apdu:\n"), pFileLog );
-		else
-			_fputts( TEXT("Response:\n"), pFileLog );
-		for( BYTE bIndex=0; bIndex<nLength; bIndex++ )
-		{
-			_stprintf_s( szLog, _countof(szLog), TEXT("%02X"), pbApdu[bIndex] );
-            _fputts( szLog, pFileLog );
-		}
 
-		_fputts( TEXT("\n"), pFileLog );
-		fclose( pFileLog );
-	}
-}
-#endif
-
-#ifdef READER_TYPE_CCID
 void PrintApduToFile( BYTE bFlag, BYTE* pbApdu, DWORD bLength )
 {
 	FILE* pFileLog;
-	errno_t nErr = -1;
-	TCHAR szLog[1024];
-	nErr = _tfopen_s( &pFileLog, SV_PSZLOGPATH, TEXT("a+") );
-	if( nErr == 0 )
+	CHAR szLog[1024];
+	pFileLog = fopen( SV_PSZLOGPATH, "a+" );
+	if( pFileLog == NULL )
 	{
 		if( bFlag == 0 )
-			_fputts( TEXT("Apdu:\n"), pFileLog );
+			fputs( "Apdu:\n", pFileLog );
 		else
-			_fputts( TEXT("Response:\n"), pFileLog );
+			fputs( "Response:\n", pFileLog );
 		for( DWORD dwIndex=0; dwIndex<bLength; dwIndex++ )
 		{
-			_stprintf_s( szLog, _countof(szLog), TEXT("%02X"), pbApdu[dwIndex] );
-            _fputts( szLog, pFileLog );
+			sprintf( szLog, "%02X", pbApdu[dwIndex] );
+			fputs( szLog, pFileLog );
 		}
 
-		_fputts( TEXT("\n"), pFileLog );
+		fputs( "\n", pFileLog );
 		fclose( pFileLog );
 	}
 }
-#endif
 
 void WriteLogToFile( CHAR* szLog )
 {

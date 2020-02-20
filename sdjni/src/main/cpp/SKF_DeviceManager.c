@@ -2,6 +2,7 @@
 //
 //////////////////////////////////////////////////////////////////////
 
+#include <string.h>
 #include "SKF_TypeDef.h"
 #include "Global_Def.h"
 #include "Algorithms.h"

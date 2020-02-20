@@ -1,7 +1,7 @@
 // SKF_CryptoService.cpp: implementation of the SKF_CryptoService class.
 //
 //////////////////////////////////////////////////////////////////////
-
+#include <string.h>
 #include "SKF_TypeDef.h"
 #include "Global_Def.h"
 #include "Algorithms.h"
