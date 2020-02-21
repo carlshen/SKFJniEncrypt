@@ -11,21 +11,6 @@ BYTE APDU_EF01_FID[2];
 BYTE APDU_EF02_FID[2];
 //设备管理
 
-
-//访问控制
-//验证PIN码，0x05，包括管理员PIN和用户PIN
-BYTE apdu_verifyPIN[0x05];
-//解锁PIN，0x05，在管理员验证后对用户PIN进行解锁
-BYTE apdu_unblockPIN[0x05];
-//修改PIN码，0x05，包括管理员PIN和用户PIN
-BYTE apdu_changePIN[0x05];
-//重装PIN，0x05，包括管理员PIN和用户PIN
-BYTE apdu_reloadPIN[0x05];
-//重装PIN时计算MAC的初始值，x08
-BYTE reload_initV[0x08];
-//重装PIN时计算MAC的密钥，0x08
-BYTE reload_key[0x10];
-
 //应用管理
 //设备， 0x10
 BYTE apdu_deviceKey[0x10];
@@ -90,13 +75,36 @@ BYTE apdu_random2[5];
 BYTE apdu_getResponse[5];
 
 //ECC签名密钥对
+BYTE apdu_GenEccKeyPair[0x05];
 BYTE apdu_eccGenKeyPair[0x05];
 BYTE apdu_eccSignData[0x05];
 BYTE apdu_eccSignVerify[0x05];
+BYTE apdu_genDataKeyEcc[0x05];
 BYTE apdu_eccEncrypt[0x05];
 BYTE apdu_eccDecrypt[0x05];
-//
-BYTE apdu_personalization[0x05];
+BYTE apdu_84_00[0x04];
+BYTE apdu_A4_04[0x04];
+BYTE apdu_A5_00[0x04];
+BYTE apdu_B0_00[0x04];
+BYTE apdu_C8_00[0x04];
+BYTE apdu_C6_00[0x04];
+BYTE apdu_CA_05[0x05];
+BYTE apdu_CC_00[0x04];
+BYTE apdu_CE_00[0x04];
+BYTE apdu_D6_00[0x04];
+BYTE apdu_E1_00[0x05];
+BYTE apdu_F1_00[0x04];
+BYTE apdu_F4_00[0x04];
+BYTE apdu_F8_01[0x04];
+BYTE apdu_F8_02[0x04];
+BYTE apdu_F8_03[0x04];
+BYTE apdu_FA_00[0x04];
+BYTE apdu_FA_01[0x04];
+BYTE apdu_FA_02[0x04];
+BYTE apdu_FA_03[0x04];
+BYTE apdu_FC_01[0x06];
+BYTE apdu_FC_02[0x04];
+BYTE apdu_FC_03[0x04];
 
 //SM1，加密，ECB模式，0x05
 BYTE apdu_encrypt_sm1_ecb[0x05];

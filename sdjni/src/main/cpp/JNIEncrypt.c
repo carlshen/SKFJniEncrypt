@@ -51,7 +51,7 @@ JNIEXPORT jlong JNICALL set_package(JNIEnv *env, jobject instance, jstring str_)
     return pkgresult;
 }
 
-JNIEXPORT jlong JNICALL get_func_list(JNIEnv *env, jobject instance, jstring str_) {
+JNIEXPORT jstring JNICALL get_func_list(JNIEnv *env, jobject instance, jstring str_) {
     char *pkgname = (char *) (*env)->GetStringUTFChars(env, str_, JNI_FALSE);
     LOGI("get_func_list pkgname: %s\n", pkgname);
     memset(SV_PSZLOGPATH, 0x00, SIZE_BUFFER_128);
@@ -62,12 +62,18 @@ JNIEXPORT jlong JNICALL get_func_list(JNIEnv *env, jobject instance, jstring str
     strcat(SV_PSZLOGTHREADPATH, "/files/tmc_sdk.log.0");
     LOGI("set_package log_name: %s\n", SV_PSZLOGPATH);
     LOGI("set_package log_name_bak: %s\n", SV_PSZLOGTHREADPATH);
-//    CK_FUNCTION_LIST_PTR ck_ptr;
-//    CK_RV baseResult = C_GetFunctionList(&ck_ptr);
-//    LOGI("get_func_list baseResult: %ld", baseResult);
-//    LOGI("get_func_list version.major: %c", ck_ptr->version.major);
-//    LOGI("get_func_list version.minor: %c", ck_ptr->version.minor);
-    return 1;
+    char *devInfo = (char *) malloc(SDSC_MAX_DEV_NAME_LEN * sizeof(char));
+    if (devInfo == NULL) {
+        LOGE("get_dev_info with null alloc.");
+        return (*env)->NewStringUTF(env, '\0');
+    }
+    memset(devInfo, 0x00, SDSC_FIRMWARE_VER_LEN * sizeof(char));
+    unsigned long baseResult = SKF_GetFuncList( sv_Device, devInfo );
+    LOGI("get_dev_info baseResult: %ld", baseResult);
+    jstring  result = charToJstring(env, devInfo);
+    // need free the memory
+    free(devInfo);
+    return result;
 }
 
 JNIEXPORT jlong JNICALL import_cert(JNIEnv *env, jobject instance, jint handle) {
@@ -287,17 +293,17 @@ JNIEXPORT jlong JNICALL close_handle(JNIEnv *env, jobject instance, jint handle)
 
 JNIEXPORT jstring JNICALL get_dev_info(JNIEnv *env, jobject instance, jint handle) {
     LOGI("get_dev_info handle: %ld", handle);
-    char *firmVer = (char *) malloc(SDSC_MAX_DEV_NAME_LEN * sizeof(char));
-    if (firmVer == NULL) {
+    char *devInfo = (char *) malloc(SDSC_MAX_DEV_NAME_LEN * sizeof(char));
+    if (devInfo == NULL) {
         LOGE("get_dev_info with null alloc.");
         return (*env)->NewStringUTF(env, '\0');
     }
-    memset(firmVer, 0x00, SDSC_FIRMWARE_VER_LEN * sizeof(char));
-    unsigned long baseResult = SKF_GetDevInfo( sv_Device, firmVer );
+    memset(devInfo, 0x00, SDSC_FIRMWARE_VER_LEN * sizeof(char));
+    unsigned long baseResult = SKF_GetDevInfo( handle, devInfo );
     LOGI("get_dev_info baseResult: %ld", baseResult);
-    jstring  result = charToJstring(env, firmVer);
+    jstring  result = charToJstring(env, devInfo);
     // need free the memory
-    free(firmVer);
+    free(devInfo);
     return result;
 }
 
@@ -490,7 +496,7 @@ JNIEXPORT jlong JNICALL ecc_prv_key_decrypt(JNIEnv *env, jobject instance, jint 
     PECCCIPHERBLOB pCipherText;
     BYTE* pbPlainText;
     ULONG* pulPlainTextLen;
-    unsigned long baseResult = SKF_ECCDecrypt( handle, pCipherText, pbPlainText, pulPlainTextLen );
+    unsigned long baseResult = SKF_ECCPrvKeyDecrypt( handle, pCipherText, pbPlainText, pulPlainTextLen );
     LOGI("ecc_prv_key_decrypt baseResult: %ld", baseResult);
     return baseResult;
 }
@@ -510,7 +516,7 @@ JNIEXPORT jlong JNICALL cipher(JNIEnv *env, jobject instance, jint handle) {
     ULONG ulDataLen;
     BYTE *pbSignature;
     ULONG *pulSignLen;
-    unsigned long baseResult = SKF_RSASignData( handle, pbData, ulDataLen, pbSignature, pulSignLen );
+    unsigned long baseResult = SKF_Cipher( handle, pbData, ulDataLen, pbSignature, pulSignLen );
     LOGI("ecc_sign_data baseResult: %ld", baseResult);
     return baseResult;
 }
@@ -697,7 +703,7 @@ JNIEXPORT jlong JNICALL get_scio_type(JNIEnv *env, jobject instance, jint handle
 // Java和JNI函数的绑定表
 static JNINativeMethod method_table[] = {
         {"setPackageName",  "(Ljava/lang/String;)J",                                   (void *) set_package},
-        {"GetFuncList",     "(Ljava/lang/String;)J",                                   (void *) get_func_list},
+        {"GetFuncList",     "(Ljava/lang/String;)Ljava/lang/String;",                   (void *) get_func_list},
         {"ImportCert",      "(I)J",                                                     (void *) import_cert},
         {"ExportCert",      "(I)J",                                                     (void *) export_cert},
         {"EnumDev",         "()Ljava/lang/String;",                                    (void *) enum_dev},
@@ -748,7 +754,7 @@ static JNINativeMethod method_table[] = {
         {"TransmitSd",        "(I[BJJ)[B",                                                    (void *) transmit},
         {"TransmitEx",        "(I[BJ)[B",                                                 (void *) transmit_ex},
         {"GetSDKVer",         "()Ljava/lang/String;",                                    (void *) get_sdk_ver},
-//        {"GetSCIOType",      "(I)J",                                                     (void *) get_scio_type},
+        {"GetSCIOType",      "(I)J",                                                     (void *) get_scio_type},
 };
 
 // 注册native方法到java中

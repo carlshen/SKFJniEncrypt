@@ -20,7 +20,7 @@ public class AESEncrypt {
      * @return 1 : pass ， -1 or  -2 : error.
      */
     public static native long setPackageName(String str);
-    public static native long GetFuncList(String dev);
+    public static native String GetFuncList(String dev);
     public static native long ImportCert(int handle);
     public static native long ExportCert(int handle);
     public static native String EnumDev();

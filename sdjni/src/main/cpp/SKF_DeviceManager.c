@@ -461,6 +461,16 @@ extern "C" {
 		return SAR_OK;
 	}
 
+	// need update
+ULONG SKF_GetFuncList( DEVHANDLE hDev, DEVINFO * pDevInfo )
+{
+	CHAR* pszLog = ("**********Start to execute SKF_GetFuncList ********** \n");
+
+	WriteLogToFile( pszLog );
+
+	return SAR_OK;
+}
+
 #ifdef __cplusplus
 }
 #endif  /*__cplusplus*/

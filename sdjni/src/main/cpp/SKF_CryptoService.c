@@ -2582,6 +2582,94 @@ ULONG SKF_CloseHandle( HANDLE hHandle )
 	return SAR_OK;
 }
 
+// need update.
+ULONG SKF_ECCPrvKeyDecrypt( HCONTAINER hContainer, PECCCIPHERBLOB pCipherText, BYTE* pbPlainText, ULONG* pulPlainTextLen )
+{
+    CHAR* pszLog = ( "**********Start to execute SKF_ECCDecrypt ********** \n");
+    CHAR szLog[SIZE_BUFFER_1024];
+    //ECCCIPHERBLOB eccCiperBlob;
+    BYTE fileSFI[0x06] = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
+    PCONTAINERINFO pContainer;
+    BYTE apdu[SIZE_BUFFER_1024];
+    BYTE response[SIZE_BUFFER_1024];
+    DEVHANDLE hDev;
+    DWORD nResponseLen = 0;
+    LONG nRet = 0;
+#ifdef _DEBUG
+    ULONG m = 0;
+#endif
+    sv_fEnd = FALSE;
+    memset( apdu, 0x00, sizeof(apdu) );
+    memset( response, 0x00, sizeof(response) );
+    memset( szLog, 0x0, strlen(szLog) );
+
+    WriteLogToFile( pszLog );
+
+    //--------容器句柄不能为空
+    if( hContainer == NULL )
+    {
+        return SAR_INVALIDHANDLEERR;
+    }
+
+    if( pCipherText->CipherLen > SIZE_BUFFER_128 )
+    {
+        return SAR_INDATALENERR;
+    }
+
+    //--------获取设备句柄
+    GetDevHandleFromContainer( hContainer, &hDev );
+    pContainer = (PCONTAINERINFO)hContainer;
+    memcpy( fileSFI, pContainer->bSFI, sizeof(fileSFI) );
+
+
+    //--------组织APDU
+    memcpy( apdu, apdu_eccDecrypt, 0x05 );
+    apdu[2] = 0xEA;
+    apdu[3] = fileSFI[3];
+    apdu[4] = (BYTE)((BYTE)pCipherText->CipherLen + SIZE_BUFFER_96);  //长度字节
+
+    memcpy( apdu+0x05, (pCipherText->XCoordinate) + SIZE_BUFFER_32, SIZE_BUFFER_32 );
+    memcpy( apdu+0x05+SIZE_BUFFER_32, (pCipherText->YCoordinate) + SIZE_BUFFER_32, SIZE_BUFFER_32 );
+    memcpy( apdu+0x05+SIZE_BUFFER_64, (pCipherText->HASH), SIZE_BUFFER_32 );
+    memcpy( apdu+0x05+SIZE_BUFFER_96, pCipherText->Cipher, pCipherText->CipherLen);
+
+    nResponseLen = sizeof( response );
+    nRet = TransmitData( hDev, apdu, (BYTE)(0x05+(BYTE)pCipherText->CipherLen + SIZE_BUFFER_96), response, &nResponseLen );
+    if( nRet != SAR_OK )
+    {
+        sprintf( szLog, "ECC解密失败，错误码: %d \n", nRet );
+        WriteLogToFile( szLog );
+        sv_nStatus = 1;
+        return SAR_FAIL;
+    }
+
+    if( (response[nResponseLen-2] == 0x90) && (response[nResponseLen-1] == 0x00) )
+    {
+        if (pbPlainText != NULL)
+        {
+            memcpy( pbPlainText, response, nResponseLen-2 );
+        }
+        *pulPlainTextLen = nResponseLen-2;
+    }
+    else
+    {
+        sprintf( szLog, "ECC解密失败，状态码: %02x%02x \n", response[nResponseLen-2], response[nResponseLen-1] );
+        WriteLogToFile( szLog );
+        return SAR_FAIL;
+    }
+
+    return SAR_OK;
+}
+
+ULONG SKF_Cipher( HCONTAINER hContainer, BYTE *pbData, ULONG  ulDataLen, BYTE *pbSignature, ULONG *pulSignLen )
+{
+    CHAR* pszLog = ( "**********Start to execute SKF_RSASignData ********** \n" );
+
+    WriteLogToFile( pszLog );
+
+    return SAR_OK;
+}
+
 #ifdef __cplusplus
 }
 #endif  /*__cplusplus*/

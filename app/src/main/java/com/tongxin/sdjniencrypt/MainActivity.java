@@ -122,7 +122,7 @@ public class MainActivity extends AppCompatActivity {
         mGetFuncList.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                long result = AESEncrypt.GetFuncList(extPath);
+                String result = AESEncrypt.GetFuncList(extPath);
                 tvResult.setText("GetFuncList: " + result);
             }
         });
