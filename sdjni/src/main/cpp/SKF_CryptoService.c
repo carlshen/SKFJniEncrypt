@@ -46,7 +46,7 @@ ULONG SKF_GenRandom( DEVHANDLE hDev, BYTE *pbRandom, ULONG ulRandomLen )
 	LONG nRet = 0;
 	sv_fEnd = FALSE;
     memset( response, 0x00, sizeof(response) );
-	memset( szLog, 0x0, strlen(szLog) );
+	memset( szLog, 0x0, sizeof(szLog) );
 	memset( apdu, 0x00, sizeof(apdu) );
 
     WriteLogToFile( pszLog );
@@ -76,7 +76,7 @@ ULONG SKF_GenRandom( DEVHANDLE hDev, BYTE *pbRandom, ULONG ulRandomLen )
 //		PrintApduToFile( 0, apdu, 0x05 );
 
 	    nResponseLen = sizeof( response );
-	    nRet = TransmitData( hDev, apdu, 0x05, response, &nResponseLen );
+	    nRet = TransmitData( hDev, apdu_random, 0x05, response, &nResponseLen );
         if( nRet != SAR_OK )
 		{
 			sprintf( szLog, "取随机数失败，错误码: %d \n", nRet );
@@ -373,7 +373,7 @@ ULONG SKF_GenECCKeyPair( HCONTAINER hContainer, ULONG ulAlgId, ECCPUBLICKEYBLOB*
     nRet = TransmitData( hDev, apdu, 0x05, response, &nResponseLen );
     if( nRet != SAR_OK )
 	{
-//        _stprintf_s( szLog, _countof(szLog), TEXT("生成ECC签名密钥对失败，错误码: %d \n"), nRet );
+        sprintf( szLog, "生成ECC签名密钥对失败，错误码: %d \n", nRet );
 		WriteLogToFile( szLog );
 		sv_nStatus = 1;
 		return SAR_FAIL;
@@ -2242,16 +2242,6 @@ ULONG SKF_DecryptFinal (HANDLE hKey, BYTE *pbDecryptedData, ULONG *pulDecryptedL
             其他值: 错误码
 */
 ULONG SKF_DigestInit( DEVHANDLE hDev, ULONG ulAlgID, ECCPUBLICKEYBLOB* pPubKey, BYTE* pucID,
-							ULONG ulIDLen, HANDLE *phHash )
-{
-	//HASHINFO hashInfo;
-	//hashInfo.AlgID = ulAlgID;
-	//hashInfo.hDev = hDev;
-	//
-	//sm3( 
-	return SAR_OK;
-}
-ULONG SKF_DigestInit1( DEVHANDLE hDev, ULONG ulAlgID, ECCPUBLICKEYBLOB* pPubKey, BYTE* pucID,
 							ULONG ulIDLen, HANDLE *phHash )
 {
 	CHAR* pszLog = ( "**********Start to execute SKF_DigestInit ********** \n" );

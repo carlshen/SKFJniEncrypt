@@ -16,26 +16,9 @@ CHAR pLabel[32];
 CHAR pSerialNumber[32] = "02569874513625987452136529";
 
 
-#define  DEV_PLUG_IN_EVENT   1
-#define  DEV_PLUG_OUT_EVENT  2
-volatile BOOL g_bWaitForDevice = TRUE;
-volatile BOOL g_bPresent = FALSE;
-INT n1 = 0, n2 = 0, nFirst3 = 0;
-INT nA = 0, nB = 0, nFirstC = 0;
-
 #ifdef __cplusplus
 extern "C" {
 #endif  /*__cplusplus*/
-
-	ULONG del(CHAR *a, ULONG n)
-	{
-		ULONG i =0,j=0;
-		for(; i< n; i+=2,j++)
-		{
-			a[j] = a[i];
-		}
-		return j;	
-	}
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/*
@@ -360,23 +343,23 @@ extern "C" {
 	ULONG SKF_DisConnectDev( DEVHANDLE hDev )
 	{
 		CHAR* pszLog = ( "**********Start to execute SKF_DisConnectDev ********** \n" );
-//		TCHAR szLog[SIZE_BUFFER_1024];
+		CHAR szLog[SIZE_BUFFER_1024];
 
 		sv_fEnd = TRUE;
 		WriteLogToFile( pszLog );
 
-/*		LONG            lReturn;*/
+		LONG            lReturn;
 
-// 		lReturn = SCardDisconnect(hDev, SCARD_LEAVE_CARD);
-// 		if ( SCARD_S_SUCCESS != lReturn )
-// 		{
-// 			_stprintf_s( szLog, _countof(szLog), TEXT("SCardDisconnect fail : %d \n"), lReturn );
-// 			WriteLogToFile( szLog );
-// 			return SAR_FAIL;
-// 		}
+ 		lReturn = SDSCDisconnectDev(hDev);
+ 		if ( SAR_OK != lReturn )
+ 		{
+			sprintf( szLog, "SCardDisconnect fail : %d \n", lReturn );
+ 			WriteLogToFile( szLog );
+ 			return SAR_FAIL;
+ 		}
 
-// 		_stprintf_s( szLog, _countof(szLog), TEXT("SCardDisconnect success \n"), lReturn );
-// 		WriteLogToFile( szLog );
+		sprintf( szLog, "SCardDisconnect success \n", lReturn );
+ 		WriteLogToFile( szLog );
 
 		return SAR_OK;
 	}

@@ -32,6 +32,7 @@ public class AESEncrypt {
     public static native long ImportECCKey(int handle);
     public static native long ECCSignData(int handle);
     public static native long ECCVerify(int handle);
+    public static native long ExtECCVerify(int handle);
     public static native long GenDataWithECC(int handle);
     public static native long GenKeyWithECC(int handle);
     public static native long GenDataAndKeyWithECC(int handle);

@@ -21,6 +21,7 @@ add_library( # Sets the name of the library.
 		     src/main/cpp/Algorithms.c
 		     src/main/cpp/APDUs.c
 		     src/main/cpp/Global_Def.c
+		     src/main/cpp/SKF_ContainerManager.c
 		     src/main/cpp/SKF_CryptoService.c
 		     src/main/cpp/SKF_DeviceManager.c
              )

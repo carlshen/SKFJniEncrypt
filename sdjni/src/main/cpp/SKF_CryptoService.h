@@ -48,6 +48,8 @@ ULONG SKF_GenerateKeyWithECC( HANDLE hAgreementHandle, ECCPUBLICKEYBLOB* pECCPub
                               ECCPUBLICKEYBLOB* pTempECCPubKeyBlob, BYTE* pbID,
                               ULONG ulIDLen, HANDLE* phKeyHandle );
 ULONG SKF_ExportPublicKey( HCONTAINER hContainer, BOOL bSignFlag, BYTE* pbBlob, ULONG* pulBlobLen );
+ULONG SKF_ImportSessionKey( HCONTAINER hContainer, ULONG ulAlgId, BYTE* pbWrapedData,
+                            ULONG ulWrapedLen, HANDLE* phKey );
 ULONG SKF_SetSymmKey( DEVHANDLE hDev,  BYTE *pbKey, ULONG ulAlgID, HANDLE *phKey );
 ULONG SKF_EncryptInit( HANDLE hKey, BLOCKCIPHERPARAM encryptParam );
 ULONG SKF_Encrypt( HANDLE hKey, BYTE *pbData, ULONG ulDataLen,
@@ -63,8 +65,6 @@ ULONG SKF_DecryptUpdate( HANDLE hKey, BYTE * pbEncryptedData, ULONG ulEncryptedL
 ULONG SKF_DecryptFinal (HANDLE hKey, BYTE *pbDecryptedData, ULONG *pulDecryptedLen);
 ULONG SKF_DigestInit( DEVHANDLE hDev, ULONG ulAlgID, ECCPUBLICKEYBLOB* pPubKey, BYTE* pucID,
                       ULONG ulIDLen, HANDLE *phHash );
-ULONG SKF_DigestInit1( DEVHANDLE hDev, ULONG ulAlgID, ECCPUBLICKEYBLOB* pPubKey, BYTE* pucID,
-                       ULONG ulIDLen, HANDLE *phHash );
 ULONG SKF_Digest( HANDLE hHash, BYTE* pbData, ULONG ulDataLen, BYTE* pbHashData, ULONG* pulHashLen );
 ULONG SKF_DigestUpdate( HANDLE hHash, BYTE* pbData, ULONG ulDataLen );
 ULONG SKF_DigestFinal( HANDLE hHash, BYTE* pbHashData, ULONG* pulHashLen );

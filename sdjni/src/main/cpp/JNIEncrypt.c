@@ -10,11 +10,9 @@
 #include "SKF_TypeDef.h"
 #include "transmit.h"
 #include "Global_Def.h"
+#include "SKF_ContainerManager.h"
 #include "SKF_DeviceManager.h"
 #include "SKF_CryptoService.h"
-
-// just test flag for skf source
-#define SKF_SOURCE 1
 
 // 获取数组的大小
 # define NELEM(x) ((int) (sizeof(x) / sizeof((x)[0])))
@@ -55,7 +53,7 @@ JNIEXPORT jlong JNICALL set_package(JNIEnv *env, jobject instance, jstring str_)
 
 JNIEXPORT jlong JNICALL get_func_list(JNIEnv *env, jobject instance, jstring str_) {
     char *pkgname = (char *) (*env)->GetStringUTFChars(env, str_, JNI_FALSE);
-    LOGI("set_package external path: %s\n", pkgname);
+    LOGI("get_func_list pkgname: %s\n", pkgname);
     memset(SV_PSZLOGPATH, 0x00, SIZE_BUFFER_128);
     memcpy(SV_PSZLOGPATH, pkgname, strlen(pkgname));
     strcat(SV_PSZLOGPATH, "/files/tmc_sdk.log");
@@ -73,16 +71,35 @@ JNIEXPORT jlong JNICALL get_func_list(JNIEnv *env, jobject instance, jstring str
 }
 
 JNIEXPORT jlong JNICALL import_cert(JNIEnv *env, jobject instance, jint handle) {
-    LOGI("import_cert baseResult: %ld", handle);
+    LOGI("import_cert handle: %ld", handle);
+    char *pszDrives = (char *) malloc(SDSC_MAX_DEV_NUM * SDSC_MAX_DEV_NAME_LEN * sizeof(char));
+    if (pszDrives == NULL) {
+        LOGE("import_cert with null alloc.");
+        return (*env)->NewStringUTF(env, '\0');
+    }
+    memset(pszDrives, 0x00, SDSC_MAX_DEV_NUM * SDSC_MAX_DEV_NAME_LEN * sizeof(char));
+    unsigned long pulDrivesLen = SDSC_MAX_DEV_NUM * SDSC_MAX_DEV_NAME_LEN * sizeof(char);
+    unsigned long baseResult = SKF_ImportCertificate(handle, 1, pszDrives, &pulDrivesLen);
+    LOGI("import_cert result: %ld", baseResult);
     return handle;
 }
 
 JNIEXPORT jlong JNICALL export_cert(JNIEnv *env, jobject instance, jint handle) {
-    LOGI("export_cert baseResult: %ld", handle);
+    LOGI("export_cert handle: %ld", handle);
+    char *pszDrives = (char *) malloc(SDSC_MAX_DEV_NUM * SDSC_MAX_DEV_NAME_LEN * sizeof(char));
+    if (pszDrives == NULL) {
+        LOGE("export_cert with null alloc.");
+        return (*env)->NewStringUTF(env, '\0');
+    }
+    memset(pszDrives, 0x00, SDSC_MAX_DEV_NUM * SDSC_MAX_DEV_NAME_LEN * sizeof(char));
+    unsigned long pulDrivesLen = SDSC_MAX_DEV_NUM * SDSC_MAX_DEV_NAME_LEN * sizeof(char);
+    unsigned long baseResult = SKF_ExportCertificate(handle, 1, pszDrives, &pulDrivesLen);
+    LOGI("export_cert result: %ld", baseResult);
     return handle;
 }
 
 JNIEXPORT jstring JNICALL enum_dev(JNIEnv *env, jobject instance) {
+    LOGI("enum_dev function.");
     char *pszDrives = (char *) malloc(SDSC_MAX_DEV_NUM * SDSC_MAX_DEV_NAME_LEN * sizeof(char));
     if (pszDrives == NULL) {
         LOGE("EnumDev with null alloc.");
@@ -91,12 +108,7 @@ JNIEXPORT jstring JNICALL enum_dev(JNIEnv *env, jobject instance) {
     memset(pszDrives, 0x00, SDSC_MAX_DEV_NUM * SDSC_MAX_DEV_NAME_LEN * sizeof(char));
     unsigned long pulDrivesLen = SDSC_MAX_DEV_NUM * SDSC_MAX_DEV_NAME_LEN * sizeof(char);
     unsigned long pulDriveNum = 0;
-    unsigned long baseResult = 0;
-    if (SKF_SOURCE) {
-        baseResult = SKF_EnumDev(pszDrives, &pulDrivesLen, &pulDriveNum);
-    } else {
-        baseResult = SDSCListDevs(pszDrives, &pulDrivesLen, &pulDriveNum);
-    }
+    unsigned long baseResult = SKF_EnumDev(pszDrives, &pulDrivesLen, &pulDriveNum);
     LOGI("EnumDev result: %ld", baseResult);
     LOGI("EnumDev pulDriveNum: %ld", pulDriveNum);
     LOGI("EnumDev pszDrives: %s\n", pszDrives);
@@ -114,12 +126,7 @@ JNIEXPORT jint JNICALL connect_dev(JNIEnv *env, jobject instance, jstring str_) 
     }
     LOGI("connect_dev szDrive: %s\n", szDrive);
     int pulDriveNum = 0;
-    unsigned long baseResult = 0;
-    if (SKF_SOURCE) {
-        baseResult = SKF_ConnectDev(szDrive, &pulDriveNum);
-    } else {
-        baseResult = SDSCConnectDev(szDrive, &pulDriveNum);
-    }
+    unsigned long baseResult = SKF_ConnectDev(szDrive, &pulDriveNum);
     LOGI("connect_dev baseResult: %ld", baseResult);
     LOGI("connect_dev pulDriveNum: %d", pulDriveNum);
     sv_Device = pulDriveNum;
@@ -132,77 +139,154 @@ JNIEXPORT jint JNICALL connect_dev(JNIEnv *env, jobject instance, jstring str_) 
 }
 
 JNIEXPORT jlong JNICALL disconnect_dev(JNIEnv *env, jobject instance, jint handle) {
-    unsigned long baseResult = 0;
-    if (SKF_SOURCE) {
-        baseResult = SKF_DisConnectDev(sv_Device);
-    } else {
-        baseResult = SDSCDisconnectDev(handle);
-    }
+    LOGI("disconnect_dev handle: %ld", handle);
+    unsigned long baseResult = SKF_DisConnectDev(sv_Device);
     LOGI("disconnect_dev baseResult: %ld", baseResult);
     return baseResult;
 }
 
 JNIEXPORT jlong JNICALL gen_random(JNIEnv *env, jobject instance, jint handle) {
-    LOGI("gen_random baseResult: %ld", handle);
-    return handle;
+    LOGI("gen_random handle: %ld", handle);
+    char *pszDrives = (char *) malloc(SDSC_MAX_DEV_NUM * SDSC_MAX_DEV_NAME_LEN * sizeof(char));
+    if (pszDrives == NULL) {
+        LOGE("gen_random with null alloc.");
+        return (*env)->NewStringUTF(env, '\0');
+    }
+    memset(pszDrives, 0x00, SDSC_MAX_DEV_NUM * SDSC_MAX_DEV_NAME_LEN * sizeof(char));
+    unsigned long pulDrivesLen = SDSC_MAX_DEV_NUM * SDSC_MAX_DEV_NAME_LEN * sizeof(char);
+    unsigned long baseResult = SKF_GenRandom(handle, pszDrives, &pulDrivesLen);
+    LOGI("gen_random baseResult: %ld", baseResult);
+    return baseResult;
 }
 
 JNIEXPORT jlong JNICALL gen_ecc_key(JNIEnv *env, jobject instance, jint handle) {
-    LOGI("gen_ecc_key baseResult: %ld", handle);
-    return handle;
+    LOGI("gen_ecc_key handle: %ld", handle);
+    ECCPUBLICKEYBLOB pBlob;
+    unsigned long baseResult = SKF_GenECCKeyPair( handle, SGD_SM2_1, &pBlob );
+    LOGI("gen_ecc_key baseResult: %ld", baseResult);
+    return baseResult;
 }
 
 JNIEXPORT jlong JNICALL import_ecc_key(JNIEnv *env, jobject instance, jint handle) {
-    LOGI("import_ecc_key baseResult: %ld", handle);
-    return handle;
+    LOGI("import_ecc_key handle: %ld", handle);
+    PENVELOPEDKEYBLOB pEnvelopedKeyBlob;
+    unsigned long baseResult = SKF_ImportECCKeyPair( handle, pEnvelopedKeyBlob );
+    LOGI("import_ecc_key baseResult: %ld", baseResult);
+    return baseResult;
 }
 
 JNIEXPORT jlong JNICALL ecc_sign_data(JNIEnv *env, jobject instance, jint handle) {
-    LOGI("export_cert baseResult: %ld", handle);
-    return handle;
+    LOGI("ecc_sign_data handle: %ld", handle);
+    BYTE *pbData;
+    ULONG ulDataLen;
+    PECCSIGNATUREBLOB pSignature;
+    unsigned long baseResult = SKF_ECCSignData( handle, pbData, ulDataLen, pSignature );
+    LOGI("ecc_sign_data baseResult: %ld", baseResult);
+    return baseResult;
 }
 
 JNIEXPORT jlong JNICALL ecc_verify(JNIEnv *env, jobject instance, jint handle) {
-    LOGI("ecc_sign_data baseResult: %ld", handle);
-    return handle;
+    LOGI("ecc_verify handle: %ld", handle);
+    BYTE *pbData;
+    ULONG ulDataLen;
+    ECCPUBLICKEYBLOB pECCPubKeyBlob;
+    PECCSIGNATUREBLOB pSignature;
+    unsigned long baseResult = SKF_ECCVerify( handle, &pECCPubKeyBlob, pbData, ulDataLen, pSignature );
+    LOGI("ecc_verify baseResult: %ld", baseResult);
+    return baseResult;
+}
+
+JNIEXPORT jlong JNICALL ext_ecc_verify(JNIEnv *env, jobject instance, jint handle) {
+    LOGI("ext_ecc_verify handle: %ld", handle);
+    BYTE *pbData;
+    ULONG ulDataLen;
+    ECCPUBLICKEYBLOB pECCPubKeyBlob;
+    PECCSIGNATUREBLOB pSignature;
+    unsigned long baseResult = SKF_ExtECCVerify( handle, &pECCPubKeyBlob, pbData, ulDataLen, pSignature );
+    LOGI("ext_ecc_verify baseResult: %ld", baseResult);
+    return baseResult;
 }
 
 JNIEXPORT jlong JNICALL gen_data_ecc(JNIEnv *env, jobject instance, jint handle) {
-    LOGI("gen_data_ecc baseResult: %ld", handle);
-    return handle;
+    LOGI("gen_data_ecc handle: %ld", handle);
+    BYTE *pbData;
+    ULONG ulDataLen;
+    ECCPUBLICKEYBLOB pECCPubKeyBlob;
+    HANDLE* phAgreementHandle;
+    unsigned long baseResult = SKF_GenerateAgreementDataWithECC( handle, SGD_SM2_1, &pECCPubKeyBlob,
+            pbData, ulDataLen, phAgreementHandle );
+    LOGI("gen_data_ecc baseResult: %ld", baseResult);
+    return baseResult;
 }
 
 JNIEXPORT jlong JNICALL gen_key_ecc(JNIEnv *env, jobject instance, jint handle) {
-    LOGI("gen_key_ecc baseResult: %ld", handle);
-    return handle;
+    LOGI("gen_key_ecc handle: %ld", handle);
+    ULONG ulAlgId;
+    ECCPUBLICKEYBLOB pSponsorECCPubKeyBlob;
+    ECCPUBLICKEYBLOB pTempECCPubKeyBlob;
+    BYTE pbID;
+    ULONG ulIDLen;
+    HANDLE phKeyHandle;
+    unsigned long baseResult = SKF_GenerateKeyWithECC( handle, &pSponsorECCPubKeyBlob,
+            &pTempECCPubKeyBlob, &pbID, ulIDLen, &phKeyHandle );
+    LOGI("gen_key_ecc baseResult: %ld", baseResult);
+    return baseResult;
 }
 
 JNIEXPORT jlong JNICALL gen_data_key_ecc(JNIEnv *env, jobject instance, jint handle) {
-    LOGI("gen_data_key_ecc baseResult: %ld", handle);
-    return handle;
+    LOGI("gen_data_key_ecc handle: %ld", handle);
+    ULONG ulAlgId;
+    ECCPUBLICKEYBLOB pSponsorECCPubKeyBlob;
+    ECCPUBLICKEYBLOB pSponsorTempECCPubKeyBlob;
+    ECCPUBLICKEYBLOB pTempECCPubKeyBlob;
+    BYTE pbID;
+    ULONG ulIDLen;
+    BYTE pbSponsorID;
+    ULONG ulSponsorIDLen;
+    HANDLE phKeyHandle;
+    unsigned long baseResult = SKF_GenerateAgreementDataAndKeyWithECC( handle, ulAlgId, &pSponsorECCPubKeyBlob,
+            &pSponsorTempECCPubKeyBlob, &pTempECCPubKeyBlob, &pbID, ulIDLen, &pbSponsorID, ulSponsorIDLen, &phKeyHandle );
+    LOGI("gen_data_key_ecc baseResult: %ld", baseResult);
+    return baseResult;
 }
 
 JNIEXPORT jlong JNICALL export_public_key(JNIEnv *env, jobject instance, jint handle) {
-    LOGI("export_public_key baseResult: %ld", handle);
-    return handle;
+    LOGI("export_public_key handle: %ld", handle);
+    BYTE pbBlob;
+    ULONG pulBlobLen;
+    unsigned long baseResult = SKF_ExportPublicKey( handle, 1, &pbBlob, &pulBlobLen );
+    LOGI("export_public_key baseResult: %ld", baseResult);
+    return baseResult;
 }
 
 JNIEXPORT jlong JNICALL import_session_key(JNIEnv *env, jobject instance, jint handle) {
-    LOGI("import_session_key baseResult: %ld", handle);
-    return handle;
+    LOGI("import_session_key handle: %ld", handle);
+    BYTE* pbBlob;
+    ULONG pulBlobLen;
+    HANDLE phKey;
+    unsigned long baseResult = SKF_ImportSessionKey( handle, SGD_SM2_1, pbBlob, pulBlobLen, &phKey );
+    LOGI("import_session_key baseResult: %ld", baseResult);
+    return baseResult;
 }
 
 JNIEXPORT jlong JNICALL set_sym_key(JNIEnv *env, jobject instance, jint handle) {
-    LOGI("set_sym_key baseResult: %ld", handle);
-    return handle;
+    LOGI("set_sym_key handle: %ld", handle);
+    BYTE* pbBlob;
+    HANDLE* phKey;
+    unsigned long baseResult = SKF_SetSymmKey( handle, pbBlob, SGD_SM2_1, phKey );
+    LOGI("set_sym_key baseResult: %ld", baseResult);
+    return baseResult;
 }
 
 JNIEXPORT jlong JNICALL close_handle(JNIEnv *env, jobject instance, jint handle) {
-    LOGI("close_handle baseResult: %ld", handle);
-    return handle;
+    LOGI("close_handle handle: %ld", handle);
+    unsigned long baseResult = SKF_CloseHandle( handle );
+    LOGI("close_handle baseResult: %ld", baseResult);
+    return baseResult;
 }
 
 JNIEXPORT jstring JNICALL get_dev_info(JNIEnv *env, jobject instance, jint handle) {
+    LOGI("get_dev_info handle: %ld", handle);
     char *firmVer = (char *) malloc(SDSC_MAX_DEV_NAME_LEN * sizeof(char));
     if (firmVer == NULL) {
         LOGE("get_dev_info with null alloc.");
@@ -218,114 +302,217 @@ JNIEXPORT jstring JNICALL get_dev_info(JNIEnv *env, jobject instance, jint handl
 }
 
 JNIEXPORT jlong JNICALL get_za(JNIEnv *env, jobject instance, jint handle) {
-    LOGI("get_za baseResult: %ld", handle);
-    return handle;
+    LOGI("get_za handle: %ld", handle);
+    unsigned long baseResult = SKF_CloseHandle( handle );
+    LOGI("get_za baseResult: %ld", baseResult);
+    return baseResult;
 }
 
 JNIEXPORT jlong JNICALL encrypt_init(JNIEnv *env, jobject instance, jint handle) {
-    LOGI("encrypt_init baseResult: %ld", handle);
-    return handle;
+    LOGI("encrypt_init handle: %ld", handle);
+    BLOCKCIPHERPARAM encryptParam;
+    unsigned long baseResult = SKF_EncryptInit( handle, encryptParam );
+    LOGI("encrypt_init baseResult: %ld", baseResult);
+    return baseResult;
 }
 
 JNIEXPORT jlong JNICALL encrypt(JNIEnv *env, jobject instance, jint handle) {
-    LOGI("encrypt baseResult: %ld", handle);
-    return handle;
+    LOGI("encrypt handle: %ld", handle);
+    BYTE *pbData;
+    ULONG ulDataLen;
+    BYTE *pbEncryptedData;
+    ULONG *pulEncryptedLen;
+    unsigned long baseResult = SKF_Encrypt( handle, pbData, ulDataLen, pbEncryptedData, pulEncryptedLen );
+    LOGI("encrypt baseResult: %ld", baseResult);
+    return baseResult;
 }
 
 JNIEXPORT jlong JNICALL encrypt_update(JNIEnv *env, jobject instance, jint handle) {
-    LOGI("encrypt_update baseResult: %ld", handle);
-    return handle;
+    LOGI("encrypt_update handle: %ld", handle);
+    BYTE *pbData;
+    ULONG ulDataLen;
+    BYTE *pbEncryptedData;
+    ULONG *pulEncryptedLen;
+    unsigned long baseResult = SKF_EncryptUpdate( handle, pbData, ulDataLen, pbEncryptedData, pulEncryptedLen );
+    LOGI("encrypt_update baseResult: %ld", baseResult);
+    return baseResult;
 }
 
 JNIEXPORT jlong JNICALL encrypt_final(JNIEnv *env, jobject instance, jint handle) {
-    LOGI("encrypt_final baseResult: %ld", handle);
-    return handle;
+    LOGI("encrypt_final handle: %ld", handle);
+    BYTE *pbEncryptedData;
+    ULONG *pulEncryptedLen;
+    unsigned long baseResult = SKF_EncryptFinal( handle, pbEncryptedData, pulEncryptedLen );
+    LOGI("encrypt_final baseResult: %ld", baseResult);
+    return baseResult;
 }
 
 JNIEXPORT jlong JNICALL decrypt_init(JNIEnv *env, jobject instance, jint handle) {
-    LOGI("decrypt_init baseResult: %ld", handle);
-    return handle;
+    LOGI("decrypt_init handle: %ld", handle);
+    BLOCKCIPHERPARAM encryptParam;
+    unsigned long baseResult = SKF_DecryptInit( handle, encryptParam );
+    LOGI("decrypt_init baseResult: %ld", baseResult);
+    return baseResult;
 }
 
 JNIEXPORT jlong JNICALL decrypt(JNIEnv *env, jobject instance, jint handle) {
-    LOGI("decrypt baseResult: %ld", handle);
-    return handle;
+    LOGI("decrypt handle: %ld", handle);
+    BYTE *pbData;
+    ULONG ulDataLen;
+    BYTE *pbEncryptedData;
+    ULONG *pulEncryptedLen;
+    unsigned long baseResult = SKF_Decrypt( handle, pbData, ulDataLen, pbEncryptedData, pulEncryptedLen );
+    LOGI("decrypt baseResult: %ld", baseResult);
+    return baseResult;
 }
 
 JNIEXPORT jlong JNICALL decrypt_update(JNIEnv *env, jobject instance, jint handle) {
-    LOGI("decrypt_update baseResult: %ld", handle);
-    return handle;
+    LOGI("decrypt_update handle: %ld", handle);
+    BYTE *pbData;
+    ULONG ulDataLen;
+    BYTE *pbEncryptedData;
+    ULONG *pulEncryptedLen;
+    unsigned long baseResult = SKF_DecryptUpdate( handle, pbData, ulDataLen, pbEncryptedData, pulEncryptedLen );
+    LOGI("decrypt_update baseResult: %ld", baseResult);
+    return baseResult;
 }
 
 JNIEXPORT jlong JNICALL decrypt_final(JNIEnv *env, jobject instance, jint handle) {
-    LOGI("decrypt_final baseResult: %ld", handle);
-    return handle;
+    LOGI("decrypt_final handle: %ld", handle);
+    BYTE *pbEncryptedData;
+    ULONG *pulEncryptedLen;
+    unsigned long baseResult = SKF_DecryptFinal( handle, pbEncryptedData, pulEncryptedLen );
+    LOGI("decrypt_final baseResult: %ld", baseResult);
+    return baseResult;
 }
 
 JNIEXPORT jlong JNICALL digest_init(JNIEnv *env, jobject instance, jint handle) {
-    LOGI("digest_init baseResult: %ld", handle);
-    return handle;
+    LOGI("digest_init handle: %ld", handle);
+    ECCPUBLICKEYBLOB* pPubKey;
+    BYTE* pucID;
+    ULONG ulIDLen;
+    HANDLE *phHash;
+    unsigned long baseResult = SKF_DigestInit( handle, SGD_SM2_1, pPubKey, pucID, ulIDLen, phHash );
+    LOGI("digest_init baseResult: %ld", baseResult);
+    return baseResult;
 }
 
 JNIEXPORT jlong JNICALL digest(JNIEnv *env, jobject instance, jint handle) {
-    LOGI("digest baseResult: %ld", handle);
-    return handle;
+    LOGI("digest handle: %ld", handle);
+    BYTE *pbData;
+    ULONG ulDataLen;
+    BYTE *pbEncryptedData;
+    ULONG *pulEncryptedLen;
+    unsigned long baseResult = SKF_Digest( handle, pbData, ulDataLen, pbEncryptedData, pulEncryptedLen );
+    LOGI("digest baseResult: %ld", baseResult);
+    return baseResult;
 }
 
 JNIEXPORT jlong JNICALL digest_update(JNIEnv *env, jobject instance, jint handle) {
-    LOGI("digest_update baseResult: %ld", handle);
-    return handle;
+    LOGI("digest_update handle: %ld", handle);
+    BYTE *pbData;
+    ULONG ulDataLen;
+    unsigned long baseResult = SKF_DigestUpdate( handle, pbData, ulDataLen );
+    LOGI("digest_update baseResult: %ld", baseResult);
+    return baseResult;
 }
 
 JNIEXPORT jlong JNICALL digest_final(JNIEnv *env, jobject instance, jint handle) {
-    LOGI("digest_final baseResult: %ld", handle);
-    return handle;
+    LOGI("digest_final handle: %ld", handle);
+    BYTE *pbHashData;
+    ULONG *pulHashLen;
+    unsigned long baseResult = SKF_DigestFinal( handle, pbHashData, pulHashLen );
+    LOGI("digest_final baseResult: %ld", baseResult);
+    return baseResult;
 }
 
 JNIEXPORT jlong JNICALL mac_init(JNIEnv *env, jobject instance, jint handle) {
-    LOGI("mac_init baseResult: %ld", handle);
-    return handle;
+    LOGI("mac_init handle: %ld", handle);
+    BLOCKCIPHERPARAM* pMacParam;
+    HANDLE *phMac;
+    unsigned long baseResult = SKF_MacInit( handle, pMacParam, phMac );
+    LOGI("mac_init baseResult: %ld", baseResult);
+    return baseResult;
+}
+
+JNIEXPORT jlong JNICALL mac(JNIEnv *env, jobject instance, jint handle) {
+    LOGI("mac handle: %ld", handle);
+    BYTE *pbData;
+    ULONG ulDataLen;
+    BYTE *pbEncryptedData;
+    ULONG *pulEncryptedLen;
+    unsigned long baseResult = SKF_Mac( handle, pbData, ulDataLen, pbEncryptedData, pulEncryptedLen );
+    LOGI("mac baseResult: %ld", baseResult);
+    return baseResult;
 }
 
 JNIEXPORT jlong JNICALL mac_update(JNIEnv *env, jobject instance, jint handle) {
-    LOGI("mac_update baseResult: %ld", handle);
-    return handle;
+    LOGI("mac_update handle: %ld", handle);
+    BYTE *pbData;
+    ULONG ulDataLen;
+    unsigned long baseResult = SKF_MacUpdate( handle, pbData, ulDataLen );
+    LOGI("mac_update baseResult: %ld", baseResult);
+    return baseResult;
 }
 
 JNIEXPORT jlong JNICALL mac_final(JNIEnv *env, jobject instance, jint handle) {
-    LOGI("mac_final baseResult: %ld", handle);
-    return handle;
+    LOGI("mac_final handle: %ld", handle);
+    BYTE *pbHashData;
+    ULONG *pulHashLen;
+    unsigned long baseResult = SKF_MacFinal( handle, pbHashData, pulHashLen );
+    LOGI("mac_final baseResult: %ld", baseResult);
+    return baseResult;
 }
 
 JNIEXPORT jlong JNICALL gen_key(JNIEnv *env, jobject instance, jint handle) {
-    LOGI("generate_key baseResult: %ld", handle);
-//    CK_SESSION_HANDLE hSession;	/* the session's handle */
-//    CK_MECHANISM_PTR pMechanism;	/* the key generation mechanism */
-//    CK_ATTRIBUTE_PTR pTemplate;	/* template for the new key */
-//    CK_ULONG ulCount;	/* number of attributes in template */
-//    CK_OBJECT_HANDLE_PTR phKey;
-//    C_GenerateKey(hSession, pMechanism, pTemplate, ulCount, phKey);
-    return handle;
+    LOGI("generate_key handle: %ld", handle);
+    // need update GenerateKey
+    ULONG ulBitsLen;
+    RSAPRIVATEKEYBLOB *pBlob;
+    unsigned long baseResult = SKF_GenExtRSAKey( handle, ulBitsLen, pBlob );
+    LOGI("generate_key baseResult: %ld", baseResult);
+    return baseResult;
 }
 
 JNIEXPORT jlong JNICALL ecc_export_session_key(JNIEnv *env, jobject instance, jint handle) {
-    LOGI("ecc_export_session_key baseResult: %ld", handle);
-    return handle;
+    LOGI("ecc_export_session_key handle: %ld", handle);
+    ECCPUBLICKEYBLOB* pPubKey;
+    PECCCIPHERBLOB pData;
+    HANDLE* phSessionKey;
+    unsigned long baseResult = SKF_ECCExportSessionKey( handle, SGD_SM2_1, pPubKey, pData, phSessionKey );
+    LOGI("ecc_export_session_key baseResult: %ld", baseResult);
+    return baseResult;
 }
 
 JNIEXPORT jlong JNICALL ecc_prv_key_decrypt(JNIEnv *env, jobject instance, jint handle) {
-    LOGI("ecc_prv_key_decrypt baseResult: %ld", handle);
-    return handle;
+    LOGI("ecc_prv_key_decrypt handle: %ld", handle);
+    // need update ECCPrvKeyDecrypt
+    PECCCIPHERBLOB pCipherText;
+    BYTE* pbPlainText;
+    ULONG* pulPlainTextLen;
+    unsigned long baseResult = SKF_ECCDecrypt( handle, pCipherText, pbPlainText, pulPlainTextLen );
+    LOGI("ecc_prv_key_decrypt baseResult: %ld", baseResult);
+    return baseResult;
 }
 
 JNIEXPORT jlong JNICALL import_key_pair(JNIEnv *env, jobject instance, jint handle) {
-    LOGI("import_key_pair baseResult: %ld", handle);
-    return handle;
+    LOGI("import_key_pair handle: %ld", handle);
+    PENVELOPEDKEYBLOB pEnvelopedKeyBlob;
+    unsigned long baseResult = SKF_ImportECCKeyPair2( handle, pEnvelopedKeyBlob );
+    LOGI("import_key_pair baseResult: %ld", baseResult);
+    return baseResult;
 }
 
 JNIEXPORT jlong JNICALL cipher(JNIEnv *env, jobject instance, jint handle) {
-    LOGI("cipher baseResult: %ld", handle);
-    return handle;
+    LOGI("cipher handle: %ld", handle);
+    // need update Cipher
+    BYTE *pbData;
+    ULONG ulDataLen;
+    BYTE *pbSignature;
+    ULONG *pulSignLen;
+    unsigned long baseResult = SKF_RSASignData( handle, pbData, ulDataLen, pbSignature, pulSignLen );
+    LOGI("ecc_sign_data baseResult: %ld", baseResult);
+    return baseResult;
 }
 
 JNIEXPORT jlong JNICALL begin_transaction(JNIEnv *env, jobject instance, jint handle) {
@@ -521,6 +708,7 @@ static JNINativeMethod method_table[] = {
         {"ImportECCKey",    "(I)J",                                                    (void *) import_ecc_key},
         {"ECCSignData",     "(I)J",                                                    (void *) ecc_sign_data},
         {"ECCVerify",       "(I)J",                                                    (void *) ecc_verify},
+        {"ExtECCVerify",    "(I)J",                                                    (void *) ext_ecc_verify},
         {"GenDataWithECC",   "(I)J",                                                    (void *) gen_data_ecc},
         {"GenKeyWithECC",    "(I)J",                                                    (void *) gen_key_ecc},
         {"GenDataAndKeyWithECC", "(I)J",                                                (void *) gen_data_key_ecc},
