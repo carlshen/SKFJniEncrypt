@@ -24,7 +24,7 @@ extern "C" {
 * 返 回 值：SAR_OK: 成功
             其他值:错误码
 */
-ULONG SKF_ImportCertificate( HCONTAINER hContainer, BOOL bSignFlag, BYTE* pbCert, ULONG ulCertLen )
+ULONG SKF_ImportCertificate( DEVHANDLE hContainer, BOOL bSignFlag, BYTE* pbCert, ULONG ulCertLen )
 {
 	CHAR* pszLog = "**********Start to execute SKF_ImportCertificate ********** \n";
 	CHAR szLog[SIZE_BUFFER_1024];
@@ -33,9 +33,6 @@ ULONG SKF_ImportCertificate( HCONTAINER hContainer, BOOL bSignFlag, BYTE* pbCert
 	BYTE bSFI = 0x00;
 	BYTE apdu[SIZE_BUFFER_1024];
 	BYTE response[SIZE_BUFFER_1024];
-	HAPPLICATION hApplication;
-	PAPPLICATIONINFO pApplication;
-    PCONTAINERINFO pContainer;
 	INT nDivider = 0;
 	INT nRemainder = 0;
 	INT nIndex = 0;
@@ -48,13 +45,6 @@ ULONG SKF_ImportCertificate( HCONTAINER hContainer, BOOL bSignFlag, BYTE* pbCert
 	{
 		return SAR_INVALIDHANDLEERR;
 	}
-
-	pContainer = (PCONTAINERINFO)hContainer;
-	hApplication = pContainer -> hApplication;
-	memcpy( fileSFI, pContainer->bSFI, sizeof(fileSFI) );
-	pApplication = (PAPPLICATIONINFO)hApplication;
-	hDev = pApplication -> hDev;
-	memcpy( appFID, pApplication->ApplicationFID, 0x02 );
 
 	WriteLogToFile( pszLog );
 	sv_fEnd = FALSE;
@@ -210,7 +200,7 @@ ULONG SKF_ImportCertificate( HCONTAINER hContainer, BOOL bSignFlag, BYTE* pbCert
             其他值:错误码
 */
 
-ULONG SKF_ExportCertificate( HCONTAINER hContainer, BOOL bSignFlag, BYTE* pbCert, ULONG* pulCertLen )
+ULONG SKF_ExportCertificate( DEVHANDLE hContainer, BOOL bSignFlag, BYTE* pbCert, ULONG* pulCertLen )
 {
 	CHAR* pszLog = "**********Start to execute SKF_ExportCertificate ********** \n";
     CHAR szLog[SIZE_BUFFER_1024];
@@ -219,9 +209,6 @@ ULONG SKF_ExportCertificate( HCONTAINER hContainer, BOOL bSignFlag, BYTE* pbCert
 	BYTE bSFI = 0x00;
 	BYTE apdu[SIZE_BUFFER_1024];
 	BYTE response[SIZE_BUFFER_1024];
-	HAPPLICATION hApplication;
-	PAPPLICATIONINFO pApplication;
-    PCONTAINERINFO pContainer;
 	INT nIndex = 0;
 	INT nDivider = 0;
 	INT nRemainder = 0;
@@ -241,13 +228,6 @@ ULONG SKF_ExportCertificate( HCONTAINER hContainer, BOOL bSignFlag, BYTE* pbCert
 	{
 		return SAR_INVALIDHANDLEERR;
 	}
-
-	pContainer = (PCONTAINERINFO)hContainer;
-	hApplication = pContainer -> hApplication;
-	memcpy( fileSFI, pContainer->bSFI, sizeof(fileSFI) );
-	pApplication = (PAPPLICATIONINFO)hApplication;
-	hDev = pApplication -> hDev;
-	memcpy( appFID, pApplication->ApplicationFID, 0x02 );
 
 	//--------选择ADF，通过FID选择
 	if( SV_SelectDFByFID(hDev, appFID, "") != SAR_OK )

@@ -21,11 +21,6 @@
 #define SIZE_BUFFER_512        512
 #define SIZE_BUFFER_1024       1024
 #define SIZE_BUFFER_2048       2048
-#define SIZE_BUFFER_3072       3072
-#define SIZE_BUFFER_4096       4096
-#define SIZE_BUFFER_8192       8192
-#define SIZE_BUFFER_10240      10240
-#define SIZE_BUFFER_102400     102400
 
 #define PARAM_E_EXIST		0x01
 #define PARAM_A_EXIST		0x02
@@ -86,17 +81,6 @@ CONTAINERINFO    sv_stContainer;    //容器
 DEVINFO          sv_stDevice;       //设备
 DEVHANDLE        sv_hDev;           //设备句柄
 HASHINFO         sv_stHash;         //哈希杂凑对象
-
-//有关容器定义变量
-//注：
-//--容器名称
-BYTE sv_containerNameInfo[MAX_CONTAINER_NUM][SIZE_CONTAINER_ITEM];
-BYTE sv_containerCurrentIndex;
-//--容器内密钥文件SFI
-const BYTE SV_CONTAINER_SFI[MAX_CONTAINER_NUM][6];
-//--容器全局类型
-ULONG sv_containerType;
-
 
 //有关文件定义变量
 //--文件名称

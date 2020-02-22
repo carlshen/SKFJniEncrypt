@@ -79,7 +79,8 @@ BYTE apdu_GenEccKeyPair[0x05];
 BYTE apdu_eccGenKeyPair[0x05];
 BYTE apdu_eccSignData[0x05];
 BYTE apdu_eccSignVerify[0x05];
-BYTE apdu_genDataKeyEcc[0x05];
+BYTE apdu_genDataKeyEcc[0x0D];
+BYTE apdu_getDevInfo[0x05];
 BYTE apdu_eccEncrypt[0x05];
 BYTE apdu_eccDecrypt[0x05];
 BYTE apdu_84_00[0x04];
@@ -91,6 +92,7 @@ BYTE apdu_C6_00[0x04];
 BYTE apdu_CA_05[0x05];
 BYTE apdu_CC_00[0x04];
 BYTE apdu_CE_00[0x04];
+BYTE apdu_CE_01[0x04];
 BYTE apdu_D6_00[0x04];
 BYTE apdu_E1_00[0x05];
 BYTE apdu_F1_00[0x04];
@@ -105,6 +107,10 @@ BYTE apdu_FA_03[0x04];
 BYTE apdu_FC_01[0x06];
 BYTE apdu_FC_02[0x04];
 BYTE apdu_FC_03[0x04];
+BYTE apdu_A001[0x02];
+BYTE apdu_A002[0x02];
+BYTE apdu_01[0x01];
+BYTE apdu_02[0x01];
 
 //SM1£¬¼ÓÃÜ£¬ECBÄ£Ê½£¬0x05
 BYTE apdu_encrypt_sm1_ecb[0x05];

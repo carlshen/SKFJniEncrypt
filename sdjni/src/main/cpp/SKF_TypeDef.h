@@ -20,13 +20,9 @@ typedef int                 INT;
 typedef unsigned char UINT8;
 typedef unsigned short UINT16;
 typedef unsigned int UINT32;
-typedef int BOOL;
-typedef UINT8 BYTE;
 typedef CHAR * LPSTR;
 typedef int HANDLE;
 typedef HANDLE DEVHANDLE;
-typedef HANDLE HAPPLICATION;
-typedef HANDLE HCONTAINER;
 
 //算法标识
 //分组密码算法标识
@@ -98,7 +94,7 @@ typedef struct Struct_APPLICATIONINFO {
 //容器信息
 typedef struct Struct_CONTAINERINFO {
 
-	HAPPLICATION hApplication;
+	DEVHANDLE hApplication;
 	ULONG  ulContainerType;
 	BYTE bSFI[6];
 

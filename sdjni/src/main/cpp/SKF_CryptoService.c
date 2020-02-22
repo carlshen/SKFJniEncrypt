@@ -2,25 +2,18 @@
 //
 //////////////////////////////////////////////////////////////////////
 #include <string.h>
+#include <zconf.h>
 #include "SKF_TypeDef.h"
 #include "Global_Def.h"
 #include "Algorithms.h"
 #include "transmit.h"
 #include "SKF_CryptoService.h"
+#include "APDUs.h"
+#include "logger.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif  /*__cplusplus*/
-
-//以下为内部函数
-void GetDevHandleFromContainer( HCONTAINER hContainer, DEVHANDLE* phDev )
-{
-	PCONTAINERINFO pContainer = (PCONTAINERINFO)hContainer;
-	PAPPLICATIONINFO pApplication = (PAPPLICATIONINFO)(pContainer->hApplication);
-	DEVHANDLE hDev = pApplication -> hDev;
-
-	*phDev = hDev;
-}
 
 //1
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -175,13 +168,11 @@ ULONG SKF_GenExtRSAKey( DEVHANDLE hDev, ULONG ulBitsLen, RSAPRIVATEKEYBLOB *pBlo
 * 返 回 值:	SAR_OK：成功
             其他值：错误码
 */
-ULONG SKF_GenRSAKeyPair( HCONTAINER hContainer, ULONG ulBitsLen, RSAPUBLICKEYBLOB* pBlob )
+ULONG SKF_GenRSAKeyPair( DEVHANDLE hContainer, ULONG ulBitsLen, RSAPUBLICKEYBLOB* pBlob )
 {
 	CHAR* pszLog = ( "**********Start to execute SKF_GenRSAKeyPair ********** \n" );
     
 	WriteLogToFile( pszLog );
-
-	sv_containerType = CONTAINER_RSA;
 
 	return SAR_OK;
 }
@@ -201,7 +192,7 @@ ULONG SKF_GenRSAKeyPair( HCONTAINER hContainer, ULONG ulBitsLen, RSAPUBLICKEYBLO
             其他值：错误码
 */
 
-ULONG SKF_ImportRSAKeyPair( HCONTAINER hContainer, ULONG ulSymAlgId, BYTE *pbWrappedKey, ULONG ulWrappedKeyLen,
+ULONG SKF_ImportRSAKeyPair( DEVHANDLE hContainer, ULONG ulSymAlgId, BYTE *pbWrappedKey, ULONG ulWrappedKeyLen,
                                    BYTE *pbEncryptedData, ULONG ulEncryptedDataLen)
 {
 	CHAR* pszLog = ( "**********Start to execute SKF_ImportRSAKeyPair ********** \n" );
@@ -225,7 +216,7 @@ ULONG SKF_ImportRSAKeyPair( HCONTAINER hContainer, ULONG ulSymAlgId, BYTE *pbWra
 * 返 回 值：SAR_OK: 成功
             其他值: 错误码
 */
-ULONG SKF_RSASignData( HCONTAINER hContainer, BYTE *pbData, ULONG  ulDataLen, BYTE *pbSignature, ULONG *pulSignLen )
+ULONG SKF_RSASignData( DEVHANDLE hContainer, BYTE *pbData, ULONG  ulDataLen, BYTE *pbSignature, ULONG *pulSignLen )
 {
 	CHAR* pszLog = ( "**********Start to execute SKF_RSASignData ********** \n" );
     
@@ -276,7 +267,7 @@ ULONG SKF_RSAVerify( DEVHANDLE hDev, RSAPUBLICKEYBLOB* pRSAPubKeyBlob, BYTE *pbD
 * 返 回 值：SAR_OK: 成功
             其他值: 错误码
 */
-ULONG SKF_RSAExportSessionKey( HCONTAINER hContainer, ULONG ulAlgId, RSAPUBLICKEYBLOB *pPubKey,
+ULONG SKF_RSAExportSessionKey( DEVHANDLE hContainer, ULONG ulAlgId, RSAPUBLICKEYBLOB *pPubKey,
 									 BYTE *pbData, ULONG  *pulDataLen, HANDLE *phSessionKey )
 {
 	CHAR* pszLog = ("**********Start to execute SKF_RSAExportSessionKey ********** \n");
@@ -318,7 +309,7 @@ ULONG SKF_ExtRSAPriKeyOperation( DEVHANDLE hDev, RSAPRIVATEKEYBLOB* pRSAPriKeyBl
 * 返 回 值：SAR_OK: 成功
             其他值: 错误码
 */
-ULONG SKF_GenECCKeyPair( HCONTAINER hContainer, ULONG ulAlgId, ECCPUBLICKEYBLOB* pBlob )
+ULONG SKF_GenECCKeyPair( DEVHANDLE hContainer, ULONG ulAlgId, ECCPUBLICKEYBLOB* pBlob )
 {
 	CHAR* pszLog = ( "**********Start to execute SKF_GenECCKeyPair ********** \n" );
 	CHAR szLog[SIZE_BUFFER_1024];
@@ -331,7 +322,6 @@ ULONG SKF_GenECCKeyPair( HCONTAINER hContainer, ULONG ulAlgId, ECCPUBLICKEYBLOB*
 	DWORD nResponseLen = 0;
 	LONG nRet = 0;
 	sv_fEnd = FALSE;
-	sv_containerType = CONTAINER_SM2;
 	
     memset( szLog, 0x0, strlen(szLog) );
 	memset( apdu, 0x00, sizeof(apdu) );
@@ -344,11 +334,6 @@ ULONG SKF_GenECCKeyPair( HCONTAINER hContainer, ULONG ulAlgId, ECCPUBLICKEYBLOB*
 	{
 		return SAR_INVALIDHANDLEERR;
 	}
-
-	//--------获取设备句柄
-	GetDevHandleFromContainer( hContainer, &hDev );
-	pContainer = (PCONTAINERINFO)hContainer;
-	memcpy( fileSFI, pContainer->bSFI, sizeof(fileSFI) );
 
 	//--------算法标识，只支持SGD_SM2_1算法
 	switch( ulAlgId )
@@ -422,7 +407,7 @@ ULONG SKF_GenECCKeyPair( HCONTAINER hContainer, ULONG ulAlgId, ECCPUBLICKEYBLOB*
 * 返 回 值：SAR_OK: 成功
             其他值: 错误码
 */
-ULONG SKF_ImportECCKeyPair( HCONTAINER hContainer, PENVELOPEDKEYBLOB pEnvelopedKeyBlob )
+ULONG SKF_ImportECCKeyPair( DEVHANDLE hContainer, PENVELOPEDKEYBLOB pEnvelopedKeyBlob )
 {
 	CHAR* pszLog = ( "**********Start to execute SKF_ImportECCKeyPair ********** \n" );
 	CHAR szLog[SIZE_BUFFER_1024];
@@ -433,9 +418,6 @@ ULONG SKF_ImportECCKeyPair( HCONTAINER hContainer, PENVELOPEDKEYBLOB pEnvelopedK
 	BYTE response[SIZE_BUFFER_1024];
 	BYTE tempbuf[SIZE_BUFFER_1024];
 	ULONG length = 0;
-	HAPPLICATION hApplication;
-	PAPPLICATIONINFO pApplication;
-    PCONTAINERINFO pContainer;
 	//ENVELOPEDKEYBLOB envelopedKeyBlob;
 	INT nDivider = 0;
 	INT nRemainder = 0;
@@ -449,13 +431,6 @@ ULONG SKF_ImportECCKeyPair( HCONTAINER hContainer, PENVELOPEDKEYBLOB pEnvelopedK
 	{
 		return SAR_INVALIDHANDLEERR;
 	}
-
-	pContainer = (PCONTAINERINFO)hContainer;
-	hApplication = pContainer -> hApplication;
-	memcpy( fileSFI, pContainer->bSFI, sizeof(fileSFI) );
-	pApplication = (PAPPLICATIONINFO)hApplication;
-	hDev = pApplication -> hDev;
-	memcpy( appFID, pApplication->ApplicationFID, 0x02 );
 
 	WriteLogToFile( pszLog );
 	sv_fEnd = FALSE;
@@ -597,7 +572,7 @@ ULONG SKF_ImportECCKeyPair( HCONTAINER hContainer, PENVELOPEDKEYBLOB pEnvelopedK
             其他值: 错误码
 */
 BYTE sign_ef_fid[2] = { 0x00, 0x00 };
-ULONG SKF_ECCSignData( HCONTAINER hContainer, BYTE *pbData, ULONG ulDataLen,
+ULONG SKF_ECCSignData( DEVHANDLE hContainer, BYTE *pbData, ULONG ulDataLen,
 							 PECCSIGNATUREBLOB pSignature )
 {
 	CHAR* pszLog = ("**********Start to execute SKF_ECCSignData ********** \n");
@@ -606,10 +581,7 @@ ULONG SKF_ECCSignData( HCONTAINER hContainer, BYTE *pbData, ULONG ulDataLen,
 	BYTE response[SIZE_BUFFER_1024];
 	BYTE fileSFI[0x06] = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
 	BYTE apdu[SIZE_BUFFER_1024];
-	PCONTAINERINFO pContainer;
 	DEVHANDLE hDev;
-	HAPPLICATION hApplication;
-	PAPPLICATIONINFO pApplication;
 	DWORD nResponseLen = 0;
 	LONG nRet = 0;
 	sv_fEnd = FALSE;
@@ -624,13 +596,6 @@ ULONG SKF_ECCSignData( HCONTAINER hContainer, BYTE *pbData, ULONG ulDataLen,
 	{
 		return SAR_INVALIDHANDLEERR;
 	}
-
-	pContainer = (PCONTAINERINFO)hContainer;
-	hApplication = pContainer -> hApplication;
-	memcpy( fileSFI, pContainer->bSFI, sizeof(fileSFI) );
-	pApplication = (PAPPLICATIONINFO)hApplication;
-	hDev = pApplication -> hDev;
-	memcpy( appFID, pApplication->ApplicationFID, 0x02 );
 
 	//--------选择ADF，通过FID选择
 	if( SV_SelectDFByFID(hDev, appFID, "选择ADF") != SAR_OK )
@@ -776,7 +741,7 @@ ULONG SKF_ECCVerify( DEVHANDLE hDev, ECCPUBLICKEYBLOB* pECCPubKeyBlob, BYTE* pbD
 * 返 回 值：SAR_OK: 成功
             其他值: 错误码
 */
-ULONG SKF_ECCExportSessionKey( HCONTAINER hContainer, ULONG ulAlgId, ECCPUBLICKEYBLOB* pPubKey,
+ULONG SKF_ECCExportSessionKey( DEVHANDLE hContainer, ULONG ulAlgId, ECCPUBLICKEYBLOB* pPubKey,
 									 PECCCIPHERBLOB pData, HANDLE* phSessionKey )
 {
 	CHAR* pszLog = ( "**********Start to execute SKF_ECCExportSessionKey ********** \n" );
@@ -787,9 +752,6 @@ ULONG SKF_ECCExportSessionKey( HCONTAINER hContainer, ULONG ulAlgId, ECCPUBLICKE
 	BYTE fileSFI[0x06] = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
 	BYTE appFID[0x02] = { 0xDF, 0x00 };
     SESSIONKEY sessionKey;
-    HAPPLICATION hApplication;
-	PAPPLICATIONINFO pApplication;
-    PCONTAINERINFO pContainer;
 	DEVHANDLE hDev;
 	DWORD nResponseLen = 0;
 	LONG nRet = 0;
@@ -806,13 +768,6 @@ ULONG SKF_ECCExportSessionKey( HCONTAINER hContainer, ULONG ulAlgId, ECCPUBLICKE
 	{
 		return SAR_INVALIDHANDLEERR;
 	}
-
-	pContainer = (PCONTAINERINFO)hContainer;
-	hApplication = pContainer -> hApplication;
-	memcpy( fileSFI, pContainer->bSFI, sizeof(fileSFI) );
-	pApplication = (PAPPLICATIONINFO)hApplication;
-	hDev = pApplication -> hDev;
-	memcpy( appFID, pApplication->ApplicationFID, 0x02 );
 
 	//--------取16字节随机数
 	memcpy( apdu, apdu_random, 0x05 );
@@ -999,7 +954,7 @@ ULONG SKF_ExtECCVerify( DEVHANDLE hDev, ECCPUBLICKEYBLOB*  pECCPubKeyBlob,BYTE* 
 * 返 回 值：SAR_OK: 成功
             其他值: 错误码
 */
-ULONG SKF_GenECCKeyPairEx( HCONTAINER hContainer, ULONG ulAlgId, ECCPUBLICKEYBLOB* pPubKeyBlob,
+ULONG SKF_GenECCKeyPairEx( DEVHANDLE hContainer, ULONG ulAlgId, ECCPUBLICKEYBLOB* pPubKeyBlob,
                                                  ECCPRIVATEKEYBLOB *pPrivKeyBlob )
 {
 	CHAR* pszLog = ( "**********Start to execute SKF_GenECCKeyPairEx ********** \n" );
@@ -1014,7 +969,6 @@ ULONG SKF_GenECCKeyPairEx( HCONTAINER hContainer, ULONG ulAlgId, ECCPUBLICKEYBLO
 	DWORD nResponseLen = 0;
 	LONG nRet = 0;
 	sv_fEnd = FALSE;
-	sv_containerType = CONTAINER_SM2;
 	
     memset( szLog, 0x0, strlen(szLog) );
 	memset( apdu, 0x00, sizeof(apdu) );
@@ -1027,11 +981,6 @@ ULONG SKF_GenECCKeyPairEx( HCONTAINER hContainer, ULONG ulAlgId, ECCPUBLICKEYBLO
 	{
 		return SAR_INVALIDHANDLEERR;
 	}
-
-	//--------获取设备句柄
-	GetDevHandleFromContainer( hContainer, &hDev );
-	pContainer = (PCONTAINERINFO)hContainer;
-	memcpy( fileSFI, pContainer->bSFI, sizeof(fileSFI) );
 
 	//--------算法标识，只支持SGD_SM2_1算法
 	switch( ulAlgId )
@@ -1106,7 +1055,7 @@ ULONG SKF_GenECCKeyPairEx( HCONTAINER hContainer, ULONG ulAlgId, ECCPUBLICKEYBLO
 * 返 回 值：SAR_OK: 成功
             其他值: 错误码
 */
-ULONG SKF_ImportECCKeyPair2( HCONTAINER hContainer, PENVELOPEDKEYBLOB pEnvelopedKeyBlob )
+ULONG SKF_ImportECCKeyPair2( DEVHANDLE hContainer, PENVELOPEDKEYBLOB pEnvelopedKeyBlob )
 {
 	CHAR* pszLog = ( "**********Start to execute SKF_ImportECCKeyPair ********** \n" );
 	CHAR szLog[SIZE_BUFFER_1024];
@@ -1117,9 +1066,6 @@ ULONG SKF_ImportECCKeyPair2( HCONTAINER hContainer, PENVELOPEDKEYBLOB pEnveloped
 	BYTE response[SIZE_BUFFER_1024];
 	BYTE tempbuf[SIZE_BUFFER_1024];
 	ULONG length = 0;
-	HAPPLICATION hApplication;
-	PAPPLICATIONINFO pApplication;
-    PCONTAINERINFO pContainer;
 	//ENVELOPEDKEYBLOB envelopedKeyBlob;
 	INT nDivider = 0;
 	INT nRemainder = 0;
@@ -1133,13 +1079,6 @@ ULONG SKF_ImportECCKeyPair2( HCONTAINER hContainer, PENVELOPEDKEYBLOB pEnveloped
 	{
 		return SAR_INVALIDHANDLEERR;
 	}
-
-	pContainer = (PCONTAINERINFO)hContainer;
-	hApplication = pContainer -> hApplication;
-	memcpy( fileSFI, pContainer->bSFI, sizeof(fileSFI) );
-	pApplication = (PAPPLICATIONINFO)hApplication;
-	hDev = pApplication -> hDev;
-	memcpy( appFID, pApplication->ApplicationFID, 0x02 );
 
 	WriteLogToFile( pszLog );
 	sv_fEnd = FALSE;
@@ -1275,7 +1214,7 @@ ULONG SKF_ImportECCKeyPair2( HCONTAINER hContainer, PENVELOPEDKEYBLOB pEnveloped
 * 返 回 值：SAR_OK: 成功
             其他值: 错误码
 */
-ULONG SKF_ECCDecrypt( HCONTAINER hContainer, PECCCIPHERBLOB pCipherText, BYTE* pbPlainText, ULONG* pulPlainTextLen )
+ULONG SKF_ECCDecrypt( DEVHANDLE hContainer, PECCCIPHERBLOB pCipherText, BYTE* pbPlainText, ULONG* pulPlainTextLen )
 {
 	CHAR* pszLog = ( "**********Start to execute SKF_ECCDecrypt ********** \n");
 	CHAR szLog[SIZE_BUFFER_1024];
@@ -1307,12 +1246,6 @@ ULONG SKF_ECCDecrypt( HCONTAINER hContainer, PECCCIPHERBLOB pCipherText, BYTE* p
 	{
 		return SAR_INDATALENERR;
 	}
-
-	//--------获取设备句柄
-	GetDevHandleFromContainer( hContainer, &hDev );
-	pContainer = (PCONTAINERINFO)hContainer;
-	memcpy( fileSFI, pContainer->bSFI, sizeof(fileSFI) );
-
 
 	//--------组织APDU
 	memcpy( apdu, apdu_eccDecrypt, 0x05 );
@@ -1369,7 +1302,7 @@ ULONG SKF_ECCDecrypt( HCONTAINER hContainer, PECCCIPHERBLOB pCipherText, BYTE* p
 * 返 回 值：SAR_OK: 成功
             其他值: 错误码
 */
-ULONG SKF_ECCMultAdd(HCONTAINER hContainer, unsigned int k, ECCPRIVATEKEYBLOB *e,
+ULONG SKF_ECCMultAdd(DEVHANDLE hContainer, unsigned int k, ECCPRIVATEKEYBLOB *e,
                                                  ECCPUBLICKEYBLOB *A, ECCPUBLICKEYBLOB * B, ECCPUBLICKEYBLOB * C)
 
 {
@@ -1402,11 +1335,6 @@ ULONG SKF_ECCMultAdd(HCONTAINER hContainer, unsigned int k, ECCPRIVATEKEYBLOB *e
 	{
 		return SAR_INDATAERR;
 	}
-
-	//--------获取设备句柄
-	GetDevHandleFromContainer( hContainer, &hDev );
-	pContainer = (PCONTAINERINFO)hContainer;
-	memcpy( fileSFI, pContainer->bSFI, sizeof(fileSFI) );
 
 	if(k != 0)
 	{
@@ -1486,7 +1414,7 @@ ULONG SKF_ECCMultAdd(HCONTAINER hContainer, unsigned int k, ECCPRIVATEKEYBLOB *e
 * 返 回 值：SAR_OK: 成功
             其他值: 错误码
 */
-ULONG SKF_ECCModMultAdd(HCONTAINER hContainer, ECCPRIVATEKEYBLOB *k, ECCPRIVATEKEYBLOB * a,
+ULONG SKF_ECCModMultAdd(DEVHANDLE hContainer, ECCPRIVATEKEYBLOB *k, ECCPRIVATEKEYBLOB * a,
                                                  ECCPRIVATEKEYBLOB * b, ECCPRIVATEKEYBLOB * c)
 
 {
@@ -1514,11 +1442,6 @@ ULONG SKF_ECCModMultAdd(HCONTAINER hContainer, ECCPRIVATEKEYBLOB *k, ECCPRIVATEK
 	{
 		return SAR_INVALIDHANDLEERR;
 	}
-
-	//--------获取设备句柄
-	GetDevHandleFromContainer( hContainer, &hDev );
-	pContainer = (PCONTAINERINFO)hContainer;
-	memcpy( fileSFI, pContainer->bSFI, sizeof(fileSFI) );
 
 	//--------组织APDU
 	memcpy( apdu, apdu_mod_multadd, 0x05 );
@@ -1572,7 +1495,7 @@ ULONG SKF_ECCModMultAdd(HCONTAINER hContainer, ECCPRIVATEKEYBLOB *k, ECCPRIVATEK
 
 
 //19--------------------NO
-ULONG SKF_GenerateAgreementDataWithECC( HCONTAINER hContainer, ULONG ulAlgId, ECCPUBLICKEYBLOB* pTempECCPubKeyBlob,
+ULONG SKF_GenerateAgreementDataWithECC( DEVHANDLE hContainer, ULONG ulAlgId, ECCPUBLICKEYBLOB* pTempECCPubKeyBlob,
 							BYTE* pbID, ULONG ulIDLen, HANDLE* phAgreementHandle )
 {
 	CHAR* pszLog = ( "**********Start to execute SKF_GenerateAgreementDataWithECC ********** \n");
@@ -1586,12 +1509,85 @@ ULONG SKF_GenerateAgreementDataWithECC( HCONTAINER hContainer, ULONG ulAlgId, EC
 ULONG SKF_GenerateAgreementDataAndKeyWithECC( HANDLE hContainer, ULONG ulAlgId,
 							ECCPUBLICKEYBLOB* pSponsorECCPubKeyBlob, ECCPUBLICKEYBLOB* pSponsorTempECCPubKeyBlob,
 							ECCPUBLICKEYBLOB* pTempECCPubKeyBlob, BYTE* pbID, ULONG ulIDLen, BYTE* pbSponsorID,
-							ULONG ulSponsorIDLen, HANDLE* phKeyHandle )
-{
+							ULONG ulSponsorIDLen, HANDLE* phKeyHandle ) {
 	CHAR* pszLog = ("**********Start to execute SKF_GenerateAgreementDataAndKeyWithECC ********** \n");
 
 	WriteLogToFile( pszLog );
 
+	// 1st command  80C80000 08 0107+B001+B101+0100
+	unsigned char *DataTobeSend = apdu_genDataKeyEcc;
+	unsigned long send_len = 0;
+	unsigned char check_sum = 0;
+
+	int ret;
+	unsigned char * tmpBuffer_wr = memalign(512, DATA_TRANSMIT_BUFFER_MAX_SIZE);
+	memset(tmpBuffer_wr, 0, DATA_TRANSMIT_BUFFER_MAX_SIZE);
+	send_len = sizeof(DataTobeSend);
+
+	unsigned char *tmpBuffer_rd = memalign(512, DATA_TRANSMIT_BUFFER_MAX_SIZE);
+	unsigned long recv_len = DATA_TRANSMIT_BUFFER_MAX_SIZE;
+	memset(tmpBuffer_rd, 0, DATA_TRANSMIT_BUFFER_MAX_SIZE);
+
+	//copy the raw data
+	memcpy(tmpBuffer_wr, (unsigned char *)DataTobeSend, send_len);
+
+    //fill the checksum byte
+    check_sum = CalculateCheckSum((tmpBuffer_wr+1), (send_len-1));
+
+	//fill the data ...........................................
+	*(tmpBuffer_wr+send_len) = check_sum;
+	send_len = send_len + 1;
+
+	int repeat_times = 10;
+	for (int i = 0; i < repeat_times; i++) {
+		if (repeat_times > 1)
+			usleep(500 * 1000);  //gap between each cycle
+
+		memset(tmpBuffer_rd, 0, DATA_TRANSMIT_BUFFER_MAX_SIZE);
+		recv_len = DATA_TRANSMIT_BUFFER_MAX_SIZE;
+		ret = TransmitData(hContainer, tmpBuffer_wr, send_len, tmpBuffer_rd, &recv_len);
+		if (ret < 0) {
+			LOGE("TransmitData return failed, ret %d.", ret);
+			ret = -1;
+			continue;
+		}
+		if( (tmpBuffer_rd[recv_len-2] == 0x90) && (tmpBuffer_rd[recv_len-1] == 0x00 ) ) {
+			break;
+		}
+	}
+	// 2nd command 80CE0100 02 A001
+	DataTobeSend = (unsigned char) malloc(0x07);
+	memset(DataTobeSend, '\0', 0x07);
+	memcpy(DataTobeSend, apdu_CE_01, 0x04);
+	memcpy(DataTobeSend + 0x04, apdu_02, 0x01);
+	memcpy(DataTobeSend + 0x05, apdu_A001, 0x02);
+	memset(tmpBuffer_wr, 0, DATA_TRANSMIT_BUFFER_MAX_SIZE);
+	send_len = sizeof(DataTobeSend);
+	//copy the raw data
+	memcpy(tmpBuffer_wr, (unsigned char *)DataTobeSend, send_len);
+	for (int i = 0; i < repeat_times; i++) {
+		if (repeat_times > 1)
+			usleep(500 * 1000);  //gap between each cycle
+
+		memset(tmpBuffer_rd, 0, DATA_TRANSMIT_BUFFER_MAX_SIZE);
+		recv_len = DATA_TRANSMIT_BUFFER_MAX_SIZE;
+		ret = TransmitData(hContainer, tmpBuffer_wr, send_len, tmpBuffer_rd, &recv_len);
+		if (ret < 0) {
+			LOGE("TransmitData return failed, ret %d.", ret);
+			ret = -1;
+			continue;
+		}
+		if( (tmpBuffer_rd[recv_len-2] == 0x90) && (tmpBuffer_rd[recv_len-1] == 0x00 ) ) {
+			// get the public key
+			break;
+		}
+	}
+
+	free(DataTobeSend);
+	free(tmpBuffer_wr);
+	free(tmpBuffer_rd);
+
+	return ret;
 	return SAR_OK;
 }
 
@@ -1619,7 +1615,7 @@ ULONG SKF_GenerateKeyWithECC( HANDLE hAgreementHandle, ECCPUBLICKEYBLOB* pECCPub
 * 返 回 值：SAR_OK: 成功
             其他值: 错误码
 */
-ULONG SKF_ExportPublicKey( HCONTAINER hContainer, BOOL bSignFlag, BYTE* pbBlob, ULONG* pulBlobLen )
+ULONG SKF_ExportPublicKey( DEVHANDLE hContainer, BOOL bSignFlag, BYTE* pbBlob, ULONG* pulBlobLen )
 {
 	CHAR* pszLog = ( "**********Start to execute SKF_ExportPublicKey ********** \n" );
 	CHAR szLog[SIZE_BUFFER_1024];
@@ -1628,9 +1624,6 @@ ULONG SKF_ExportPublicKey( HCONTAINER hContainer, BOOL bSignFlag, BYTE* pbBlob, 
 	BYTE bSFI = 0x00;
 	BYTE apdu[SIZE_BUFFER_1024];
 	BYTE response[SIZE_BUFFER_1024];
-	HAPPLICATION hApplication;
-	PAPPLICATIONINFO pApplication;
-    PCONTAINERINFO pContainer;
 	ECCPUBLICKEYBLOB eccPubKeyBlob;
 	INT nIndex = 0;
 	INT nDivider = 0;
@@ -1656,13 +1649,6 @@ ULONG SKF_ExportPublicKey( HCONTAINER hContainer, BOOL bSignFlag, BYTE* pbBlob, 
 	{
 		return SAR_INVALIDHANDLEERR;
 	}
-
-	pContainer = (PCONTAINERINFO)hContainer;
-	hApplication = pContainer -> hApplication;
-	memcpy( fileSFI, pContainer->bSFI, sizeof(fileSFI) );
-	pApplication = (PAPPLICATIONINFO)hApplication;
-	hDev = pApplication -> hDev;
-	memcpy( appFID, pApplication->ApplicationFID, 0x02 );
 
 	//--------选择ADF，通过FID选择
 	if( SV_SelectDFByFID(hDev, appFID, "选择ADF") != SAR_OK )
@@ -1732,7 +1718,7 @@ ULONG SKF_ExportPublicKey( HCONTAINER hContainer, BOOL bSignFlag, BYTE* pbBlob, 
 * 返 回 值：SAR_OK: 成功
             其他值: 错误码
 */
-ULONG SKF_ImportSessionKey( HCONTAINER hContainer, ULONG ulAlgId, BYTE* pbWrapedData,
+ULONG SKF_ImportSessionKey( DEVHANDLE hContainer, ULONG ulAlgId, BYTE* pbWrapedData,
 								  ULONG ulWrapedLen, HANDLE* phKey )
 {
 	CHAR* pszLog = ( "**********Start to execute SKF_ImportSessionKey ********** \n");
@@ -1897,33 +1883,6 @@ ULONG SKF_Encrypt( HANDLE hKey, BYTE *pbData, ULONG ulDataLen,
 	ulAlgID = sessionKey -> AlgID;
 	hDev    = sessionKey -> hDev;
 
-	//--------选择CA环境DDF3
-/*
-	memcpy( apdu, apdu_selectDF, 0x07 );
-	apdu[5] = APDU_CA_FID[0];
-	apdu[6] = APDU_CA_FID[1];
-#ifdef READER_TYPE_HID	
-	nRet = dc_pro_command( hDev, 0x07, apdu, &nResponseLen, response, 7 );
-	if( nRet != 0 )
-#endif
-#ifdef READER_TYPE_CCID	
-	nResponseLen = sizeof( response );
-    nRet = SCardTransmit( (SCARDHANDLE)hDev, &sv_IORequest, apdu, , NULL, response, &nResponseLen );
-    if( nRet != SCARD_S_SUCCESS )
-#endif
-	{
-        _stprintf_s( szLog, "选择CA环境失败，错误码: %d \n", nRet );
-		WriteLogToFile( szLog );
-		return SAR_FAIL;
-	}
-	
-	if( (response[nResponseLen-2] != 0x90) || (response[nResponseLen-1] != 0x00) )
-	{
-        _stprintf_s( szLog, "选择CA环境失败，状态码: %02x%02x \n", response[nResponseLen-2], response[nResponseLen-1] );
-		WriteLogToFile( szLog );
-		return SAR_FAIL;	
-	}
-*/
     //--------根据算法类型，调用加解密函数
 	switch( ulAlgID )
 	{
@@ -2583,7 +2542,7 @@ ULONG SKF_CloseHandle( HANDLE hHandle )
 }
 
 // need update.
-ULONG SKF_ECCPrvKeyDecrypt( HCONTAINER hContainer, PECCCIPHERBLOB pCipherText, BYTE* pbPlainText, ULONG* pulPlainTextLen )
+ULONG SKF_ECCPrvKeyDecrypt( DEVHANDLE hContainer, PECCCIPHERBLOB pCipherText, BYTE* pbPlainText, ULONG* pulPlainTextLen )
 {
     CHAR* pszLog = ( "**********Start to execute SKF_ECCDecrypt ********** \n");
     CHAR szLog[SIZE_BUFFER_1024];
@@ -2615,12 +2574,6 @@ ULONG SKF_ECCPrvKeyDecrypt( HCONTAINER hContainer, PECCCIPHERBLOB pCipherText, B
     {
         return SAR_INDATALENERR;
     }
-
-    //--------获取设备句柄
-    GetDevHandleFromContainer( hContainer, &hDev );
-    pContainer = (PCONTAINERINFO)hContainer;
-    memcpy( fileSFI, pContainer->bSFI, sizeof(fileSFI) );
-
 
     //--------组织APDU
     memcpy( apdu, apdu_eccDecrypt, 0x05 );
@@ -2661,7 +2614,7 @@ ULONG SKF_ECCPrvKeyDecrypt( HCONTAINER hContainer, PECCCIPHERBLOB pCipherText, B
     return SAR_OK;
 }
 
-ULONG SKF_Cipher( HCONTAINER hContainer, BYTE *pbData, ULONG  ulDataLen, BYTE *pbSignature, ULONG *pulSignLen )
+ULONG SKF_Cipher( DEVHANDLE hContainer, BYTE *pbData, ULONG  ulDataLen, BYTE *pbSignature, ULONG *pulSignLen )
 {
     CHAR* pszLog = ( "**********Start to execute SKF_RSASignData ********** \n" );
 
@@ -2670,6 +2623,15 @@ ULONG SKF_Cipher( HCONTAINER hContainer, BYTE *pbData, ULONG  ulDataLen, BYTE *p
     return SAR_OK;
 }
 
+ULONG SKF_GetZA( HANDLE hHandle )
+{
+    CHAR* pszLog = ( "**********Start to execute SKF_CloseHandle ********** \n" );
+
+    WriteLogToFile( pszLog );
+    sv_fEnd = FALSE;
+
+    return SAR_OK;
+}
 #ifdef __cplusplus
 }
 #endif  /*__cplusplus*/

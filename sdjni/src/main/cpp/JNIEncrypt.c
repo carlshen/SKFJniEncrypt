@@ -309,7 +309,7 @@ JNIEXPORT jstring JNICALL get_dev_info(JNIEnv *env, jobject instance, jint handl
 
 JNIEXPORT jlong JNICALL get_za(JNIEnv *env, jobject instance, jint handle) {
     LOGI("get_za handle: %ld", handle);
-    unsigned long baseResult = SKF_CloseHandle( handle );
+    unsigned long baseResult = SKF_GetZA( handle );
     LOGI("get_za baseResult: %ld", baseResult);
     return baseResult;
 }

@@ -320,7 +320,7 @@ extern "C" {
 		//--------选择CA环境DDF3
 		if( SV_SelectDFByFID( sv_hDev, APDU_CA_FID, "选择CA环境") != SAR_OK )
 		{
-//			_stprintf_s( szLog, _countof(szLog), TEXT("设备连接失败（选择CA环境）\n") );
+			sprintf( szLog, "设备连接失败（选择CA环境）\n" );
 			WriteLogToFile( szLog );
 			sv_fEnd = TRUE;
 			return SAR_FAIL;
@@ -378,13 +378,11 @@ extern "C" {
 		CHAR* pLog = ( "**********Start to execute SKF_GetDevInfo ********** \n" );
 		CHAR szLog[SIZE_BUFFER_1024];
 		BYTE response[SIZE_BUFFER_1024];
-		BYTE apdu[SIZE_BUFFER_1024];
 
 		DWORD nResponseLen = 0;
 		LONG nRet = 0;
 		sv_fEnd = FALSE;
 		WriteLogToFile( pLog );
-		memset( apdu, 0x00, sizeof(apdu) );
 
 		//--------判断设备句柄是否为空
 		if( hDev == NULL )
@@ -424,14 +422,9 @@ extern "C" {
 
 		//--------读二进制文件1E，读取设备标签
 		memset( response, 0x00, sizeof(response) );
-		memcpy( apdu, apdu_readBinary, 0x05 );
-
-		apdu[2] |= 0x1E;  //SFI
-		apdu[3] = 0x00;         //偏移量为0x00
-		apdu[4] = 0x21;         //大小为0x21
 
 //		PrintApduToFile( 0, apdu, 0x05 );
-		nRet = TransmitData( hDev, apdu, 0x05, response, &nResponseLen );
+		nRet = TransmitData( hDev, apdu_getDevInfo, 0x05, response, &nResponseLen );
 		if( nRet != SAR_OK )
 		{
 			sprintf( szLog, "读1E（设备标签）文件失败，错误码: %d \n", nRet );

@@ -5,35 +5,12 @@
 #include "Global_Def.h"
 #include "transmit.h"
 
-//////////////////////////////////////////////////////////////////////
-// Construction/Destruction
-//////////////////////////////////////////////////////////////////////
-ULONG sv_containerType = CONTAINER_NULL;
-/*
-CONTAINERINFO sv_containerInfo[MAX_CONTAINER_NUM] = {
-};
-*/
-
 //全局结构体变量
 APPLICATIONINFO  sv_stApplication;  //应用
 CONTAINERINFO    sv_stContainer;    //容器
 DEVINFO          sv_stDevice;       //设备
 DEVHANDLE        sv_hDev;           //设备句柄
 HASHINFO         sv_stHash;         //哈希杂凑对象
-
-
-//有关容器定义变量
-//注：
-//--容器名称
-BYTE  sv_containerNameInfo[MAX_CONTAINER_NUM][SIZE_CONTAINER_ITEM];
-BYTE  sv_containerCurrentIndex = 0;
-
-//--容器内密钥文件SFI
-const BYTE SV_CONTAINER_SFI[MAX_CONTAINER_NUM][6] = {
-	{0x0A, 0x0B, 0x0C, 0x13, 0x14, 0x19}, //容器1
-	{0x0D, 0x0E, 0x0F, 0x15, 0x16, 0x1A}, //容器2
-	{0x10, 0x11, 0x12, 0x17, 0x18, 0x1B}  //容器3
-};
 
 //有关文件定义变量
 //--文件名称
@@ -156,7 +133,7 @@ void WriteLogToFile2( CHAR* szLog )
 
 ULONG sc_command(DEVHANDLE hDev, BYTE* inBuf, DWORD inLen, BYTE* retBuf, DWORD* pdwLen)
 {
-	return TransmitData(1, inBuf, inLen, retBuf, pdwLen);
+	return TransmitData(hDev, inBuf, inLen, retBuf, pdwLen);
 }
 
 //DES/TDES，ECB模式，加密
@@ -402,11 +379,6 @@ ULONG SV_SelectDFByFID( DEVHANDLE hDev, const BYTE appFID[2], CHAR *pszLog )
 	BYTE apdu[SIZE_BUFFER_1024];
 	BYTE response[SIZE_BUFFER_1024];
 
-#ifdef READER_TYPE_CCID
-	sv_IORequest.dwProtocol = 0;
-	sv_IORequest.cbPciLength = sizeof( SCARD_IO_REQUEST );
-#endif
-
 	DWORD nResponseLen = 0;
 	LONG nRet = 0;
 	memset( apdu, 0x00, sizeof(apdu) );
@@ -448,17 +420,11 @@ ULONG SV_SelectDFByFID( DEVHANDLE hDev, const BYTE appFID[2], CHAR *pszLog )
 
 	
 
-#ifdef READER_TYPE_HID
-	nRet = dc_pro_command( hDev, 0x07, apdu, &nResponseLen, response, 7 );
-	if( nRet != 0 )
-#endif
-#ifdef READER_TYPE_CCID	
 	nResponseLen = sizeof( response );
-    nRet = SCardTransmit( (SCARDHANDLE)hDev, &sv_IORequest, apdu, 0x07, NULL, response, &nResponseLen );
-    if( nRet != SCARD_S_SUCCESS )
-#endif
+    nRet = TransmitData( hDev, apdu, 0x07, response, &nResponseLen );
+    if( nRet != SAR_OK )
 	{
-//		_stprintf_s( szLog, _countof(szLog), TEXT("%s失败，错误码: %d \n"), pszLog, nRet );
+		sprintf( szLog, "%s失败，错误码: %d \n", pszLog, nRet );
 		WriteLogToFile( szLog );
 		sv_nStatus = 1;
 		return SAR_FAIL;
@@ -468,8 +434,7 @@ ULONG SV_SelectDFByFID( DEVHANDLE hDev, const BYTE appFID[2], CHAR *pszLog )
 
 	if( (response[nResponseLen-2] != 0x90) || (response[nResponseLen-1] != 0x00) )
 	{
-//		_stprintf_s( szLog, _countof(szLog), TEXT("%s失败，状态码: %02X%02X \n"), pszLog,
-//			response[nResponseLen-2], response[nResponseLen-1] );
+		sprintf( szLog, "%s failure, status code: %02X%02X \n", pszLog, response[nResponseLen-2], response[nResponseLen-1] );
 		WriteLogToFile( szLog );
 		return SAR_FAIL;
 	}
@@ -490,16 +455,8 @@ ULONG FindDFByAppName( DEVHANDLE hDev, LPSTR szAppName, BYTE *appFID )
 	BYTE bIsFound = 0x00;
 	INT nIndex = 0;
     size_t nAppNameLen = 0;
-#ifdef READER_TYPE_HID
-    BYTE nResponseLen = 0;
-	SHORT nRet = 0;
-#endif
-#ifdef READER_TYPE_CCID
 	DWORD nResponseLen = 0;
 	LONG nRet = 0;
-	sv_IORequest.dwProtocol = 0;
-	sv_IORequest.cbPciLength = sizeof( SCARD_IO_REQUEST );
-#endif
 	memset( szLog, 0x0, strlen(szLog) );
 
 	WriteLogToFile( pszLog );
@@ -527,37 +484,30 @@ ULONG FindDFByAppName( DEVHANDLE hDev, LPSTR szAppName, BYTE *appFID )
 	apdu[4] = SIZE_CA_EF01;
 
 //	PrintApduToFile( 0, apdu, 0x05 );
-
-#ifdef READER_TYPE_HID
-	nRet = dc_pro_command( hDev, 0x05, apdu, &nResponseLen, response, 7 );
-	if( nRet != 0 )
-#endif
-#ifdef READER_TYPE_CCID	
     nResponseLen = sizeof( response );
-    nRet = SCardTransmit( (SCARDHANDLE)hDev, &sv_IORequest, apdu, 0x05, NULL, response, &nResponseLen );
-    if( nRet != SCARD_S_SUCCESS )
-#endif
+    nRet = TransmitData( hDev, apdu, 0x05, response, &nResponseLen );
+    if( nRet != SAR_OK )
 	{
-//		_stprintf_s( szLog, _countof(szLog), TEXT("读取CA下EF01失败，错误码: %d \n"), nRet );
+		sprintf( szLog, "读取CA下EF01失败，错误码: %d \n", nRet );
 		WriteLogToFile( szLog );
 		return SAR_FAIL;
 	}
 
 //	PrintApduToFile( 1, response, nResponseLen );
 
-//	if( (response[nResponseLen-2] == 0x90) && (response[nResponseLen-1] == 0x00) )
-//	{
-//        for( nIndex=0; nIndex<MAX_APPLICATION_NUM; nIndex++ )
-//		{
-//			memcpy( sv_appNameInfo[nIndex], response+(nIndex*SIZE_APPLICATION_ITEM), SIZE_APPLICATION_ITEM );
-//		}
-//	}
-//	else
-//	{
-//		_stprintf_s( szLog, _countof(szLog), TEXT("读取CA下EF01失败，状态码: %02X%02X \n"), response[nResponseLen-2], response[nResponseLen-1] );
-//		WriteLogToFile( szLog );
-//		return SAR_FAIL;
-//	}
+	if( (response[nResponseLen-2] == 0x90) && (response[nResponseLen-1] == 0x00) )
+	{
+        for( nIndex=0; nIndex<MAX_APPLICATION_NUM; nIndex++ )
+		{
+			memcpy( sv_appNameInfo[nIndex], response+(nIndex*SIZE_APPLICATION_ITEM), SIZE_APPLICATION_ITEM );
+		}
+	}
+	else
+	{
+		sprintf( szLog, "读取CA下EF01失败，状态码: %02X%02X \n", response[nResponseLen-2], response[nResponseLen-1] );
+		WriteLogToFile( szLog );
+		return SAR_FAIL;
+	}
 
 	for( nIndex=0; nIndex<MAX_APPLICATION_NUM; nIndex++ )
 	{
