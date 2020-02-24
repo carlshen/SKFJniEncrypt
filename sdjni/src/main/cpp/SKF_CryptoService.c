@@ -1587,7 +1587,6 @@ ULONG SKF_GenerateAgreementDataAndKeyWithECC( HANDLE hContainer, ULONG ulAlgId,
 	free(tmpBuffer_wr);
 	free(tmpBuffer_rd);
 
-	return ret;
 	return SAR_OK;
 }
 
@@ -2616,22 +2615,74 @@ ULONG SKF_ECCPrvKeyDecrypt( DEVHANDLE hContainer, PECCCIPHERBLOB pCipherText, BY
 
 ULONG SKF_Cipher( DEVHANDLE hContainer, BYTE *pbData, ULONG  ulDataLen, BYTE *pbSignature, ULONG *pulSignLen )
 {
-    CHAR* pszLog = ( "**********Start to execute SKF_RSASignData ********** \n" );
+    CHAR* pszLog = ( "**********Start to execute SKF_Cipher ********** \n" );
 
     WriteLogToFile( pszLog );
 
     return SAR_OK;
 }
 
-ULONG SKF_GetZA( HANDLE hHandle )
+ULONG SKF_GetZA( HANDLE hContainer,BYTE *pData, ULONG  ulDataLen, BYTE *pZA, ULONG  *ulZALen )
 {
-    CHAR* pszLog = ( "**********Start to execute SKF_CloseHandle ********** \n" );
+    CHAR* pszLog = ( "**********Start to execute SKF_GetZA ********** \n" );
 
     WriteLogToFile( pszLog );
-    sv_fEnd = FALSE;
+
+    // 1st command  80F10000 40 64×Ö½ÚSM2¹«Ô¿
+    unsigned char DataTobeSend[0x45];
+    unsigned long send_len = 0;
+    unsigned char check_sum = 0;
+
+    int ret;
+    unsigned char * tmpBuffer_wr = memalign(512, DATA_TRANSMIT_BUFFER_MAX_SIZE);
+    memset(tmpBuffer_wr, 0, DATA_TRANSMIT_BUFFER_MAX_SIZE);
+    send_len = sizeof(DataTobeSend);
+
+    unsigned char *tmpBuffer_rd = memalign(512, DATA_TRANSMIT_BUFFER_MAX_SIZE);
+    unsigned long recv_len = DATA_TRANSMIT_BUFFER_MAX_SIZE;
+    memset(tmpBuffer_rd, 0, DATA_TRANSMIT_BUFFER_MAX_SIZE);
+
+    //copy the raw data
+    memcpy(tmpBuffer_wr, (unsigned char *)DataTobeSend, send_len);
+
+    //fill the checksum byte
+    check_sum = CalculateCheckSum((tmpBuffer_wr+1), (send_len-1));
+
+    //fill the data ...........................................
+    *(tmpBuffer_wr+send_len) = check_sum;
+    send_len = send_len + 1;
+
+	memset(DataTobeSend, '\0', 0x45);
+	memcpy(DataTobeSend, apdu_F1_40, 0x05);
+	memcpy(DataTobeSend + 0x05, pData, 0x40);
+    int repeat_times = 10;
+    for (int i = 0; i < repeat_times; i++) {
+        if (repeat_times > 1)
+            usleep(500 * 1000);  //gap between each cycle
+
+        memset(tmpBuffer_rd, 0, DATA_TRANSMIT_BUFFER_MAX_SIZE);
+        recv_len = DATA_TRANSMIT_BUFFER_MAX_SIZE;
+        ret = TransmitData(hContainer, tmpBuffer_wr, send_len, tmpBuffer_rd, &recv_len);
+        if (ret < 0) {
+            LOGE("TransmitData return failed, ret %d.", ret);
+            ret = -1;
+            continue;
+        }
+        if( (tmpBuffer_rd[recv_len-2] == 0x90) && (tmpBuffer_rd[recv_len-1] == 0x00 ) ) {
+            // get ZA
+            pZA = tmpBuffer_rd[0];
+            *ulZALen = recv_len-2;
+            break;
+        }
+    }
+
+    free(DataTobeSend);
+    free(tmpBuffer_wr);
+    free(tmpBuffer_rd);
 
     return SAR_OK;
 }
+
 #ifdef __cplusplus
 }
 #endif  /*__cplusplus*/

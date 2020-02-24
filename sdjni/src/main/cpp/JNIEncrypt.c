@@ -40,11 +40,7 @@ JNIEXPORT jlong JNICALL set_package(JNIEnv *env, jobject instance, jstring str_)
     memset(SV_PSZLOGPATH, 0x00, SIZE_BUFFER_128);
     memcpy(SV_PSZLOGPATH, pkgname, strlen(pkgname));
     strcat(SV_PSZLOGPATH, "/files/tmc_sdk.log");
-    memset(SV_PSZLOGTHREADPATH, 0x00, SIZE_BUFFER_128);
-    memcpy(SV_PSZLOGTHREADPATH, pkgname, strlen(pkgname));
-    strcat(SV_PSZLOGTHREADPATH, "/files/tmc_sdk.log.0");
     LOGI("set_package log_name: %s\n", SV_PSZLOGPATH);
-    LOGI("set_package log_name_bak: %s\n", SV_PSZLOGTHREADPATH);
     unsigned long pkgresult = SDSCSetPackageName(pkgname);
     LOGI("setpackage result: %ld", pkgresult);
     (*env)->ReleaseStringUTFChars(env, str_, pkgname);
@@ -57,11 +53,7 @@ JNIEXPORT jstring JNICALL get_func_list(JNIEnv *env, jobject instance, jstring s
     memset(SV_PSZLOGPATH, 0x00, SIZE_BUFFER_128);
     memcpy(SV_PSZLOGPATH, pkgname, strlen(pkgname));
     strcat(SV_PSZLOGPATH, "/files/tmc_sdk.log");
-    memset(SV_PSZLOGTHREADPATH, 0x00, SIZE_BUFFER_128);
-    memcpy(SV_PSZLOGTHREADPATH, pkgname, strlen(pkgname));
-    strcat(SV_PSZLOGTHREADPATH, "/files/tmc_sdk.log.0");
     LOGI("set_package log_name: %s\n", SV_PSZLOGPATH);
-    LOGI("set_package log_name_bak: %s\n", SV_PSZLOGTHREADPATH);
     char *devInfo = (char *) malloc(SDSC_MAX_DEV_NAME_LEN * sizeof(char));
     if (devInfo == NULL) {
         LOGE("get_dev_info with null alloc.");
@@ -309,7 +301,11 @@ JNIEXPORT jstring JNICALL get_dev_info(JNIEnv *env, jobject instance, jint handl
 
 JNIEXPORT jlong JNICALL get_za(JNIEnv *env, jobject instance, jint handle) {
     LOGI("get_za handle: %ld", handle);
-    unsigned long baseResult = SKF_GetZA( handle );
+    BYTE *pbData;
+    ULONG ulDataLen;
+    BYTE *pbZAData;
+    ULONG pulZALen;
+    unsigned long baseResult = SKF_GetZA( handle, pbData, ulDataLen, pbZAData, &pulZALen );
     LOGI("get_za baseResult: %ld", baseResult);
     return baseResult;
 }
@@ -744,9 +740,9 @@ static JNINativeMethod method_table[] = {
         {"ECCPrvKeyDecrypt",  "(I)J",                                                   (void *) ecc_prv_key_decrypt},
         {"ImportKeyPair",     "(I)J",                                                   (void *) import_key_pair},
         {"Cipher",            "(I)J",                                                   (void *) cipher},
-
-        {"BeginTransaction", "(I)J",                                                (void *) begin_transaction},
-        {"EndTransaction",   "(I)J",                                                  (void *) end_transaction},
+        {"GetZA",             "(I)J",                                                   (void *) get_za},
+        {"BeginTransaction", "(I)J",                                                   (void *) begin_transaction},
+        {"EndTransaction",   "(I)J",                                                   (void *) end_transaction},
         {"GetFirmVer",        "(I)Ljava/lang/String;",                                 (void *) get_firm_ver},
         {"GetFlashID",        "(I)Ljava/lang/String;",                                 (void *) get_flash_id},
         {"ResetCard",         "(I)Ljava/lang/String;",                                   (void *) reset_card},

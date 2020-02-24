@@ -96,6 +96,7 @@ BYTE apdu_CE_01[0x04];
 BYTE apdu_D6_00[0x04];
 BYTE apdu_E1_00[0x05];
 BYTE apdu_F1_00[0x04];
+BYTE apdu_F1_40[0x05];
 BYTE apdu_F4_00[0x04];
 BYTE apdu_F8_01[0x04];
 BYTE apdu_F8_02[0x04];

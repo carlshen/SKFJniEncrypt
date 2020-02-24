@@ -31,12 +31,6 @@ static CHAR sv_pszCCIDDevNameA[SIZE_BUFFER_1024];
 
 // 有关日志变量
 static CHAR SV_PSZLOGPATH[SIZE_BUFFER_128];
-static CHAR SV_PSZLOGTHREADPATH[SIZE_BUFFER_128];
-
-//容器类型
-#define  CONTAINER_NULL  0  //未知容器
-#define  CONTAINER_RSA   1  //RSA容器
-#define  CONTAINER_SM2   2  //SM2容器
 
 //有关应用定义
 //--最大应用个数
@@ -118,8 +112,6 @@ ECCSIGNATUREBLOB sv_eccSignBlob;
 BYTE sv_signEF_FID[2];
 
 void WriteLogToFile( CHAR* szLog );
-void ResetLogFile( CHAR*  lpszName );
-void WriteLogToFile2( CHAR* szLog );
 ULONG sc_command(DEVHANDLE hDev, BYTE* inBuf, DWORD inLen, BYTE* retBuf, DWORD* pdwLen);
 BYTE cryptoDESMAC(BYTE *pbKey, BYTE *pbIv, BYTE * pbDatIn, BYTE bDatLen, BYTE *pbDatOut);
 BYTE cryptoDESEcbEnc(BYTE *pbKey, BYTE bKeyLen, BYTE *pbDatIn, UINT16 usLen, BYTE *pbDatOut);

@@ -1,5 +1,5 @@
-#ifndef SKF_CRYPTOSERVICE_H
-#define SKF_CRYPTOSERVICE_H
+#ifndef SKF_CRYPTO_SERVICE_H
+#define SKF_CRYPTO_SERVICE_H
 
 #include "SKF_TypeDef.h"
 
@@ -75,6 +75,6 @@ ULONG SKF_MacFinal( HANDLE hMac, BYTE* pbMacData, ULONG* pulMacDataLen );
 ULONG SKF_CloseHandle( HANDLE hHandle );
 ULONG SKF_ECCPrvKeyDecrypt( DEVHANDLE hContainer, PECCCIPHERBLOB pCipherText, BYTE* pbPlainText, ULONG* pulPlainTextLen );
 ULONG SKF_Cipher( DEVHANDLE hContainer, BYTE *pbData, ULONG  ulDataLen, BYTE *pbSignature, ULONG *pulSignLen );
-ULONG SKF_GetZA( HANDLE hHandle );
+ULONG SKF_GetZA( HANDLE hContainer,BYTE *pData, ULONG  ulDataLen, BYTE *pZA, ULONG  *ulZALen );
 
-#endif //SKF_CRYPTOSERVICE_H
+#endif //SKF_CRYPTO_SERVICE_H

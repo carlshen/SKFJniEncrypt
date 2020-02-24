@@ -291,6 +291,14 @@ public class SyncActivity extends AppCompatActivity {
                 tvResult.setText("Cipher: " + result);
             }
         });
+        mGetZA = (Button) findViewById(R.id.btn_getza);
+        mGetZA.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                long result = AESEncrypt.GetZA(deviceHandle);
+                tvResult.setText("GetZA: " + result);
+            }
+        });
     }
 
     @Override

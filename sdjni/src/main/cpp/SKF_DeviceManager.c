@@ -98,7 +98,7 @@ extern "C" {
 
 			if( nRet != SAR_OK )
 			{
-				sprintf( szLog, "枚举设备失败，错误码: 0x%08X \n", nRet );
+				sprintf( szLog, "enum device fail, error code: 0x%08X \n", nRet );
 				WriteLogToFile( szLog );
 
 				return SAR_FAIL;
@@ -129,7 +129,7 @@ extern "C" {
 
 			if( nRet != SAR_OK )
 			{
-				sprintf( szLog, "枚举设备失败，错误码: 0x%08X \n", nRet );
+				sprintf( szLog, "enum device fail, error code: 0x%08X \n", nRet );
 				WriteLogToFile( szLog );
 
 			}
@@ -150,7 +150,7 @@ extern "C" {
 
 					if( nRet != SAR_OK )
 					{
-						sprintf( szLog, "设备枚举失败： 0x%08X \n", nRet );
+						sprintf( szLog, "enum device fail, error code: 0x%08X \n", nRet );
 						WriteLogToFile( szLog );
 					}
 					else
@@ -217,11 +217,6 @@ extern "C" {
 
 		}
 
-		sprintf( szLog, "枚举设备失败，错误码: %d \n", nRet );
-		WriteLogToFile( szLog );
-		sv_nStatus = 1;
-		sv_fEnd = TRUE;
-		return SAR_FAIL;
 	}
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -312,15 +307,15 @@ extern "C" {
 		nRet = SDSCConnectDev(szName, &sv_Device);
 		if( nRet != SAR_OK )
 		{
-			sprintf( szLog, "设备连接失败： %d \n", nRet );
+			sprintf( szLog, "device connect fail, error code: %d \n", nRet );
 			WriteLogToFile( szLog );
 			return SAR_FAIL;
 		}
 
 		//--------选择CA环境DDF3
-		if( SV_SelectDFByFID( sv_hDev, APDU_CA_FID, "选择CA环境") != SAR_OK )
+		if( SV_SelectDFByFID( sv_hDev, APDU_CA_FID, "select CA Env") != SAR_OK )
 		{
-			sprintf( szLog, "设备连接失败（选择CA环境）\n" );
+			sprintf( szLog, "Device connect fail (select CA Env)\n" );
 			WriteLogToFile( szLog );
 			sv_fEnd = TRUE;
 			return SAR_FAIL;
@@ -417,8 +412,6 @@ extern "C" {
 		memset( sv_stDevice.Reserved, 0x00, sizeof(sv_stDevice.Reserved) );          //保留扩展
 
 		nResponseLen = sizeof( response );
-		//--------选择MF
-		//--------选择CA环境
 
 		//--------读二进制文件1E，读取设备标签
 		memset( response, 0x00, sizeof(response) );
@@ -427,7 +420,7 @@ extern "C" {
 		nRet = TransmitData( hDev, apdu_getDevInfo, 0x05, response, &nResponseLen );
 		if( nRet != SAR_OK )
 		{
-			sprintf( szLog, "读1E（设备标签）文件失败，错误码: %d \n", nRet );
+			sprintf( szLog, "read 1E (device label) file fail, status code: %d \n", nRet );
 			WriteLogToFile( szLog );
 			sv_nStatus = 1;
 			return SAR_FAIL;
@@ -444,7 +437,7 @@ extern "C" {
 		}
 		else
 		{
-			sprintf( szLog, "读1E（设备标签）文件失败，状态码: %02X%02X \n", response[nResponseLen-2], response[nResponseLen-1] );
+			sprintf( szLog, "read 1E (device label) file fail, status code: %02X%02X \n", response[nResponseLen-2], response[nResponseLen-1] );
 			WriteLogToFile( szLog );
 			return SAR_FAIL;
 		}

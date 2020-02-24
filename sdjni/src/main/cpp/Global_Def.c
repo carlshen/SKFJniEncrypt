@@ -99,36 +99,15 @@ void PrintApduToFile( BYTE bFlag, BYTE* pbApdu, DWORD bLength )
 void WriteLogToFile( CHAR* szLog )
 {
 	FILE* pFileLog;
-
+#ifdef SKF_WRITE_LOG_FILE
 	pFileLog = fopen( SV_PSZLOGPATH, "a+");
-	if( pFileLog == NULL )
+	if( pFileLog != NULL )
 	{
-//        _fputts( szLog, pFileLog );
+        fprintf( szLog, pFileLog );
 	
 		fclose( pFileLog );
 	}
-}
-
-void ResetLogFile(char * lpszName )
-{
-	FILE* pFileLog;
-	pFileLog = fopen( lpszName, ("w+") );
-	if( pFileLog == NULL )
-	{
-		fclose( pFileLog );
-	}
-}
-void WriteLogToFile2( CHAR* szLog )
-{
-	FILE* pFileLog;
-
-	pFileLog = fopen( SV_PSZLOGTHREADPATH, ("a+") );
-	if( pFileLog == NULL )
-	{
-//        _fputts( szLog, pFileLog );
-	
-		fclose( pFileLog );
-	}
+#endif
 }
 
 ULONG sc_command(DEVHANDLE hDev, BYTE* inBuf, DWORD inLen, BYTE* retBuf, DWORD* pdwLen)
