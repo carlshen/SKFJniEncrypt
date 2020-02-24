@@ -1,5 +1,4 @@
 #include <jni.h>
-#include "logger.h"
 #include <string.h>
 #include <stdlib.h>
 #include <stdint.h>
@@ -7,8 +6,9 @@
 #include <sys/ptrace.h>
 #include <SDSCErr.h>
 #include <SDSCDev.h>
-#include "SKF_TypeDef.h"
 #include "transmit.h"
+#include "logger.h"
+#include "SKF_TypeDef.h"
 #include "Global_Def.h"
 #include "SKF_ContainerManager.h"
 #include "SKF_DeviceManager.h"
@@ -587,18 +587,46 @@ JNIEXPORT jlong JNICALL reset_control(JNIEnv *env, jobject instance, jint handle
     return baseResult;
 }
 
+//init key area data with random data.
+int DebugWriteKey(int handle) {
+    unsigned long index = 1;
+    int iResult;
+    unsigned char ucInData[512];
+    unsigned char ucOutData[512];
+    unsigned long ulInDataLen = 480;
+    unsigned char randomd_data = 0;
+    uint64_t KeyOffSet = 0;
+
+    for(index=1;index<=32;index++){
+        randomd_data = (unsigned char)rand();
+        memset(ucInData, randomd_data, sizeof(ucInData));
+        memset(ucOutData, 0, sizeof(ucOutData));
+        KeyOffSet = index*480;
+        iResult = WriteKey(handle, ucInData, KeyOffSet, ulInDataLen);
+        LOGI("WriteKey Result: %d", iResult);
+        iResult = ReadKey(handle, ucOutData, KeyOffSet, ulInDataLen);
+        //ulResult = SDHAWriteData(handle, index, ucInData, ulInDataLen);
+        LOGI("ReadKey Result: %d", iResult);
+    }
+
+    return iResult;
+}
+
 #if 1 //temporary replaced with other debugging interface,
 JNIEXPORT jbyteArray JNICALL transmit(JNIEnv *env, jobject instance, jint handle, jbyteArray str_, jlong length, jlong mode) {
-    unsigned long result;
+    int result;
+    jbyte* bBuffer = (*env)->GetByteArrayElements(env, str_, 0);
+    unsigned char* pbCommand = (unsigned char*) bBuffer;
 
     if(length == 2){
+        result = DebugWriteKey(handle);
+        LOGI("DebugWriteKey ret:%d", result);
     }else if(length == 4) {
-    }else if(length == 5) {
-        result = TransmitData_WriteKeyTest(handle);
+        result = TransmitData_WriteThroughTest(handle);
         LOGI("TransmitData WriteKeyTest ret:%d", result);
+    }else if(length == 5) {
     }else if(length == 6) {
-        result = TransmitData_ClearKeyTest(handle);
-        LOGI("TransmitData ClearKeyTest ret:%d", result);
+    }else if(length == 7) {
     } else {
         result = TransmitData_EncryptTest(handle);
         LOGI("TransmitData EncryptTest ret:%d", result);

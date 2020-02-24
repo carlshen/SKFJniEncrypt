@@ -388,4 +388,11 @@ unsigned long SDHAWriteData
 	unsigned long ulInDataLen
 );
 
+unsigned long SDHAGetHASize
+(
+	int fd,
+	unsigned long *pulHASize,
+	unsigned long *pulPageSize
+);
+
 #endif // end #ifndef __SDSCDEV_H__
