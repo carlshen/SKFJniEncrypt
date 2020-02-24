@@ -285,17 +285,14 @@ JNIEXPORT jlong JNICALL close_handle(JNIEnv *env, jobject instance, jint handle)
 
 JNIEXPORT jstring JNICALL get_dev_info(JNIEnv *env, jobject instance, jint handle) {
     LOGI("get_dev_info handle: %ld", handle);
-    char *devInfo = (char *) malloc(SDSC_MAX_DEV_NAME_LEN * sizeof(char));
-    if (devInfo == NULL) {
-        LOGE("get_dev_info with null alloc.");
-        return (*env)->NewStringUTF(env, '\0');
-    }
-    memset(devInfo, 0x00, SDSC_FIRMWARE_VER_LEN * sizeof(char));
-    unsigned long baseResult = SKF_GetDevInfo( handle, devInfo );
+    DEVINFO devInfo;
+    unsigned long baseResult = SKF_GetDevInfo( handle, &devInfo );
     LOGI("get_dev_info baseResult: %ld", baseResult);
-    jstring  result = charToJstring(env, devInfo);
-    // need free the memory
-    free(devInfo);
+    LOGI("get_dev_info devInfo.Label: %s\n", devInfo.Label);
+    LOGI("get_dev_info devInfo.Issuer: %s\n", devInfo.Issuer);
+    LOGI("get_dev_info devInfo.Manufacturer: %s\n", devInfo.Manufacturer);
+    LOGI("get_dev_info devInfo.SerialNumber: %s\n", devInfo.SerialNumber);
+    jstring  result = charToJstring(env, devInfo.Label);
     return result;
 }
 

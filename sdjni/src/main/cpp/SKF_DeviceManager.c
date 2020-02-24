@@ -9,6 +9,7 @@
 #include "transmit.h"
 #include <SDSCDev.h>
 #include "SKF_DeviceManager.h"
+#include "logger.h"
 
 CHAR pManufacturer[64] = "Tongfang Microelectronics Company";
 CHAR pIssuer[64] = "Tongfang Microelectronics Company";
@@ -30,193 +31,29 @@ extern "C" {
 	* 返 回 值：SAR_OK: 成功
 	其他值: 错误码
 	*/
-	ULONG SKF_EnumDev( BOOL bPresent, LPSTR szNameList, ULONG * pulSize )
+	ULONG SKF_EnumDev( char * pDrives, ULONG * pDrivesLen, ULONG * pulSize )
 	{
 		CHAR* pszLog = "Start to execute SKF_EnumDev \n";
-		CHAR szLog[SIZE_BUFFER_1024];
-
-		DWORD dwStrLen = 0;
-		BYTE devName[SIZE_BUFFER_256];
-		BYTE hasDevSupported = 0x00;
-		DWORD dwOff = 0;
-		DWORD dwLen = 0;
-
-		DWORD nResponseLen = 0;
-		LONG nRet = 0;
-		BYTE response[SIZE_BUFFER_2048];
-		DWORD dwActiveProtocol = 0;
-
-		// 清除日志内容
-		//ResetLogFile( SV_PSZLOGPATH );
-		sv_nStatus = 0;
 		sv_fEnd = FALSE;
-		memset( devName, '\0', sizeof(devName) );
-		memset( response, 0, sizeof(response) );
-		memset( szLog, 0x0, strlen(szLog) );
-
-
-#if 0
-		CHAR namebuf[1024];
-		ULONG l;
-		LONG lReturn;
-
-		lReturn = SCardEstablishContext(SCARD_SCOPE_USER,NULL,NULL, &hSC);
-		if(lReturn != SCARD_S_SUCCESS)
-		{
-			_stprintf_s( szLog, _countof(szLog), TEXT("SCardEstablishContext: %d \n"), lReturn );
-			WriteLogToFile( szLog );
-			return SAR_FAIL;
-		}
-
-		lReturn= SCardListReaders(hSC,NULL,(LPTSTR)namebuf,&l);	
-		if(lReturn != SCARD_S_SUCCESS)
-		{
-			_stprintf_s( szLog, _countof(szLog), TEXT("SCardListReaders: %d \n"), lReturn );
-			WriteLogToFile( szLog );
-			return SAR_FAIL;
-		}
-		l = del(namebuf, l*2);
-		_stprintf_s( szLog, _countof(szLog), TEXT("szNameList: %s \n"), namebuf );
-		WriteLogToFile( szLog );
-
-		memcpy(szNameList, namebuf, l);
-		*pulSize = l;
-
-		_stprintf_s( szLog, _countof(szLog), TEXT("SKF_EnumDev success \n"), lReturn );
-		WriteLogToFile( szLog );
-
-		return SAR_OK;
-#endif
-
-
 		WriteLogToFile( pszLog );
-		nResponseLen = sizeof( response );
-
-		if( bPresent ) //!bPresent ) //TRUE：列出所有设备
-		{
-			nRet = SDSCListDevs( szNameList, pulSize, &nResponseLen );
-
-			if( nRet != SAR_OK )
-			{
-				sprintf( szLog, "enum device fail, error code: 0x%08X \n", nRet );
-				WriteLogToFile( szLog );
-
-				return SAR_FAIL;
-			}
-
-			//2013年07月02日
-			//加入对传入的参数非NULL的判断
-// 			if( szNameList != NULL )
-// 			{
-// 				memcpy( szNameList, response, strlen(response) );
-// 				szNameList[strlen(response)] = '\0';
-// 				szNameList[strlen(response)+1] = '\0';	
-// 			}
-// 
-// 			*pulSize = strlen(response) + 2;
-			if( szNameList != NULL )
-			{
-				memcpy( szNameList, response, nResponseLen );
-			}
-
-			*pulSize = nResponseLen;
-			return SAR_OK;
+		if (pDrives == NULL) {
+			LOGE("SKF_EnumDev param pDrives is null.");
+			return -1;
 		}
-		else  //FALSE：支持的设备
-		{
-
-			nRet = SDSCListDevs( szNameList, pulSize, &nResponseLen );
-
-			if( nRet != SAR_OK )
-			{
-				sprintf( szLog, "enum device fail, error code: 0x%08X \n", nRet );
-				WriteLogToFile( szLog );
-
-			}
-			else
-			{
-				//2013年07月02日
-				//加入对传入的参数非NULL的判断
-				*pulSize = 0;
-				while (nResponseLen > dwStrLen+1)
-				{
-					memset(sv_pszCCIDDevNameA,0,sizeof(sv_pszCCIDDevNameA));
-					strcpy( sv_pszCCIDDevNameA, (const char *)(response + dwStrLen) );
-					dwLen = strlen(sv_pszCCIDDevNameA);
-					dwStrLen += dwLen;
-					dwStrLen++;
-					// need update the params later
-					nRet = SDSCConnectDev( sv_pszCCIDDevNameA, &sv_Device);
-
-					if( nRet != SAR_OK )
-					{
-						sprintf( szLog, "enum device fail, error code: 0x%08X \n", nRet );
-						WriteLogToFile( szLog );
-					}
-					else
-					{
-						if( szNameList  != NULL )
-						{
-							memcpy( szNameList + dwOff, sv_pszCCIDDevNameA, dwLen );							
-						}
-						dwOff += dwLen;
-						*pulSize = dwStrLen;
-					}
-				}
-				*pulSize += 1;
-
-// 				while( nResponseLen > dwStrLen+1 )
-// 				{
-// 					strcpy_s( devName, response + dwStrLen );
-// 					dwStrLen += strlen( response + dwStrLen +1);
-// 					dwStrLen +=2;
-// 
-// 					if( strcmp(sv_pszCCIDDevNameA, devName) == 0 )
-// 					{
-// 						nResponseLen = strlen( sv_pszCCIDDevNameA );
-// 
-// 						if( szNameList  != NULL )
-// 						{
-// 							memcpy( szNameList, sv_pszCCIDDevNameA, nResponseLen );		
-// 							szNameList[nResponseLen] = 0;
-// 							szNameList[nResponseLen+1] = 0;
-// 						}
-// 
-// 						*pulSize = nResponseLen + 2;
-// 						break;
-// 					}
-// 				}
-// 
-// 
-// 				nRet = SCardConnectA( sv_hContext, 
-// 					sv_pszCCIDDevNameA,
-// 					SCARD_SHARE_SHARED,
-// 					SCARD_PROTOCOL_T0 | SCARD_PROTOCOL_T1,
-// 					( LPSCARDHANDLE )&sv_hDev,
-// 					&dwActiveProtocol );
-// 
-// 				if( nRet != SCARD_S_SUCCESS )
-// 				{
-// 					_stprintf_s( szLog, _countof(szLog), TEXT("设备枚举失败： 0x%08X \n"), nRet );
-// 					WriteLogToFile( szLog );
-// 					hasDevSupported = 0x00;
-// 				}
-// 				else
-// 				{
-// 					hasDevSupported = 0x01;
-// 				}
-
-			}
-
-// 			if( hasDevSupported == 0x00 )
-// 			{
-// 				*pulSize = 0;
-// 			}
-
-			return SAR_OK;
-
+		unsigned long baseResult = 0;
+#if 0
+		baseResult = SDSCListDevs(pDrives, pDrivesLen, pulSize);
+#else
+		baseResult = ListDevice(pDrives, &pDrivesLen);
+		*pulSize = baseResult;
+#endif
+		if ( LOGCAT_PRINT ) {
+			LOGI("SKF_EnumDev baseResult: %ld", baseResult);
+			LOGI("SKF_EnumDev pDrivesLen: %ld", pDrivesLen);
+			LOGI("SKF_EnumDev pDrives: %s\n", pDrives);
 		}
 
+		return baseResult;
 	}
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -228,103 +65,26 @@ extern "C" {
 	* 返 回 值：SAR_OK: 成功
 	其他值: 错误码
 	*/
-	ULONG SKF_ConnectDev( LPSTR szName, DEVHANDLE *phDev )
+	ULONG SKF_ConnectDev( char *szDrive, int *szNum )
 	{
 		CHAR* pszLog = ( "**********Start to execute SKF_ConnectDev ********** \n" );
-		CHAR szLog[SIZE_BUFFER_1024];
-
-		DWORD nResponseLen = 0;
-		DWORD dwActiveProtocol = 0;
-		LONG nRet = 0;
-
 		sv_fEnd = FALSE;
-		memset( szLog, 0x0, strlen(szLog) );
 		WriteLogToFile( pszLog );
-
-#if 0
-		wchar_t			wName[SIZE_BUFFER_1024];
-		LONG            lReturn;
-		DWORD           dwAP;
-		LONG            lReturn2;
-
-		int len = strlen(szName);
-
-		mbstowcs(wName, szName, len+1);
-
-		lReturn = SCardConnect( hSC, wName,SCARD_SHARE_SHARED,SCARD_PROTOCOL_T0 | SCARD_PROTOCOL_T1,&hCardHandle,&dwAP );
-		if ( SCARD_S_SUCCESS != lReturn )
-		{
-			_stprintf_s( szLog, _countof(szLog), TEXT("SCardConnect fail: %d \n"), lReturn );
-			WriteLogToFile( szLog );
-			return SAR_FAIL;
+		if (szDrive == NULL) {
+			LOGE("SKF_ConnectDev szDrive param is null.");
+			return -1;
 		}
-
-		_stprintf_s( szLog, _countof(szLog), TEXT("SCardConnect success \n"), lReturn );
-		WriteLogToFile( szLog );
-
-		// Use the connection.
-		// Display the active protocol.
-		switch ( dwAP )
-		{
-		case SCARD_PROTOCOL_T0:
-			_stprintf_s( szLog, _countof(szLog), TEXT("Active protocol T0\n"), lReturn );
-			WriteLogToFile( szLog );
-			break;
-
-		case SCARD_PROTOCOL_T1:
-			_stprintf_s( szLog, _countof(szLog), TEXT("Active protocol T1\n"), lReturn );
-			WriteLogToFile( szLog );
-			break;
-
-		case SCARD_PROTOCOL_UNDEFINED:
-		default:
-			_stprintf_s( szLog, _countof(szLog), TEXT("Active protocol unnegotiated or unknown\n"), lReturn );
-			WriteLogToFile( szLog );
-			break;
-		}
-
-		pioSendPci.dwProtocol = dwAP;
-		pioSendPci.cbPciLength = sizeof(SCARD_IO_REQUEST);
-
-		_stprintf_s( szLog, _countof(szLog), TEXT("SKF_ConnectDev success \n"), lReturn2 );
-		WriteLogToFile( szLog );
-
-		//--------选择CA环境DDF3
-		if( SV_SelectDFByFID( hCardHandle, APDU_CA_FID, "选择CA环境") != SAR_OK )
-		{
-			_stprintf_s( szLog, _countof(szLog), TEXT("设备连接失败（选择CA环境）\n") ); 
-			WriteLogToFile( szLog );
-			sv_fEnd = TRUE;
-			return SAR_FAIL;
-		}
-
-		//设备句柄
-		*phDev = hCardHandle;
-
-		return SAR_OK;
-
+#if 0 //mod by jason, for replace connectdev with opendev
+		unsigned long baseResult = SDSCConnectDev(szDrive, szNum);
+#else
+		unsigned long baseResult = OpenDevice(szDrive, szNum); //SDSCConnectDev(szDrive, &pulDriveNum);
 #endif
-		nRet = SDSCConnectDev(szName, &sv_Device);
-		if( nRet != SAR_OK )
-		{
-			sprintf( szLog, "device connect fail, error code: %d \n", nRet );
-			WriteLogToFile( szLog );
-			return SAR_FAIL;
+		if ( LOGCAT_PRINT ) {
+			LOGI("connect_dev baseResult: %ld", baseResult);
+			LOGI("connect_dev pulDriveNum: %d", *szNum);
+			LOGI("SKF_EnumDev szDrive: %s\n", szDrive);
 		}
-
-		//--------选择CA环境DDF3
-		if( SV_SelectDFByFID( sv_hDev, APDU_CA_FID, "select CA Env") != SAR_OK )
-		{
-			sprintf( szLog, "Device connect fail (select CA Env)\n" );
-			WriteLogToFile( szLog );
-			sv_fEnd = TRUE;
-			return SAR_FAIL;
-		}
-
-		//设备句柄
-		*phDev = sv_hDev;
-
-		return SAR_OK;
+		return baseResult;
 	}
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -335,28 +95,21 @@ extern "C" {
 	* 返 回 值：SAR_OK: 成功
 	其他值: 错误码
 	*/
-	ULONG SKF_DisConnectDev( DEVHANDLE hDev )
+	ULONG SKF_DisConnectDev( HANDLE handle )
 	{
 		CHAR* pszLog = ( "**********Start to execute SKF_DisConnectDev ********** \n" );
-		CHAR szLog[SIZE_BUFFER_1024];
-
 		sv_fEnd = TRUE;
 		WriteLogToFile( pszLog );
+#if 0 //mod by jason, for replace connectdev with opendev
+		unsigned long baseResult = SDSCDisconnectDev(handle);
+#else
+		unsigned long baseResult = CloseDevice(handle); //SDSCDisconnectDev(handle);
+#endif
+		if ( LOGCAT_PRINT ) {
+			LOGI("SKF_DisConnectDev baseResult: %ld", baseResult);
+		}
 
-		LONG            lReturn;
-
- 		lReturn = SDSCDisconnectDev(hDev);
- 		if ( SAR_OK != lReturn )
- 		{
-			sprintf( szLog, "SCardDisconnect fail : %d \n", lReturn );
- 			WriteLogToFile( szLog );
- 			return SAR_FAIL;
- 		}
-
-		sprintf( szLog, "SCardDisconnect success \n", lReturn );
- 		WriteLogToFile( szLog );
-
-		return SAR_OK;
+		return baseResult;
 	}
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -368,10 +121,9 @@ extern "C" {
 	* 返 回 值：SAR_OK: 成功
 	其他值: 错误码
 	*/
-	ULONG SKF_GetDevInfo( DEVHANDLE hDev, DEVINFO * pDevInfo )
+	ULONG SKF_GetDevInfo( HANDLE hDev, DEVINFO * pDevInfo )
 	{
 		CHAR* pLog = ( "**********Start to execute SKF_GetDevInfo ********** \n" );
-		CHAR szLog[SIZE_BUFFER_1024];
 		BYTE response[SIZE_BUFFER_1024];
 
 		DWORD nResponseLen = 0;
@@ -420,8 +172,8 @@ extern "C" {
 		nRet = TransmitData( hDev, apdu_getDevInfo, 0x05, response, &nResponseLen );
 		if( nRet != SAR_OK )
 		{
-			sprintf( szLog, "read 1E (device label) file fail, status code: %d \n", nRet );
-			WriteLogToFile( szLog );
+			sprintf( pLog, "read 1E (device label) file fail, status code: %d \n", nRet );
+			WriteLogToFile( pLog );
 			sv_nStatus = 1;
 			return SAR_FAIL;
 		}
@@ -437,8 +189,8 @@ extern "C" {
 		}
 		else
 		{
-			sprintf( szLog, "read 1E (device label) file fail, status code: %02X%02X \n", response[nResponseLen-2], response[nResponseLen-1] );
-			WriteLogToFile( szLog );
+			sprintf( pLog, "read 1E (device label) file fail, status code: %02X%02X \n", response[nResponseLen-2], response[nResponseLen-1] );
+			WriteLogToFile( pLog );
 			return SAR_FAIL;
 		}
 
@@ -448,7 +200,7 @@ extern "C" {
 	}
 
 	// need update
-ULONG SKF_GetFuncList( DEVHANDLE hDev, DEVINFO * pDevInfo )
+ULONG SKF_GetFuncList( HANDLE hDev, char * pDevInfo )
 {
 	CHAR* pszLog = ("**********Start to execute SKF_GetFuncList ********** \n");
 
