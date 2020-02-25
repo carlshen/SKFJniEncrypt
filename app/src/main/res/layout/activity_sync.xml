@@ -194,13 +194,17 @@
           android:layout_height="1dp"
           android:background="@android:color/darker_gray" />
 
-    <TextView
-        android:id="@+id/tv_log"
+    <ScrollView
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:singleLine="false"
-        android:hint="log"
-        android:textSize="20sp"
-        android:text=""/>
+        android:layout_height="wrap_content">
+        <TextView
+            android:id="@+id/tv_log"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:singleLine="false"
+            android:hint="log"
+            android:textSize="20sp"
+            android:text=""/>
+    </ScrollView>
 
 </LinearLayout>

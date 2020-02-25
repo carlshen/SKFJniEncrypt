@@ -122,8 +122,8 @@ public class MainActivity extends AppCompatActivity {
         mGetFuncList.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                String result = AESEncrypt.GetFuncList(extPath);
-                tvResult.setText("GetFuncList: " + result);
+                String result = AESEncrypt.GetFuncList();
+                tvLog.setText("GetFuncList: " + result);
             }
         });
         mGenRandom = (Button) findViewById(R.id.btn_genrandom);

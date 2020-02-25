@@ -83,6 +83,7 @@ BYTE apdu_genDataKeyEcc[0x0D];
 BYTE apdu_getDevInfo[0x05];
 BYTE apdu_eccEncrypt[0x05];
 BYTE apdu_eccDecrypt[0x05];
+BYTE apdu_connect[0x07];
 BYTE apdu_84_00[0x04];
 BYTE apdu_A4_04[0x04];
 BYTE apdu_A5_00[0x04];

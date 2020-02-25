@@ -47,24 +47,19 @@ JNIEXPORT jlong JNICALL set_package(JNIEnv *env, jobject instance, jstring str_)
     return pkgresult;
 }
 
-JNIEXPORT jstring JNICALL get_func_list(JNIEnv *env, jobject instance, jstring str_) {
-    char *pkgname = (char *) (*env)->GetStringUTFChars(env, str_, JNI_FALSE);
-    LOGI("get_func_list pkgname: %s\n", pkgname);
-    memset(SV_PSZLOGPATH, 0x00, SIZE_BUFFER_128);
-    memcpy(SV_PSZLOGPATH, pkgname, strlen(pkgname));
-    strcat(SV_PSZLOGPATH, "/files/tmc_sdk.log");
-    LOGI("set_package log_name: %s\n", SV_PSZLOGPATH);
-    char *devInfo = (char *) malloc(SDSC_MAX_DEV_NAME_LEN * sizeof(char));
-    if (devInfo == NULL) {
-        LOGE("get_dev_info with null alloc.");
+JNIEXPORT jstring JNICALL get_func_list(JNIEnv *env, jobject instance) {
+    char *funcList = (char *) malloc(1024 * sizeof(char));
+    if (funcList == NULL) {
+        LOGE("get_func_list with null alloc.");
         return (*env)->NewStringUTF(env, '\0');
     }
-    memset(devInfo, 0x00, SDSC_FIRMWARE_VER_LEN * sizeof(char));
-    unsigned long baseResult = SKF_GetFuncList( sv_Device, devInfo );
-    LOGI("get_dev_info baseResult: %ld", baseResult);
-    jstring  result = charToJstring(env, devInfo);
+    memset(funcList, '\0', 1024 * sizeof(char));
+    unsigned long baseResult = SKF_GetFuncList( funcList );
+    LOGI("get_func_list baseResult: %ld", baseResult);
+    LOGI("get_func_list funcList: %s\n", funcList);
+    jstring  result = charToJstring(env, funcList);
     // need free the memory
-    free(devInfo);
+    free(funcList);
     return result;
 }
 
@@ -724,7 +719,7 @@ JNIEXPORT jlong JNICALL get_scio_type(JNIEnv *env, jobject instance, jint handle
 // Java和JNI函数的绑定表
 static JNINativeMethod method_table[] = {
         {"setPackageName",  "(Ljava/lang/String;)J",                                   (void *) set_package},
-        {"GetFuncList",     "(Ljava/lang/String;)Ljava/lang/String;",                   (void *) get_func_list},
+        {"GetFuncList",     "()Ljava/lang/String;",                                    (void *) get_func_list},
         {"ImportCert",      "(I)J",                                                     (void *) import_cert},
         {"ExportCert",      "(I)J",                                                     (void *) export_cert},
         {"EnumDev",         "()Ljava/lang/String;",                                    (void *) enum_dev},

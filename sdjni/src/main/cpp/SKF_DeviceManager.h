@@ -7,6 +7,6 @@ ULONG SKF_EnumDev( char *pDrives, ULONG * pDrivesLen, ULONG * pulSize );
 ULONG SKF_ConnectDev( char *szDrive, int *szNum );
 ULONG SKF_DisConnectDev( HANDLE hDev );
 ULONG SKF_GetDevInfo( HANDLE hDev, DEVINFO * pDevInfo );
-ULONG SKF_GetFuncList( HANDLE hDev, char * pDevInfo );
+ULONG SKF_GetFuncList( char * pDevInfo );
 
 #endif // SKF_DEVICE_MANAGER_H

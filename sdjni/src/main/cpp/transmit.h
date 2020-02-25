@@ -12,6 +12,9 @@
 #define DATA_TRANSMIT_BUFFER_MAX_SIZE (512)
 #define DATA_TRANSMIT_BLOCK_SIZE (480)
 
+unsigned char device_path[256];
+int trans_dev_id;
+
 unsigned char CalculateCheckSum(unsigned char * ucData, unsigned long ulByteNum);
 int GetVersion(char* Version);
 int OpenDevice(char* pDeviceName, int* Result);

@@ -3,6 +3,7 @@
 //////////////////////////////////////////////////////////////////////
 
 #include <string.h>
+#include <zconf.h>
 #include "SKF_TypeDef.h"
 #include "Global_Def.h"
 #include "Algorithms.h"
@@ -76,6 +77,7 @@ extern "C" {
 		}
 #if 0 //mod by jason, for replace connectdev with opendev
 		unsigned long baseResult = SDSCConnectDev(szDrive, szNum);
+		trans_dev_id = *szNum;
 #else
 		unsigned long baseResult = OpenDevice(szDrive, szNum); //SDSCConnectDev(szDrive, &pulDriveNum);
 #endif
@@ -84,7 +86,60 @@ extern "C" {
 			LOGI("connect_dev pulDriveNum: %d", *szNum);
 			LOGI("SKF_EnumDev szDrive: %s\n", szDrive);
 		}
-		return baseResult;
+		if (trans_dev_id < 0) {
+			return trans_dev_id;
+		}
+
+		// command  00A40400 06 746D7373696D
+		unsigned char DataTobeSend[0xB];
+		unsigned long send_len = 0;
+		unsigned char check_sum = 0;
+
+		int ret;
+		unsigned char * tmpBuffer_wr = memalign(512, DATA_TRANSMIT_BUFFER_MAX_SIZE);
+		memset(tmpBuffer_wr, 0, DATA_TRANSMIT_BUFFER_MAX_SIZE);
+		send_len = sizeof(DataTobeSend);
+
+		unsigned char *tmpBuffer_rd = memalign(512, DATA_TRANSMIT_BUFFER_MAX_SIZE);
+		unsigned long recv_len = DATA_TRANSMIT_BUFFER_MAX_SIZE;
+		memset(tmpBuffer_rd, 0, DATA_TRANSMIT_BUFFER_MAX_SIZE);
+
+		//copy the raw data
+		memcpy(tmpBuffer_wr, (unsigned char *)DataTobeSend, send_len);
+
+		//fill the checksum byte
+		check_sum = CalculateCheckSum((tmpBuffer_wr+1), (send_len-1));
+
+		//fill the data ...........................................
+		*(tmpBuffer_wr+send_len) = check_sum;
+		send_len = send_len + 1;
+
+		memset(DataTobeSend, '\0', 0xB);
+		memcpy(DataTobeSend, apdu_A4_04, 0x04);
+		memcpy(DataTobeSend + 0x04, apdu_connect, 0x07);
+		int repeat_times = 10;
+		for (int i = 0; i < repeat_times; i++) {
+			if (repeat_times > 1)
+				usleep(500 * 1000);  //gap between each cycle
+
+			memset(tmpBuffer_rd, 0, DATA_TRANSMIT_BUFFER_MAX_SIZE);
+			recv_len = DATA_TRANSMIT_BUFFER_MAX_SIZE;
+			ret = TransmitData(trans_dev_id, tmpBuffer_wr, send_len, tmpBuffer_rd, &recv_len);
+			if (ret < 0) {
+				LOGE("TransmitData return failed, ret %d.", ret);
+				ret = -1;
+				continue;
+			}
+			if( (tmpBuffer_rd[recv_len-2] == 0x90) && (tmpBuffer_rd[recv_len-1] == 0x00 ) ) {
+				// get data if need
+				break;
+			}
+		}
+
+		free(tmpBuffer_wr);
+		free(tmpBuffer_rd);
+
+		return SAR_OK;
 	}
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -101,7 +156,13 @@ extern "C" {
 		sv_fEnd = TRUE;
 		WriteLogToFile( pszLog );
 #if 0 //mod by jason, for replace connectdev with opendev
+		if ((trans_dev_id == -1) || (handle != trans_dev_id)) {
+			LOGE("SKF_DisConnectDev device handler is incorrect.");
+			return -1;
+		}
 		unsigned long baseResult = SDSCDisconnectDev(handle);
+		trans_dev_id = -1;
+		memset(device_path, 0, sizeof(device_path));
 #else
 		unsigned long baseResult = CloseDevice(handle); //SDSCDisconnectDev(handle);
 #endif
@@ -200,11 +261,56 @@ extern "C" {
 	}
 
 	// need update
-ULONG SKF_GetFuncList( HANDLE hDev, char * pDevInfo )
+ULONG SKF_GetFuncList( char * pDevInfo )
 {
 	CHAR* pszLog = ("**********Start to execute SKF_GetFuncList ********** \n");
 
 	WriteLogToFile( pszLog );
+	if (pDevInfo == NULL) {
+		LOGE("SKF_GetFuncList param pDevInfo is null.");
+		return -1;
+	}
+	strcat(pDevInfo, "SKF_EnumDev;");
+	strcat(pDevInfo, "SKF_ConnectDev;");
+	strcat(pDevInfo, "SKF_DisconnectDev;");
+	strcat(pDevInfo, "SKF_ImportCertificate;");
+	strcat(pDevInfo, "SKF_ExportCertificate;");
+	strcat(pDevInfo, "SKF_GenRandom;");
+	strcat(pDevInfo, "SKF_GenECCKeyPair;");
+	strcat(pDevInfo, "SKF_ImportECCKeyPair;");
+	strcat(pDevInfo, "SKF_ECCSignData;");
+	strcat(pDevInfo, "SKF_ECCVerify;");
+	strcat(pDevInfo, "SKF_ExtECCVerify;");
+	strcat(pDevInfo, "SKF_GenerateAgreementDataWithECC;");
+	strcat(pDevInfo, "SKF_GenerateKeyWithECC;");
+	strcat(pDevInfo, "SKF_GenerateAgreementDataAndKeyWithECC;");
+	strcat(pDevInfo, "SKF_ExportPublicKey;");
+	strcat(pDevInfo, "SKF_ImportSessionKey;");
+	strcat(pDevInfo, "SKF_SetSymmKey;");
+	strcat(pDevInfo, "SKF_EncryptInit;");
+	strcat(pDevInfo, "SKF_Encrypt;");
+	strcat(pDevInfo, "SKF_EncryptUpdate;");
+	strcat(pDevInfo, "SKF_EncryptFinal;");
+	strcat(pDevInfo, "SKF_DecryptInit ;");
+	strcat(pDevInfo, "SKF_Decrypt;");
+	strcat(pDevInfo, "SKF_DecryptUpdate;");
+	strcat(pDevInfo, "SKF_DecryptFinal;");
+	strcat(pDevInfo, "SKF_DigestInit;");
+	strcat(pDevInfo, "SKF_Digest;");
+	strcat(pDevInfo, "SKF_DigestUpdate;");
+	strcat(pDevInfo, "SKF_DigestFinal;");
+	strcat(pDevInfo, "SKF_MacInit;");
+	strcat(pDevInfo, "SKF_MacUpdate;");
+	strcat(pDevInfo, "SKF_MacFinal;");
+	strcat(pDevInfo, "SKF_CloseHandle;");
+	strcat(pDevInfo, "SKF_GetDevInfo;");
+	strcat(pDevInfo, "V_GenerateKey;");
+	strcat(pDevInfo, "V_ECCExportSessionKeyByHandle;");
+	strcat(pDevInfo, "V_ECCPrvKeyDecrypt;");
+	strcat(pDevInfo, "V_ImportKeyPair;");
+	strcat(pDevInfo, "V_Cipher;");
+	strcat(pDevInfo, "V_GetZA;");
+	strcat(pDevInfo, "V_SetAppPath;");
 
 	return SAR_OK;
 }

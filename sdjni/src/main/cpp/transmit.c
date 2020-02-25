@@ -15,7 +15,6 @@
 #include "transmit.h"
 
 static unsigned long g_ulDebugLoopIndex;
-unsigned char device_path[256];
 int trans_dev_id = -1;
 uint64_t device_total_size = 0; //block size, 512 bytes/per block
 
