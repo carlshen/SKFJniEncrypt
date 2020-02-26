@@ -26,128 +26,82 @@ extern "C" {
 * 返 回 值：SAR_OK: 成功
             其他值: 错误码
 */
-ULONG SKF_GenRandom( DEVHANDLE hDev, BYTE *pbRandom, ULONG ulRandomLen )
+ULONG SKF_GenRandom( HANDLE hDev, BYTE *pbRandom, ULONG *ulRandomLen )
 {
 	CHAR* pszLog = ( "**********Start to execute SKF_GenRandom ********** \n" );
 	CHAR szLog[SIZE_BUFFER_1024];
     BYTE response[SIZE_BUFFER_1024];
-	BYTE apdu[SIZE_BUFFER_1024];
-	INT nDivider = 0;
-	INT nRemainder = 0;
-	INT nIndex = 0;
 	DWORD nResponseLen = 0;
-	LONG nRet = 0;
 	sv_fEnd = FALSE;
     memset( response, 0x00, sizeof(response) );
 	memset( szLog, 0x0, sizeof(szLog) );
-	memset( apdu, 0x00, sizeof(apdu) );
 
     WriteLogToFile( pszLog );
 
-	//--------设备句柄不能为空
-    if( hDev == NULL )
-	{
+	if( hDev < 0 ) {
 		return SAR_INVALIDHANDLEERR;
 	}
-
-	if( ulRandomLen <= 0 )
-	{
-		return SAR_INDATALENERR;
+	if (pbRandom == NULL) {
+		LOGE("SKF_GenRandom param is null.");
+		return -1;
 	}
 
-	//--------选择ADF，通过FID选择
-	nDivider = ulRandomLen / RANDOM_BLOCK_SIZE;
-	nRemainder = ulRandomLen % RANDOM_BLOCK_SIZE;
-    
-	//--------按remainder字节数取随机数
-	memcpy( apdu, apdu_random, 0x05 );
-	apdu[4] = RANDOM_BLOCK_SIZE;
+	unsigned long send_len = strlen(apdu_84_00);
+	unsigned char check_sum = 0;
+	int ret;
+	unsigned char * tmpBuffer_wr = memalign(512, DATA_TRANSMIT_BUFFER_MAX_SIZE);
+	memset(tmpBuffer_wr, 0, DATA_TRANSMIT_BUFFER_MAX_SIZE);
+	//copy the raw data
+	memcpy(tmpBuffer_wr, (unsigned char *)apdu_84_00, send_len);
 
-	for( nIndex=0; nIndex<nDivider; nIndex++ )
-	{
-		//--------取随机数
-//		PrintApduToFile( 0, apdu, 0x05 );
+	unsigned char *tmpBuffer_rd = memalign(512, DATA_TRANSMIT_BUFFER_MAX_SIZE);
+	unsigned long recv_len = 0;
 
-	    nResponseLen = sizeof( response );
-	    nRet = TransmitData( hDev, apdu_random, 0x05, response, &nResponseLen );
-        if( nRet != SAR_OK )
-		{
-			sprintf( szLog, "取随机数失败，错误码: %d \n", nRet );
+	//fill the checksum byte
+	check_sum = CalculateCheckSum((tmpBuffer_wr+1), (send_len-1));
+
+	//fill the data ...........................................
+	*(tmpBuffer_wr+send_len) = check_sum;
+	send_len = send_len + 1;
+
+	int repeat_times = 10;
+	for (int i = 0; i < repeat_times; i++) {
+		if (repeat_times > 1)
+			usleep(500 * 1000);  //gap between each cycle
+
+		memset(tmpBuffer_rd, 0, DATA_TRANSMIT_BUFFER_MAX_SIZE);
+		recv_len = DATA_TRANSMIT_BUFFER_MAX_SIZE;
+		ret = TransmitData(trans_dev_id, tmpBuffer_wr, send_len, tmpBuffer_rd, &recv_len);
+		if (ret < 0) {
+			sprintf( szLog, "SKF_GenRandom failed, error code: %d \n", ret );
 			WriteLogToFile( szLog );
-			sv_nStatus = 1;
-			return SAR_GENRANDERR;
+			LOGE("SKF_GenRandom return failed, ret %d.", ret);
+			ret = -1;
+			continue;
 		}
-
-//		PrintApduToFile( 1, response, nResponseLen );
-
-		if( (response[nResponseLen-2] == 0x90) && (response[nResponseLen-1] == 0x00 ) )
-		{
-			if( pbRandom != NULL )
-			{
-				memcpy( pbRandom+(nIndex*RANDOM_BLOCK_SIZE), response, RANDOM_BLOCK_SIZE );
-			}
-		}
-		else
-		{
-            sprintf( szLog, "取随机失败，状态码: %02x%02x \n", response[nResponseLen-2], response[nResponseLen-1] );
+		if( (tmpBuffer_rd[recv_len-2] == 0x90) && (tmpBuffer_rd[recv_len-1] == 0x00 ) ) {
+			// get data if need
+            *ulRandomLen = recv_len-2;
+            memcpy(pbRandom, tmpBuffer_rd, *ulRandomLen);
+			break;
+		} else {
+			sprintf( szLog, "SKF_GenRandom failed, status code: %02X%02X \n", response[nResponseLen-2], response[nResponseLen-1] );
 			WriteLogToFile( szLog );
-			return SAR_GENRANDERR;
-		}
-	} 
-
-	if( nRemainder != 0 )
-	{
-		//--------按remainder字节数取随机数
-		memcpy( apdu, apdu_random, 0x05 );
-		apdu[4] = (BYTE)nRemainder;
-
-//		PrintApduToFile( 0, apdu, 0x05 );
-
-		nResponseLen = sizeof( response );
-        nRet = TransmitData( hDev, apdu, 0x05, response, &nResponseLen );
-        if( nRet != SAR_OK )
-		{
-			sprintf( szLog, "取随机数失败，错误码: %d \n", nRet );
-			WriteLogToFile( szLog );
-			sv_nStatus = 1;
-			return SAR_GENRANDERR;
-		}
-
-//		PrintApduToFile( 1, response, nResponseLen );
-
-		if( (response[nResponseLen-2] == 0x90) && (response[nResponseLen-1] == 0x00) )
-		{
-			if( pbRandom != NULL )
-			{
-				memcpy( pbRandom+(nDivider*RANDOM_BLOCK_SIZE), response, nRemainder );
-			}
-		}
-		else
-		{
-            sprintf( szLog, "取随机数失败，状态码: %02x%02x \n", response[nResponseLen-2], response[nResponseLen-1] );
-			WriteLogToFile( szLog );
-			return SAR_GENRANDERR;
+			LOGE("SKF_GenRandom failed, status code: %02X%02X \n", response[nResponseLen-2], response[nResponseLen-1]);
 		}
 	}
- 
-	//--------随机数存储到全局缓冲区内
-	if( SIZE_BUFFER_1024 < ulRandomLen )
-	{
-		memcpy( sv_random, pbRandom, SIZE_BUFFER_1024 );
-		sv_randomLength = SIZE_BUFFER_1024;
-	}
-	else
-	{
-	    memcpy( sv_random, pbRandom, ulRandomLen );
-	    sv_randomLength = ulRandomLen;
-	}
 
+    free(tmpBuffer_wr);
+    free(tmpBuffer_rd);
+    if (ret < 0) {
+        return SAR_FAIL;
+    }
 	return SAR_OK;
 }
 
 
 //2--------------------NO
-ULONG SKF_GenExtRSAKey( DEVHANDLE hDev, ULONG ulBitsLen, RSAPRIVATEKEYBLOB *pBlob )
+ULONG SKF_GenExtRSAKey( HANDLE hDev, ULONG ulBitsLen, RSAPRIVATEKEYBLOB *pBlob )
 {
 	CHAR* pszLog = ( "**********Start to execute SKF_GenExtRSAKey ********** \n" );
    
@@ -168,7 +122,7 @@ ULONG SKF_GenExtRSAKey( DEVHANDLE hDev, ULONG ulBitsLen, RSAPRIVATEKEYBLOB *pBlo
 * 返 回 值:	SAR_OK：成功
             其他值：错误码
 */
-ULONG SKF_GenRSAKeyPair( DEVHANDLE hContainer, ULONG ulBitsLen, RSAPUBLICKEYBLOB* pBlob )
+ULONG SKF_GenRSAKeyPair( HANDLE hContainer, ULONG ulBitsLen, RSAPUBLICKEYBLOB* pBlob )
 {
 	CHAR* pszLog = ( "**********Start to execute SKF_GenRSAKeyPair ********** \n" );
     
@@ -192,7 +146,7 @@ ULONG SKF_GenRSAKeyPair( DEVHANDLE hContainer, ULONG ulBitsLen, RSAPUBLICKEYBLOB
             其他值：错误码
 */
 
-ULONG SKF_ImportRSAKeyPair( DEVHANDLE hContainer, ULONG ulSymAlgId, BYTE *pbWrappedKey, ULONG ulWrappedKeyLen,
+ULONG SKF_ImportRSAKeyPair( HANDLE hContainer, ULONG ulSymAlgId, BYTE *pbWrappedKey, ULONG ulWrappedKeyLen,
                                    BYTE *pbEncryptedData, ULONG ulEncryptedDataLen)
 {
 	CHAR* pszLog = ( "**********Start to execute SKF_ImportRSAKeyPair ********** \n" );
@@ -216,7 +170,7 @@ ULONG SKF_ImportRSAKeyPair( DEVHANDLE hContainer, ULONG ulSymAlgId, BYTE *pbWrap
 * 返 回 值：SAR_OK: 成功
             其他值: 错误码
 */
-ULONG SKF_RSASignData( DEVHANDLE hContainer, BYTE *pbData, ULONG  ulDataLen, BYTE *pbSignature, ULONG *pulSignLen )
+ULONG SKF_RSASignData( HANDLE hContainer, BYTE *pbData, ULONG  ulDataLen, BYTE *pbSignature, ULONG *pulSignLen )
 {
 	CHAR* pszLog = ( "**********Start to execute SKF_RSASignData ********** \n" );
     
@@ -242,7 +196,7 @@ ULONG SKF_RSASignData( DEVHANDLE hContainer, BYTE *pbData, ULONG  ulDataLen, BYT
             其他值: 错误码
 */
                                    
-ULONG SKF_RSAVerify( DEVHANDLE hDev, RSAPUBLICKEYBLOB* pRSAPubKeyBlob, BYTE *pbData, ULONG ulDataLen,
+ULONG SKF_RSAVerify( HANDLE hDev, RSAPUBLICKEYBLOB* pRSAPubKeyBlob, BYTE *pbData, ULONG ulDataLen,
 						   BYTE* pbSignature, ULONG ulSignLen )
 {
 	CHAR* pszLog = ("**********Start to execute SKF_RSAVerify ********** \n");
@@ -267,7 +221,7 @@ ULONG SKF_RSAVerify( DEVHANDLE hDev, RSAPUBLICKEYBLOB* pRSAPubKeyBlob, BYTE *pbD
 * 返 回 值：SAR_OK: 成功
             其他值: 错误码
 */
-ULONG SKF_RSAExportSessionKey( DEVHANDLE hContainer, ULONG ulAlgId, RSAPUBLICKEYBLOB *pPubKey,
+ULONG SKF_RSAExportSessionKey( HANDLE hContainer, ULONG ulAlgId, RSAPUBLICKEYBLOB *pPubKey,
 									 BYTE *pbData, ULONG  *pulDataLen, HANDLE *phSessionKey )
 {
 	CHAR* pszLog = ("**********Start to execute SKF_RSAExportSessionKey ********** \n");
@@ -278,7 +232,7 @@ ULONG SKF_RSAExportSessionKey( DEVHANDLE hContainer, ULONG ulAlgId, RSAPUBLICKEY
 }
 
 //8--------------------NO
-ULONG SKF_ExtRSAPubKeyOperation( DEVHANDLE hDev, RSAPUBLICKEYBLOB* pRSAPubKeyBlob,BYTE* pbInput,
+ULONG SKF_ExtRSAPubKeyOperation( HANDLE hDev, RSAPUBLICKEYBLOB* pRSAPubKeyBlob,BYTE* pbInput,
 										ULONG ulInputLen, BYTE* pbOutput, ULONG* pulOutputLen )
 {
 	CHAR* pszLog = ( "**********Start to execute SKF_ExtRSAPubKeyOperation ********** \n" );
@@ -289,7 +243,7 @@ ULONG SKF_ExtRSAPubKeyOperation( DEVHANDLE hDev, RSAPUBLICKEYBLOB* pRSAPubKeyBlo
 }
 
 //9--------------------NO
-ULONG SKF_ExtRSAPriKeyOperation( DEVHANDLE hDev, RSAPRIVATEKEYBLOB* pRSAPriKeyBlob,BYTE* pbInput,
+ULONG SKF_ExtRSAPriKeyOperation( HANDLE hDev, RSAPRIVATEKEYBLOB* pRSAPriKeyBlob,BYTE* pbInput,
 									   ULONG ulInputLen, BYTE* pbOutput, ULONG* pulOutputLen )
 {
 	CHAR* pszLog = ( "**********Start to execute SKF_ExtRSAPriKeyOperation ********** \n" );
@@ -309,16 +263,15 @@ ULONG SKF_ExtRSAPriKeyOperation( DEVHANDLE hDev, RSAPRIVATEKEYBLOB* pRSAPriKeyBl
 * 返 回 值：SAR_OK: 成功
             其他值: 错误码
 */
-ULONG SKF_GenECCKeyPair( DEVHANDLE hContainer, ULONG ulAlgId, ECCPUBLICKEYBLOB* pBlob )
+ULONG SKF_GenECCKeyPair( HANDLE hDev, BYTE * pBlob )
 {
 	CHAR* pszLog = ( "**********Start to execute SKF_GenECCKeyPair ********** \n" );
 	CHAR szLog[SIZE_BUFFER_1024];
 	BYTE response[SIZE_BUFFER_1024];
 	BYTE fileSFI[0x06] = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
-	BYTE apdu[SIZE_BUFFER_1024];
+	BYTE apdu[0x0D];
 	ECCPUBLICKEYBLOB eccPubKeyBlob;
 	PCONTAINERINFO pContainer;
-	DEVHANDLE hDev;
 	DWORD nResponseLen = 0;
 	LONG nRet = 0;
 	sv_fEnd = FALSE;
@@ -329,71 +282,112 @@ ULONG SKF_GenECCKeyPair( DEVHANDLE hContainer, ULONG ulAlgId, ECCPUBLICKEYBLOB* 
 
 	WriteLogToFile( pszLog );
 
-	//--------容器句柄不能为空
-	if( hContainer == NULL )
-	{
-		return SAR_INVALIDHANDLEERR;
-	}
+    if( hDev < 0 ) {
+        return SAR_INVALIDHANDLEERR;
+    }
+    if (pBlob == NULL) {
+        LOGE("SKF_GenECCKeyPair param is null.");
+        return -1;
+    }
 
-	//--------算法标识，只支持SGD_SM2_1算法
-	switch( ulAlgId )
-	{
-	    case SGD_SM2_1:
-		    break;
-	    default:
-		    return SAR_NOTSUPPORTYETERR;
-	}
+    // 80C80000 08 0107+A001+A101+0100
+    memcpy(apdu, (unsigned char *)apdu_C8_00, 0x05);
+    memcpy(apdu + 0x05, apdu_GenEccKeyPair, 0x08);
+    unsigned long send_len = strlen(apdu);
+    unsigned char check_sum = 0;
+    int ret;
+    unsigned char * tmpBuffer_wr = memalign(512, DATA_TRANSMIT_BUFFER_MAX_SIZE);
+    memset(tmpBuffer_wr, 0, DATA_TRANSMIT_BUFFER_MAX_SIZE);
+    //copy the raw data
+    memcpy(tmpBuffer_wr, (unsigned char *)apdu_84_00, send_len);
 
-	//--------组织APDU
-	memcpy( apdu, apdu_eccGenKeyPair, 0x05 );
-	apdu[2] = 0xEB;
-	apdu[3] = fileSFI[4];
-	apdu[4] = 0x40;  //0x40公钥长度字节
-    sv_signEF_FID[0] = 0xEB;
-	sv_signEF_FID[1] = fileSFI[4];
+    unsigned char *tmpBuffer_rd = memalign(512, DATA_TRANSMIT_BUFFER_MAX_SIZE);
+    unsigned long recv_len = 0;
 
-//	PrintApduToFile( 0, apdu, 0x05 );
+    //fill the checksum byte
+    check_sum = CalculateCheckSum((tmpBuffer_wr+1), (send_len-1));
 
-	nResponseLen = sizeof( response );
-    nRet = TransmitData( hDev, apdu, 0x05, response, &nResponseLen );
-    if( nRet != SAR_OK )
-	{
-        sprintf( szLog, "生成ECC签名密钥对失败，错误码: %d \n", nRet );
-		WriteLogToFile( szLog );
-		sv_nStatus = 1;
+    //fill the data ...........................................
+    *(tmpBuffer_wr+send_len) = check_sum;
+    send_len = send_len + 1;
+
+    int repeat_times = 10;
+    for (int i = 0; i < repeat_times; i++) {
+        if (repeat_times > 1)
+            usleep(500 * 1000);  //gap between each cycle
+
+        memset(tmpBuffer_rd, 0, DATA_TRANSMIT_BUFFER_MAX_SIZE);
+        recv_len = DATA_TRANSMIT_BUFFER_MAX_SIZE;
+        ret = TransmitData(trans_dev_id, tmpBuffer_wr, send_len, tmpBuffer_rd, &recv_len);
+        if (ret < 0) {
+            sprintf( szLog, "SKF_GenECCKeyPair failed, error code: %d \n", ret );
+            WriteLogToFile( szLog );
+            LOGE("SKF_GenECCKeyPair return failed, ret %d.", ret);
+            ret = -1;
+            continue;
+        }
+        if( (tmpBuffer_rd[recv_len-2] == 0x90) && (tmpBuffer_rd[recv_len-1] == 0x00 ) ) {
+            // get data if need
+            break;
+        } else {
+            sprintf( szLog, "SKF_GenECCKeyPair failed, status code: %02X%02X \n", response[nResponseLen-2], response[nResponseLen-1] );
+            WriteLogToFile( szLog );
+            LOGE("SKF_GenECCKeyPair failed, status code: %02X%02X \n", response[nResponseLen-2], response[nResponseLen-1]);
+        }
+    }
+	if (ret < 0) {
+		free(tmpBuffer_wr);
+		free(tmpBuffer_rd);
 		return SAR_FAIL;
 	}
-	
-//	PrintApduToFile( 1, response, nResponseLen );
 
-	if( (response[nResponseLen-2] == 0x90) && (response[nResponseLen-1] == 0x00) )
-	{
-#ifdef _DEBUG
-		BYTE m = 0;
-		WriteLogToFile( TEXT("SKF_GenECCKeyPair: \n") );
-		for( m=0; m<nResponseLen-2; m++ )
-		{
-			sprintf( szLog, "%02X", response[m] );
-			WriteLogToFile( szLog );
+	// command ecc key pair
+	unsigned char DataTobeSend[0x07];
+	send_len = 0x07;
+	memcpy(DataTobeSend, (unsigned char *)apdu_CE_01, 0x05);
+	memcpy(DataTobeSend + 0x05, apdu_A001, 0x02);
+	//copy the raw data
+	memcpy(tmpBuffer_wr, (unsigned char *)DataTobeSend, send_len);
+
+	//fill the checksum byte
+	check_sum = CalculateCheckSum((tmpBuffer_wr+1), (send_len-1));
+
+	//fill the data ...........................................
+	*(tmpBuffer_wr+send_len) = check_sum;
+	send_len = send_len + 1;
+
+	repeat_times = 10;
+	for (int i = 0; i < repeat_times; i++) {
+		if (repeat_times > 1)
+			usleep(500 * 1000);  //gap between each cycle
+
+		memset(tmpBuffer_rd, 0, DATA_TRANSMIT_BUFFER_MAX_SIZE);
+		recv_len = DATA_TRANSMIT_BUFFER_MAX_SIZE;
+		ret = TransmitData(trans_dev_id, tmpBuffer_wr, send_len, tmpBuffer_rd, &recv_len);
+		if (ret < 0) {
+            sprintf( szLog, "SKF_GenECCKeyPair failed, error code: %d \n", ret );
+            WriteLogToFile( szLog );
+            LOGE("SKF_GenECCKeyPair return failed, ret %d.", ret);
+			ret = -1;
+			continue;
 		}
-		WriteLogToFile( TEXT("\n") );
-#endif
-		eccPubKeyBlob.BitLen = 256;
-		memset( eccPubKeyBlob.XCoordinate, 0x00, sizeof(eccPubKeyBlob.XCoordinate) );
-		memset( eccPubKeyBlob.YCoordinate, 0x00, sizeof(eccPubKeyBlob.YCoordinate) );
-		memcpy( eccPubKeyBlob.XCoordinate+SIZE_BUFFER_32, response, SIZE_BUFFER_32 );
-		memcpy( eccPubKeyBlob.YCoordinate+SIZE_BUFFER_32, response+SIZE_BUFFER_32, SIZE_BUFFER_32 );
-	
-		*pBlob = eccPubKeyBlob;
+		if( (tmpBuffer_rd[recv_len-2] == 0x90) && (tmpBuffer_rd[recv_len-1] == 0x00 ) ) {
+			// get data if need
+			memcpy(pBlob, tmpBuffer_rd, recv_len-2);
+			break;
+        } else {
+            sprintf( szLog, "SKF_GenECCKeyPair failed, status code: %02X%02X \n", response[nResponseLen-2], response[nResponseLen-1] );
+            WriteLogToFile( szLog );
+            LOGE("SKF_GenECCKeyPair failed, status code: %02X%02X \n", response[nResponseLen-2], response[nResponseLen-1]);
+        }
 	}
-	else
-	{
-		sprintf( szLog, "生成ECC签名密钥对失败，状态码: %02x%02x \n", response[nResponseLen-2], response[nResponseLen-1] );
-		WriteLogToFile( szLog );
-		return SAR_FAIL;	
-	}
-    
-	return SAR_OK;
+
+    free(tmpBuffer_wr);
+    free(tmpBuffer_rd);
+    if (ret < 0) {
+        return SAR_FAIL;
+    }
+    return SAR_OK;
 }
 
 
@@ -407,14 +401,14 @@ ULONG SKF_GenECCKeyPair( DEVHANDLE hContainer, ULONG ulAlgId, ECCPUBLICKEYBLOB* 
 * 返 回 值：SAR_OK: 成功
             其他值: 错误码
 */
-ULONG SKF_ImportECCKeyPair( DEVHANDLE hContainer, PENVELOPEDKEYBLOB pEnvelopedKeyBlob )
+ULONG SKF_ImportECCKeyPair( HANDLE hDev, BYTE* pubKey, BYTE* privKey )
 {
 	CHAR* pszLog = ( "**********Start to execute SKF_ImportECCKeyPair ********** \n" );
 	CHAR szLog[SIZE_BUFFER_1024];
 	BYTE appFID[2] = { 0xDF, 0x00 };
 	BYTE fileSFI[6] = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
 	BYTE bSFI = 0x00;
-	BYTE apdu[SIZE_BUFFER_1024];
+	BYTE apdu[0x4B];
 	BYTE response[SIZE_BUFFER_1024];
 	BYTE tempbuf[SIZE_BUFFER_1024];
 	ULONG length = 0;
@@ -423,13 +417,18 @@ ULONG SKF_ImportECCKeyPair( DEVHANDLE hContainer, PENVELOPEDKEYBLOB pEnvelopedKe
 	INT nRemainder = 0;
 	INT nIndex = 0;
 	ULONG dwOffset = 0;
-	DEVHANDLE hDev;
 	DWORD nResponseLen = 0;
 	LONG nRet = 0;
-	//--------容器句柄不能为空
-	if( hContainer == NULL )
-	{
+	if( hDev < 0 ) {
 		return SAR_INVALIDHANDLEERR;
+	}
+	if (pubKey == NULL || (strlen(pubKey) != SIZE_BUFFER_64)) {
+		LOGE("SKF_ImportECCKeyPair param pubKey is null.");
+		return -1;
+	}
+	if (privKey == NULL || (strlen(privKey) != SIZE_BUFFER_32)) {
+		LOGE("SKF_ImportECCKeyPair param privKey is null.");
+		return -1;
 	}
 
 	WriteLogToFile( pszLog );
@@ -438,122 +437,102 @@ ULONG SKF_ImportECCKeyPair( DEVHANDLE hContainer, PENVELOPEDKEYBLOB pEnvelopedKe
 	memset( response, 0x00, sizeof(response) );
 	memset( szLog, 0x0, strlen(szLog) );
 
-	//--------选择ADF，通过FID选择
-	if( SV_SelectDFByFID(hDev, appFID, "选择ADF") != SAR_OK )
-		return SAR_FAIL;
+	//  80CC0000 46 0107+A002+0040+64字节SM2公钥
+	memcpy(apdu, (unsigned char *)apdu_CC_00, 0x04);
+	memcpy(apdu + 0x04, apdu_importEcc46, 0x07);
+	memcpy(apdu + 0x04 + 0x07, pubKey, 0x40);
+	unsigned long send_len = strlen(apdu);
+	unsigned char check_sum = 0;
+	int ret;
+	unsigned char * tmpBuffer_wr = memalign(512, DATA_TRANSMIT_BUFFER_MAX_SIZE);
+	memset(tmpBuffer_wr, 0, DATA_TRANSMIT_BUFFER_MAX_SIZE);
+	//copy the raw data
+	memcpy(tmpBuffer_wr, (unsigned char *)apdu, send_len);
 
-	//--------使用签名密钥对解密对称密钥密文
-	memcpy( apdu, apdu_eccDecrypt, 0x05 );
-	apdu[2] = 0xEB;
-	apdu[3] = fileSFI[4];
-	apdu[4] = (BYTE)(pEnvelopedKeyBlob->ECCCipherBlob.CipherLen + SIZE_BUFFER_96);  //长度字节
+	unsigned char *tmpBuffer_rd = memalign(512, DATA_TRANSMIT_BUFFER_MAX_SIZE);
+	unsigned long recv_len = 0;
 
-	memcpy( apdu+0x05, (pEnvelopedKeyBlob->ECCCipherBlob.XCoordinate) + SIZE_BUFFER_32, SIZE_BUFFER_32 );
-	memcpy( apdu+0x05+SIZE_BUFFER_32, (pEnvelopedKeyBlob->ECCCipherBlob.YCoordinate) + SIZE_BUFFER_32, SIZE_BUFFER_32 );
-	memcpy( apdu+0x05+SIZE_BUFFER_64, (pEnvelopedKeyBlob->ECCCipherBlob.HASH), SIZE_BUFFER_32 );
-	memcpy( apdu+0x05+SIZE_BUFFER_96, pEnvelopedKeyBlob->ECCCipherBlob.Cipher, pEnvelopedKeyBlob->ECCCipherBlob.CipherLen);
+	//fill the checksum byte
+	check_sum = CalculateCheckSum((tmpBuffer_wr+1), (send_len-1));
 
-    nResponseLen = sizeof( response );
-    nRet = TransmitData( hDev, apdu, (BYTE)(0x05+(BYTE)pEnvelopedKeyBlob->ECCCipherBlob.CipherLen + SIZE_BUFFER_96), response, &nResponseLen );
-    if( nRet != SAR_OK )
-	{
-        sprintf( szLog, "ECC解密失败，错误码: %d \n", nRet );
-		WriteLogToFile( szLog );
-		sv_nStatus = 1;
-		return SAR_FAIL;
-	}
-	
-	if( (response[nResponseLen-2] == 0x90) && (response[nResponseLen-1] == 0x00) )
-	{
-		memcpy( tempbuf, response, nResponseLen-2 );
-		length = nResponseLen-2;
-	}
-	else
-	{
-        sprintf( szLog, "ECC解密失败，状态码: %02x%02x \n", response[nResponseLen-2], response[nResponseLen-1] );
-		WriteLogToFile( szLog );
-		return SAR_FAIL;
-	}
+	//fill the data ...........................................
+	*(tmpBuffer_wr+send_len) = check_sum;
+	send_len = send_len + 1;
 
-	if(length != 16)
-	{
-		return SAR_INDATALENERR;
-	}
+	int repeat_times = 10;
+	for (int i = 0; i < repeat_times; i++) {
+		if (repeat_times > 1)
+			usleep(500 * 1000);  //gap between each cycle
 
-
-	//--------使用对称密钥解密私钥密文
-	 //--------根据算法类型，调用加解密函数
-	switch( pEnvelopedKeyBlob->ulSymmAlgID)
-	{
-	    case SGD_SM1_ECB:  //SM1算法ECB加密模式
-		    memcpy( apdu, apdu_decrypt_sm1_ecb, 0x05 );
+		memset(tmpBuffer_rd, 0, DATA_TRANSMIT_BUFFER_MAX_SIZE);
+		recv_len = DATA_TRANSMIT_BUFFER_MAX_SIZE;
+		ret = TransmitData(trans_dev_id, tmpBuffer_wr, send_len, tmpBuffer_rd, &recv_len);
+		if (ret < 0) {
+			sprintf( szLog, "SKF_ImportECCKeyPair failed, error code: %d \n", ret );
+			WriteLogToFile( szLog );
+			LOGE("SKF_ImportECCKeyPair return failed, ret %d.", ret);
+			ret = -1;
+			continue;
+		}
+		if( (tmpBuffer_rd[recv_len-2] == 0x90) && (tmpBuffer_rd[recv_len-1] == 0x00 ) ) {
+			// get data if need
 			break;
-	    case SGD_SSF33_ECB:  //SSF33算法ECB加密模式
-		    memcpy( apdu, apdu_decrypt_ssf33_ecb, 0x05 );
+		} else {
+			sprintf( szLog, "SKF_ImportECCKeyPair failed, status code: %02X%02X \n", response[nResponseLen-2], response[nResponseLen-1] );
+			WriteLogToFile( szLog );
+			LOGE("SKF_ImportECCKeyPair failed, status code: %02X%02X \n", response[nResponseLen-2], response[nResponseLen-1]);
+		}
+	}
+	if (ret < 0) {
+		free(tmpBuffer_wr);
+		free(tmpBuffer_rd);
+		return SAR_FAIL;
+	}
+
+	// import ecc key pair
+	unsigned char DataTobeSend[0x2B];
+	send_len = strlen(DataTobeSend);;
+    memcpy(DataTobeSend, (unsigned char *)apdu_CC_00, 0x04);
+    memcpy(DataTobeSend + 0x04, apdu_importEcc26, 0x07);
+    memcpy(DataTobeSend + 0x04 + 0x07, privKey, 0x20);
+	//copy the raw data
+	memcpy(tmpBuffer_wr, (unsigned char *)DataTobeSend, send_len);
+
+	//fill the checksum byte
+	check_sum = CalculateCheckSum((tmpBuffer_wr+1), (send_len-1));
+
+	//fill the data ...........................................
+	*(tmpBuffer_wr+send_len) = check_sum;
+	send_len = send_len + 1;
+
+	repeat_times = 10;
+	for (int i = 0; i < repeat_times; i++) {
+		if (repeat_times > 1)
+			usleep(500 * 1000);  //gap between each cycle
+
+		memset(tmpBuffer_rd, 0, DATA_TRANSMIT_BUFFER_MAX_SIZE);
+		recv_len = DATA_TRANSMIT_BUFFER_MAX_SIZE;
+		ret = TransmitData(trans_dev_id, tmpBuffer_wr, send_len, tmpBuffer_rd, &recv_len);
+		if (ret < 0) {
+            sprintf( szLog, "SKF_ImportECCKeyPair failed, error code: %d \n", ret );
+            WriteLogToFile( szLog );
+            LOGE("SKF_ImportECCKeyPair return failed, ret %d.", ret);
+			ret = -1;
+			continue;
+		}
+		if( (tmpBuffer_rd[recv_len-2] == 0x90) && (tmpBuffer_rd[recv_len-1] == 0x00 ) ) {
+			// get data if need
 			break;
-	    case SGD_SM4_ECB:  //SMS4算法ECB加密模式
-		    memcpy( apdu, apdu_decrypt_sm4_ecb, 0x05 );
-			break;
-	    default: 
-		    return SAR_NOTSUPPORTYETERR;
-	}
-	apdu[4] = (BYTE)(0x10 + SIZE_BUFFER_32);
-
-	memcpy( apdu+5, tempbuf, length );
-	memcpy( apdu+21, pEnvelopedKeyBlob->cbEncryptedPriKey + SIZE_BUFFER_32, SIZE_BUFFER_32 );
-	
-//	PrintApduToFile( 0, apdu, 21+SIZE_BUFFER_32 );
-
-    nResponseLen = sizeof( response );
-    nRet = TransmitData( hDev, apdu, 21+SIZE_BUFFER_32, response, &nResponseLen );
-    if( nRet != SAR_OK )
-	{
-		sprintf( szLog, "解密私钥失败，错误码: %d \n", nRet );
-		WriteLogToFile( szLog );
-		sv_nStatus = 1;
-		return SAR_FAIL;
+        } else {
+            sprintf( szLog, "SKF_ImportECCKeyPair failed, status code: %02X%02X \n", response[nResponseLen-2], response[nResponseLen-1] );
+            WriteLogToFile( szLog );
+            LOGE("SKF_ImportECCKeyPair failed, status code: %02X%02X \n", response[nResponseLen-2], response[nResponseLen-1]);
+        }
 	}
 
-	if( (response[nResponseLen-2] == 0x90) && (response[nResponseLen-1] == 0x00) )
-	{
-		memcpy( tempbuf, response, nResponseLen-2 );
-	}
-	else
-	{
-        sprintf( szLog, "解密私钥失败，状态码: %02X%02X \n", response[nResponseLen-2], response[nResponseLen-1] );
-		WriteLogToFile( szLog );
-		return SAR_FAIL;
-	}
-
-
-	//--------更新ADF下的加密密钥对文件
-	memcpy( apdu, apdu_updateBinary, 0x05 );
-	apdu[2] |= fileSFI[3];  //加密密钥对
-	apdu[3] = 0x00;
-	apdu[4] = 0x60;
-	//envelopedKeyBlob.
-
-	memcpy( apdu+5, pEnvelopedKeyBlob->PubKey.XCoordinate + SIZE_BUFFER_32, SIZE_BUFFER_32 );
-	memcpy( apdu+5+SIZE_BUFFER_32, pEnvelopedKeyBlob->PubKey.YCoordinate + SIZE_BUFFER_32, SIZE_BUFFER_32 );
-
-	memcpy( apdu+5+SIZE_BUFFER_64, tempbuf, SIZE_BUFFER_32 );
-
-//	PrintApduToFile( 0, apdu, 0x05+SIZE_BUFFER_96 );
-
-    nResponseLen = sizeof( response );
-    nRet = TransmitData( hDev, apdu, 0x05+SIZE_BUFFER_96, response, &nResponseLen );
-    if( nRet != SAR_OK )
-	{
-		sprintf( szLog, "导入ECC加密密钥对失败，错误码: %d \n", nRet );
-		WriteLogToFile( szLog );
-		sv_nStatus = 1;
-		return SAR_FAIL;
-	}
-
-	if( (response[nResponseLen-2] != 0x90) || (response[nResponseLen-1] != 0x00) )
-	{
-        sprintf( szLog, "导入ECC加密密钥对失败，状态码: %02X%02X \n", response[nResponseLen-2], response[nResponseLen-1] );
-		WriteLogToFile( szLog );
+	free(tmpBuffer_wr);
+	free(tmpBuffer_rd);
+	if (ret < 0) {
 		return SAR_FAIL;
 	}
 
@@ -572,7 +551,7 @@ ULONG SKF_ImportECCKeyPair( DEVHANDLE hContainer, PENVELOPEDKEYBLOB pEnvelopedKe
             其他值: 错误码
 */
 BYTE sign_ef_fid[2] = { 0x00, 0x00 };
-ULONG SKF_ECCSignData( DEVHANDLE hContainer, BYTE *pbData, ULONG ulDataLen,
+ULONG SKF_ECCSignData( HANDLE hContainer, BYTE *pbData, ULONG ulDataLen,
 							 PECCSIGNATUREBLOB pSignature )
 {
 	CHAR* pszLog = ("**********Start to execute SKF_ECCSignData ********** \n");
@@ -581,7 +560,7 @@ ULONG SKF_ECCSignData( DEVHANDLE hContainer, BYTE *pbData, ULONG ulDataLen,
 	BYTE response[SIZE_BUFFER_1024];
 	BYTE fileSFI[0x06] = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
 	BYTE apdu[SIZE_BUFFER_1024];
-	DEVHANDLE hDev;
+	HANDLE hDev;
 	DWORD nResponseLen = 0;
 	LONG nRet = 0;
 	sv_fEnd = FALSE;
@@ -667,7 +646,7 @@ ULONG SKF_ECCSignData( DEVHANDLE hContainer, BYTE *pbData, ULONG ulDataLen,
 * 返 回 值：SAR_OK: 成功
             其他值: 错误码
 */
-ULONG SKF_ECCVerify( DEVHANDLE hDev, ECCPUBLICKEYBLOB* pECCPubKeyBlob, BYTE* pbData,
+ULONG SKF_ECCVerify( HANDLE hDev, ECCPUBLICKEYBLOB* pECCPubKeyBlob, BYTE* pbData,
 						   ULONG ulDataLen, PECCSIGNATUREBLOB pSignature )
 {
 	CHAR* pszLog = ( "**********Start to execute SKF_ECCVerify ********** \n" );
@@ -741,7 +720,7 @@ ULONG SKF_ECCVerify( DEVHANDLE hDev, ECCPUBLICKEYBLOB* pECCPubKeyBlob, BYTE* pbD
 * 返 回 值：SAR_OK: 成功
             其他值: 错误码
 */
-ULONG SKF_ECCExportSessionKey( DEVHANDLE hContainer, ULONG ulAlgId, ECCPUBLICKEYBLOB* pPubKey,
+ULONG SKF_ECCExportSessionKey( HANDLE hContainer, ULONG ulAlgId, ECCPUBLICKEYBLOB* pPubKey,
 									 PECCCIPHERBLOB pData, HANDLE* phSessionKey )
 {
 	CHAR* pszLog = ( "**********Start to execute SKF_ECCExportSessionKey ********** \n" );
@@ -752,7 +731,7 @@ ULONG SKF_ECCExportSessionKey( DEVHANDLE hContainer, ULONG ulAlgId, ECCPUBLICKEY
 	BYTE fileSFI[0x06] = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
 	BYTE appFID[0x02] = { 0xDF, 0x00 };
     SESSIONKEY sessionKey;
-	DEVHANDLE hDev;
+	HANDLE hDev;
 	DWORD nResponseLen = 0;
 	LONG nRet = 0;
 	sv_fEnd = FALSE;
@@ -822,7 +801,7 @@ ULONG SKF_ECCExportSessionKey( DEVHANDLE hContainer, ULONG ulAlgId, ECCPUBLICKEY
             其他值: 错误码
 */
 ECCCIPHERBLOB eccCiperBlob;
-ULONG SKF_ExtECCEncrypt( DEVHANDLE hDev, ECCPUBLICKEYBLOB* pECCPubKeyBlob, BYTE* pbPlainText,
+ULONG SKF_ExtECCEncrypt( HANDLE hDev, ECCPUBLICKEYBLOB* pECCPubKeyBlob, BYTE* pbPlainText,
 							   ULONG ulPlainTextLen, PECCCIPHERBLOB pCipherText )
 {
 	CHAR* pszLog = ( "**********Start to execute SKF_ExtECCEncrypt ********** \n");
@@ -911,7 +890,7 @@ ULONG SKF_ExtECCEncrypt( DEVHANDLE hDev, ECCPUBLICKEYBLOB* pECCPubKeyBlob, BYTE*
 }
 
 //16--------------------NO
-ULONG SKF_ExtECCDecrypt( DEVHANDLE hDev, ECCPRIVATEKEYBLOB*  pECCPriKeyBlob, PECCCIPHERBLOB pCipherText,
+ULONG SKF_ExtECCDecrypt( HANDLE hDev, ECCPRIVATEKEYBLOB*  pECCPriKeyBlob, PECCCIPHERBLOB pCipherText,
 							   BYTE* pbPlainText, ULONG* pulPlainTextLen )
 {
 	CHAR* pszLog = ("**********Start to execute SKF_ExtECCDecrypt ********** \n");
@@ -922,7 +901,7 @@ ULONG SKF_ExtECCDecrypt( DEVHANDLE hDev, ECCPRIVATEKEYBLOB*  pECCPriKeyBlob, PEC
 }
 
 //17--------------------NO
-ULONG SKF_ExtECCSign( DEVHANDLE hDev, ECCPRIVATEKEYBLOB*  pECCPriKeyBlob, BYTE* pbData, ULONG ulDataLen,
+ULONG SKF_ExtECCSign( HANDLE hDev, ECCPRIVATEKEYBLOB*  pECCPriKeyBlob, BYTE* pbData, ULONG ulDataLen,
 							 PECCSIGNATUREBLOB pSignature )
 {
 	CHAR* pszLog = ( "**********Start to execute SKF_ExtECCSign ********** \n");
@@ -933,7 +912,7 @@ ULONG SKF_ExtECCSign( DEVHANDLE hDev, ECCPRIVATEKEYBLOB*  pECCPriKeyBlob, BYTE* 
 }
 
 //18--------------------NO
-ULONG SKF_ExtECCVerify( DEVHANDLE hDev, ECCPUBLICKEYBLOB*  pECCPubKeyBlob,BYTE* pbData, ULONG ulDataLen,
+ULONG SKF_ExtECCVerify( HANDLE hDev, ECCPUBLICKEYBLOB*  pECCPubKeyBlob,BYTE* pbData, ULONG ulDataLen,
 							  PECCSIGNATUREBLOB pSignature )
 {
 	CHAR* pszLog = ("**********Start to execute SKF_ExtECCVerify ********** \n");
@@ -954,7 +933,7 @@ ULONG SKF_ExtECCVerify( DEVHANDLE hDev, ECCPUBLICKEYBLOB*  pECCPubKeyBlob,BYTE* 
 * 返 回 值：SAR_OK: 成功
             其他值: 错误码
 */
-ULONG SKF_GenECCKeyPairEx( DEVHANDLE hContainer, ULONG ulAlgId, ECCPUBLICKEYBLOB* pPubKeyBlob,
+ULONG SKF_GenECCKeyPairEx( HANDLE hContainer, ULONG ulAlgId, ECCPUBLICKEYBLOB* pPubKeyBlob,
                                                  ECCPRIVATEKEYBLOB *pPrivKeyBlob )
 {
 	CHAR* pszLog = ( "**********Start to execute SKF_GenECCKeyPairEx ********** \n" );
@@ -965,7 +944,7 @@ ULONG SKF_GenECCKeyPairEx( DEVHANDLE hContainer, ULONG ulAlgId, ECCPUBLICKEYBLOB
 	ECCPUBLICKEYBLOB eccPubKeyBlob = {0};
 	ECCPRIVATEKEYBLOB eccPriKeyBlob = {0};
 	PCONTAINERINFO pContainer;
-	DEVHANDLE hDev;
+	HANDLE hDev;
 	DWORD nResponseLen = 0;
 	LONG nRet = 0;
 	sv_fEnd = FALSE;
@@ -1055,7 +1034,7 @@ ULONG SKF_GenECCKeyPairEx( DEVHANDLE hContainer, ULONG ulAlgId, ECCPUBLICKEYBLOB
 * 返 回 值：SAR_OK: 成功
             其他值: 错误码
 */
-ULONG SKF_ImportECCKeyPair2( DEVHANDLE hContainer, PENVELOPEDKEYBLOB pEnvelopedKeyBlob )
+ULONG SKF_ImportECCKeyPair2( HANDLE hContainer, PENVELOPEDKEYBLOB pEnvelopedKeyBlob )
 {
 	CHAR* pszLog = ( "**********Start to execute SKF_ImportECCKeyPair ********** \n" );
 	CHAR szLog[SIZE_BUFFER_1024];
@@ -1071,7 +1050,7 @@ ULONG SKF_ImportECCKeyPair2( DEVHANDLE hContainer, PENVELOPEDKEYBLOB pEnvelopedK
 	INT nRemainder = 0;
 	INT nIndex = 0;
 	ULONG dwOffset = 0;
-	DEVHANDLE hDev;
+	HANDLE hDev;
 	DWORD nResponseLen = 0;
 	LONG nRet = 0;
 	//--------容器句柄不能为空
@@ -1214,7 +1193,7 @@ ULONG SKF_ImportECCKeyPair2( DEVHANDLE hContainer, PENVELOPEDKEYBLOB pEnvelopedK
 * 返 回 值：SAR_OK: 成功
             其他值: 错误码
 */
-ULONG SKF_ECCDecrypt( DEVHANDLE hContainer, PECCCIPHERBLOB pCipherText, BYTE* pbPlainText, ULONG* pulPlainTextLen )
+ULONG SKF_ECCDecrypt( HANDLE hContainer, PECCCIPHERBLOB pCipherText, BYTE* pbPlainText, ULONG* pulPlainTextLen )
 {
 	CHAR* pszLog = ( "**********Start to execute SKF_ECCDecrypt ********** \n");
 	CHAR szLog[SIZE_BUFFER_1024];
@@ -1223,7 +1202,7 @@ ULONG SKF_ECCDecrypt( DEVHANDLE hContainer, PECCCIPHERBLOB pCipherText, BYTE* pb
 	PCONTAINERINFO pContainer;
 	BYTE apdu[SIZE_BUFFER_1024];
 	BYTE response[SIZE_BUFFER_1024];
-	DEVHANDLE hDev;
+	HANDLE hDev;
 	DWORD nResponseLen = 0;
 	LONG nRet = 0;
 #ifdef _DEBUG
@@ -1302,7 +1281,7 @@ ULONG SKF_ECCDecrypt( DEVHANDLE hContainer, PECCCIPHERBLOB pCipherText, BYTE* pb
 * 返 回 值：SAR_OK: 成功
             其他值: 错误码
 */
-ULONG SKF_ECCMultAdd(DEVHANDLE hContainer, unsigned int k, ECCPRIVATEKEYBLOB *e,
+ULONG SKF_ECCMultAdd(HANDLE hContainer, unsigned int k, ECCPRIVATEKEYBLOB *e,
                                                  ECCPUBLICKEYBLOB *A, ECCPUBLICKEYBLOB * B, ECCPUBLICKEYBLOB * C)
 
 {
@@ -1315,7 +1294,7 @@ ULONG SKF_ECCMultAdd(DEVHANDLE hContainer, unsigned int k, ECCPRIVATEKEYBLOB *e,
 	BYTE Param1 = 0;
 	BYTE Param2 = 0;
 	BYTE offset = 5;
-	DEVHANDLE hDev;
+	HANDLE hDev;
 	DWORD nResponseLen = 0;
 	LONG nRet = 0;
 	sv_fEnd = FALSE;
@@ -1414,7 +1393,7 @@ ULONG SKF_ECCMultAdd(DEVHANDLE hContainer, unsigned int k, ECCPRIVATEKEYBLOB *e,
 * 返 回 值：SAR_OK: 成功
             其他值: 错误码
 */
-ULONG SKF_ECCModMultAdd(DEVHANDLE hContainer, ECCPRIVATEKEYBLOB *k, ECCPRIVATEKEYBLOB * a,
+ULONG SKF_ECCModMultAdd(HANDLE hContainer, ECCPRIVATEKEYBLOB *k, ECCPRIVATEKEYBLOB * a,
                                                  ECCPRIVATEKEYBLOB * b, ECCPRIVATEKEYBLOB * c)
 
 {
@@ -1427,7 +1406,7 @@ ULONG SKF_ECCModMultAdd(DEVHANDLE hContainer, ECCPRIVATEKEYBLOB *k, ECCPRIVATEKE
 	BYTE Param1 = 0;
 	BYTE Param2 = 0;
 	BYTE offset = 5;
-	DEVHANDLE hDev;
+	HANDLE hDev;
 	DWORD nResponseLen = 0;
 	LONG nRet = 0;
 	sv_fEnd = FALSE;
@@ -1495,7 +1474,7 @@ ULONG SKF_ECCModMultAdd(DEVHANDLE hContainer, ECCPRIVATEKEYBLOB *k, ECCPRIVATEKE
 
 
 //19--------------------NO
-ULONG SKF_GenerateAgreementDataWithECC( DEVHANDLE hContainer, ULONG ulAlgId, ECCPUBLICKEYBLOB* pTempECCPubKeyBlob,
+ULONG SKF_GenerateAgreementDataWithECC( HANDLE hContainer, ULONG ulAlgId, ECCPUBLICKEYBLOB* pTempECCPubKeyBlob,
 							BYTE* pbID, ULONG ulIDLen, HANDLE* phAgreementHandle )
 {
 	CHAR* pszLog = ( "**********Start to execute SKF_GenerateAgreementDataWithECC ********** \n");
@@ -1614,7 +1593,7 @@ ULONG SKF_GenerateKeyWithECC( HANDLE hAgreementHandle, ECCPUBLICKEYBLOB* pECCPub
 * 返 回 值：SAR_OK: 成功
             其他值: 错误码
 */
-ULONG SKF_ExportPublicKey( DEVHANDLE hContainer, BOOL bSignFlag, BYTE* pbBlob, ULONG* pulBlobLen )
+ULONG SKF_ExportPublicKey( HANDLE hContainer, BOOL bSignFlag, BYTE* pbBlob, ULONG* pulBlobLen )
 {
 	CHAR* pszLog = ( "**********Start to execute SKF_ExportPublicKey ********** \n" );
 	CHAR szLog[SIZE_BUFFER_1024];
@@ -1629,7 +1608,7 @@ ULONG SKF_ExportPublicKey( DEVHANDLE hContainer, BOOL bSignFlag, BYTE* pbBlob, U
 	INT nRemainder = 0;
 	ULONG dwOffset = 0;
 	DWORD dwCertificateSize = 0;
-	DEVHANDLE hDev;
+	HANDLE hDev;
 
 	eccPubKeyBlob.BitLen = 256;
 	DWORD nResponseLen = 0;
@@ -1717,7 +1696,7 @@ ULONG SKF_ExportPublicKey( DEVHANDLE hContainer, BOOL bSignFlag, BYTE* pbBlob, U
 * 返 回 值：SAR_OK: 成功
             其他值: 错误码
 */
-ULONG SKF_ImportSessionKey( DEVHANDLE hContainer, ULONG ulAlgId, BYTE* pbWrapedData,
+ULONG SKF_ImportSessionKey( HANDLE hContainer, ULONG ulAlgId, BYTE* pbWrapedData,
 								  ULONG ulWrapedLen, HANDLE* phKey )
 {
 	CHAR* pszLog = ( "**********Start to execute SKF_ImportSessionKey ********** \n");
@@ -1739,7 +1718,7 @@ ULONG SKF_ImportSessionKey( DEVHANDLE hContainer, ULONG ulAlgId, BYTE* pbWrapedD
 * 返 回 值：SAR_OK: 成功
             其他值: 错误码
 */
-ULONG SKF_SetSymmKey( DEVHANDLE hDev,  BYTE *pbKey, ULONG ulAlgID, HANDLE *phKey )
+ULONG SKF_SetSymmKey( HANDLE hDev,  BYTE *pbKey, ULONG ulAlgID, HANDLE *phKey )
 {
 	CHAR* pszLog = ( "**********Start to execute SKF_SetSymmKey ********** \n" );
     ULONG keyLen = 0;
@@ -1835,7 +1814,7 @@ ULONG SKF_Encrypt( HANDLE hKey, BYTE *pbData, ULONG ulDataLen,
 	BYTE response[SIZE_BUFFER_1024];
 	ULONG ulAlgID = 0;
 	PSESSIONKEY sessionKey;
-	DEVHANDLE hDev;
+	HANDLE hDev;
 	DWORD nResponseLen = 0;
 	LONG nRet = 0;
 
@@ -2026,7 +2005,7 @@ ULONG SKF_Decrypt( HANDLE hKey, BYTE *pbEncryptedData, ULONG ulEncryptedLen,
     INT divider = 0;
 	INT remainder = 0;
     PSESSIONKEY sessionKey;
-	DEVHANDLE hDev;
+	HANDLE hDev;
 	ULONG ulAlgID = 0;
 	DWORD nResponseLen = 0;
 	LONG nRet = 0;
@@ -2199,7 +2178,7 @@ ULONG SKF_DecryptFinal (HANDLE hKey, BYTE *pbDecryptedData, ULONG *pulDecryptedL
 * 返 回 值：SAR_OK: 成功
             其他值: 错误码
 */
-ULONG SKF_DigestInit( DEVHANDLE hDev, ULONG ulAlgID, ECCPUBLICKEYBLOB* pPubKey, BYTE* pucID,
+ULONG SKF_DigestInit( HANDLE hDev, ULONG ulAlgID, ECCPUBLICKEYBLOB* pPubKey, BYTE* pucID,
 							ULONG ulIDLen, HANDLE *phHash )
 {
 	CHAR* pszLog = ( "**********Start to execute SKF_DigestInit ********** \n" );
@@ -2301,7 +2280,7 @@ ULONG SKF_Digest( HANDLE hHash, BYTE* pbData, ULONG ulDataLen, BYTE* pbHashData,
 	INT nDivider = 0;
 	INT nRemainder = 0;
 	PHASHINFO pHash;
-    DEVHANDLE hDev;
+    HANDLE hDev;
 	DWORD nResponseLen = 0;
 	LONG nRet = 0;
 	//--------哈希句柄不能为空
@@ -2541,7 +2520,7 @@ ULONG SKF_CloseHandle( HANDLE hHandle )
 }
 
 // need update.
-ULONG SKF_ECCPrvKeyDecrypt( DEVHANDLE hContainer, PECCCIPHERBLOB pCipherText, BYTE* pbPlainText, ULONG* pulPlainTextLen )
+ULONG SKF_ECCPrvKeyDecrypt( HANDLE hContainer, PECCCIPHERBLOB pCipherText, BYTE* pbPlainText, ULONG* pulPlainTextLen )
 {
     CHAR* pszLog = ( "**********Start to execute SKF_ECCDecrypt ********** \n");
     CHAR szLog[SIZE_BUFFER_1024];
@@ -2550,7 +2529,7 @@ ULONG SKF_ECCPrvKeyDecrypt( DEVHANDLE hContainer, PECCCIPHERBLOB pCipherText, BY
     PCONTAINERINFO pContainer;
     BYTE apdu[SIZE_BUFFER_1024];
     BYTE response[SIZE_BUFFER_1024];
-    DEVHANDLE hDev;
+    HANDLE hDev;
     DWORD nResponseLen = 0;
     LONG nRet = 0;
 #ifdef _DEBUG
@@ -2613,7 +2592,7 @@ ULONG SKF_ECCPrvKeyDecrypt( DEVHANDLE hContainer, PECCCIPHERBLOB pCipherText, BY
     return SAR_OK;
 }
 
-ULONG SKF_Cipher( DEVHANDLE hContainer, BYTE *pbData, ULONG  ulDataLen, BYTE *pbSignature, ULONG *pulSignLen )
+ULONG SKF_Cipher( HANDLE hContainer, BYTE *pbData, ULONG  ulDataLen, BYTE *pbSignature, ULONG *pulSignLen )
 {
     CHAR* pszLog = ( "**********Start to execute SKF_Cipher ********** \n" );
 

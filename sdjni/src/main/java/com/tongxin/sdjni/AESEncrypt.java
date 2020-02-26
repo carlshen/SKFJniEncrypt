@@ -27,7 +27,7 @@ public class AESEncrypt {
     public static native int ConnectDev(String dev);
     public static native long DisconnectDev(int handle);
     // cipher management
-    public static native long GenRandom(int handle);
+    public static native String GenRandom(int handle);
     public static native long GenECCKeyPair(int handle);
     public static native long ImportECCKey(int handle);
     public static native long ECCSignData(int handle);

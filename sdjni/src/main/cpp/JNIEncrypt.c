@@ -149,33 +149,58 @@ JNIEXPORT jlong JNICALL disconnect_dev(JNIEnv *env, jobject instance, jint handl
     return baseResult;
 }
 
-JNIEXPORT jlong JNICALL gen_random(JNIEnv *env, jobject instance, jint handle) {
+JNIEXPORT jstring JNICALL gen_random(JNIEnv *env, jobject instance, jint handle) {
     LOGI("gen_random handle: %ld", handle);
-    char *pszDrives = (char *) malloc(SDSC_MAX_DEV_NUM * SDSC_MAX_DEV_NAME_LEN * sizeof(char));
+    char *pszDrives = (char *) malloc(SIZE_BUFFER_16 * sizeof(char));
     if (pszDrives == NULL) {
         LOGE("gen_random with null alloc.");
         return (*env)->NewStringUTF(env, '\0');
     }
-    memset(pszDrives, 0x00, SDSC_MAX_DEV_NUM * SDSC_MAX_DEV_NAME_LEN * sizeof(char));
-    unsigned long pulDrivesLen = SDSC_MAX_DEV_NUM * SDSC_MAX_DEV_NAME_LEN * sizeof(char);
-    unsigned long baseResult = SKF_GenRandom(handle, pszDrives, &pulDrivesLen);
+    memset(pszDrives, 0x00, SIZE_BUFFER_16 * sizeof(char));
+    unsigned long pulLen = 0;
+    unsigned long baseResult = SKF_GenRandom(handle, pszDrives, &pulLen);
     LOGI("gen_random baseResult: %ld", baseResult);
-    return baseResult;
+    LOGI("gen_random pulLen: %ld", pulLen);
+    LOGI("gen_random pszDrives: %s\n", pszDrives);
+    jstring  result = charToJstring(env, pszDrives);
+    // need free the memory
+    free(pszDrives);
+    return result;
 }
 
 JNIEXPORT jlong JNICALL gen_ecc_key(JNIEnv *env, jobject instance, jint handle) {
     LOGI("gen_ecc_key handle: %ld", handle);
-    ECCPUBLICKEYBLOB pBlob;
-    unsigned long baseResult = SKF_GenECCKeyPair( handle, SGD_SM2_1, &pBlob );
+    unsigned char *pKeyPair = (unsigned char *) malloc(SIZE_BUFFER_64 * sizeof(char));
+    if (pKeyPair == NULL) {
+        LOGE("gen_random with null alloc.");
+        return (*env)->NewStringUTF(env, '\0');
+    }
+    memset(pKeyPair, 0x00, SIZE_BUFFER_64 * sizeof(char));
+    unsigned long baseResult = SKF_GenECCKeyPair( handle, pKeyPair );
     LOGI("gen_ecc_key baseResult: %ld", baseResult);
+    LOGI("gen_ecc_key pKeyPair: %s\n", pKeyPair);
     return baseResult;
 }
 
 JNIEXPORT jlong JNICALL import_ecc_key(JNIEnv *env, jobject instance, jint handle) {
     LOGI("import_ecc_key handle: %ld", handle);
+    unsigned char *pubKey = (unsigned char *) malloc(SIZE_BUFFER_64 * sizeof(char));
+    if (pubKey == NULL) {
+        LOGE("import_ecc_key with null alloc.");
+        return (*env)->NewStringUTF(env, '\0');
+    }
+    memset(pubKey, '0x06', SIZE_BUFFER_64 * sizeof(char));
+    unsigned char *privKey = (unsigned char *) malloc(SIZE_BUFFER_32 * sizeof(char));
+    if (privKey == NULL) {
+        LOGE("import_ecc_key with null alloc.");
+        return (*env)->NewStringUTF(env, '\0');
+    }
+    memset(privKey, '0x05', SIZE_BUFFER_32 * sizeof(char));
     PENVELOPEDKEYBLOB pEnvelopedKeyBlob;
-    unsigned long baseResult = SKF_ImportECCKeyPair( handle, pEnvelopedKeyBlob );
+    unsigned long baseResult = SKF_ImportECCKeyPair( handle, pubKey, privKey );
     LOGI("import_ecc_key baseResult: %ld", baseResult);
+    LOGI("import_ecc_key pubKey: %s\n", pubKey);
+    LOGI("import_ecc_key privKey: %s\n", privKey);
     return baseResult;
 }
 
@@ -734,9 +759,9 @@ static JNINativeMethod method_table[] = {
         {"ImportCert",      "(I[B)J",                                                  (void *) import_cert},
         {"ExportCert",      "(I)[B",                                                   (void *) export_cert},
         {"EnumDev",         "()Ljava/lang/String;",                                    (void *) enum_dev},
-        {"ConnectDev",      "(Ljava/lang/String;)I",                                    (void *) connect_dev},
+        {"ConnectDev",      "(Ljava/lang/String;)I",                                   (void *) connect_dev},
         {"DisconnectDev",   "(I)J",                                                    (void *) disconnect_dev},
-        {"GenRandom",       "(I)J",                                                    (void *) gen_random},
+        {"GenRandom",       "(I)Ljava/lang/String;",                                   (void *) gen_random},
         {"GenECCKeyPair",   "(I)J",                                                    (void *) gen_ecc_key},
         {"ImportECCKey",    "(I)J",                                                    (void *) import_ecc_key},
         {"ECCSignData",     "(I)J",                                                    (void *) ecc_sign_data},

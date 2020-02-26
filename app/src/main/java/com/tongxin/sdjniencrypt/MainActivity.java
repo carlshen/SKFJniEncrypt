@@ -141,7 +141,7 @@ public class MainActivity extends AppCompatActivity {
         mGenRandom.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                long result = AESEncrypt.GenRandom(deviceHandle);
+                String result = AESEncrypt.GenRandom(deviceHandle);
                 tvResult.setText("GenRandom: " + result);
             }
         });
