@@ -31,8 +31,6 @@ ULONG SKF_ImportCertificate( HANDLE hDev, BOOL bSignFlag, BYTE* pbCert )
 	CHAR* pszLog = "**********Start to execute SKF_ImportCertificate ********** \n";
 	CHAR szLog[SIZE_BUFFER_1024];
 	BYTE apdu[0x07];
-	BYTE response[SIZE_BUFFER_1024];
-	DWORD nResponseLen = 0;
 	if( hDev < 0 ) {
 		return SAR_INVALIDHANDLEERR;
 	}
@@ -44,7 +42,6 @@ ULONG SKF_ImportCertificate( HANDLE hDev, BOOL bSignFlag, BYTE* pbCert )
 	WriteLogToFile( pszLog );
 	sv_fEnd = FALSE;
 	memset( apdu, 0x00, sizeof(apdu) );
-	memset( response, 0x00, sizeof(response) );
 	// set the certificate file
 	memcpy( apdu, apdu_A5_00, 0x05 );
 	if( !bSignFlag ) { //加密证书
@@ -90,9 +87,9 @@ ULONG SKF_ImportCertificate( HANDLE hDev, BOOL bSignFlag, BYTE* pbCert )
 			// get data if need
 			break;
         } else {
-            sprintf( szLog, "SKF_ImportCertificate failed, status code: %02X%02X \n", response[nResponseLen-2], response[nResponseLen-1] );
+            sprintf( szLog, "SKF_ImportCertificate failed, status code: %02X%02X \n", tmpBuffer_rd[recv_len-2], tmpBuffer_rd[recv_len-1] );
             WriteLogToFile( szLog );
-            LOGE("SKF_ImportCertificate failed, status code: %02X%02X \n", response[nResponseLen-2], response[nResponseLen-1]);
+            LOGE("SKF_ImportCertificate failed, status code: %02X%02X \n", tmpBuffer_rd[recv_len-2], tmpBuffer_rd[recv_len-1]);
 		}
 	}
 	if (ret < 0) {
@@ -143,9 +140,9 @@ ULONG SKF_ImportCertificate( HANDLE hDev, BOOL bSignFlag, BYTE* pbCert )
 					// get data if need
 					break;
                 } else {
-                    sprintf( szLog, "SKF_ImportCertificate failed, status code: %02X%02X \n", response[nResponseLen-2], response[nResponseLen-1] );
+                    sprintf( szLog, "SKF_ImportCertificate failed, status code: %02X%02X \n", tmpBuffer_rd[recv_len-2], tmpBuffer_rd[recv_len-1] );
                     WriteLogToFile( szLog );
-                    LOGE("SKF_ImportCertificate failed, status code: %02X%02X \n", response[nResponseLen-2], response[nResponseLen-1]);
+                    LOGE("SKF_ImportCertificate failed, status code: %02X%02X \n", tmpBuffer_rd[recv_len-2], tmpBuffer_rd[recv_len-1]);
                 }
 			}
 		}
@@ -187,9 +184,9 @@ ULONG SKF_ImportCertificate( HANDLE hDev, BOOL bSignFlag, BYTE* pbCert )
 				// get data if need
 				break;
             } else {
-                sprintf( szLog, "SKF_ImportCertificate failed, status code: %02X%02X \n", response[nResponseLen-2], response[nResponseLen-1] );
+                sprintf( szLog, "SKF_ImportCertificate failed, status code: %02X%02X \n", tmpBuffer_rd[recv_len-2], tmpBuffer_rd[recv_len-1] );
                 WriteLogToFile( szLog );
-                LOGE("SKF_ImportCertificate failed, status code: %02X%02X \n", response[nResponseLen-2], response[nResponseLen-1]);
+                LOGE("SKF_ImportCertificate failed, status code: %02X%02X \n", tmpBuffer_rd[recv_len-2], tmpBuffer_rd[recv_len-1]);
             }
 		}
 	} else { // should not go here, just for test
@@ -230,9 +227,9 @@ ULONG SKF_ImportCertificate( HANDLE hDev, BOOL bSignFlag, BYTE* pbCert )
                 // get data if need
                 break;
             } else {
-                sprintf( szLog, "SKF_ImportCertificate failed, status code: %02X%02X \n", response[nResponseLen-2], response[nResponseLen-1] );
+                sprintf( szLog, "SKF_ImportCertificate failed, status code: %02X%02X \n", tmpBuffer_rd[recv_len-2], tmpBuffer_rd[recv_len-1] );
                 WriteLogToFile( szLog );
-                LOGE("SKF_ImportCertificate failed, status code: %02X%02X \n", response[nResponseLen-2], response[nResponseLen-1]);
+                LOGE("SKF_ImportCertificate failed, status code: %02X%02X \n", tmpBuffer_rd[recv_len-2], tmpBuffer_rd[recv_len-1]);
             }
         }
 	}
@@ -260,12 +257,9 @@ ULONG SKF_ExportCertificate( HANDLE hDev, BOOL bSignFlag, BYTE* pbCert, ULONG* p
 	CHAR* pszLog = "**********Start to execute SKF_ExportCertificate ********** \n";
     CHAR szLog[SIZE_BUFFER_1024];
 	BYTE apdu[0x07];
-	BYTE response[SIZE_BUFFER_1024];
 	INT nIndex = 0;
-	DWORD nResponseLen = 0;
 	sv_fEnd = FALSE;
 	memset( apdu, 0x00, sizeof(apdu) );
-	memset( response, 0x00, sizeof(response) );
 	memset( szLog, 0x0, sizeof(szLog) );
 
 	WriteLogToFile( pszLog );
@@ -284,7 +278,6 @@ ULONG SKF_ExportCertificate( HANDLE hDev, BOOL bSignFlag, BYTE* pbCert, ULONG* p
 	}
 
     memset( apdu, 0x00, sizeof(apdu) );
-    memset( response, 0x00, sizeof(response) );
     // set the certificate file
     memcpy( apdu, apdu_A5_00, 0x05 );
     if( !bSignFlag ) { //加密证书
@@ -330,9 +323,9 @@ ULONG SKF_ExportCertificate( HANDLE hDev, BOOL bSignFlag, BYTE* pbCert, ULONG* p
             // get data if need
             break;
         } else {
-            sprintf( szLog, "SKF_ExportCertificate failed, status code: %02X%02X \n", response[nResponseLen-2], response[nResponseLen-1] );
+            sprintf( szLog, "SKF_ExportCertificate failed, status code: %02X%02X \n", tmpBuffer_rd[recv_len-2], tmpBuffer_rd[recv_len-1] );
             WriteLogToFile( szLog );
-            LOGE("SKF_ExportCertificate failed, status code: %02X%02X \n", response[nResponseLen-2], response[nResponseLen-1]);
+            LOGE("SKF_ExportCertificate failed, status code: %02X%02X \n", tmpBuffer_rd[recv_len-2], tmpBuffer_rd[recv_len-1]);
         }
     }
     if (ret < 0) {
@@ -384,9 +377,9 @@ ULONG SKF_ExportCertificate( HANDLE hDev, BOOL bSignFlag, BYTE* pbCert, ULONG* p
 				nIndex = nIndex + recv_len - 2;
 				break;
 			} else {
-				sprintf( szLog, "SKF_ExportCertificate failed, status code: %02X%02X \n", response[nResponseLen-2], response[nResponseLen-1] );
+				sprintf( szLog, "SKF_ExportCertificate failed, status code: %02X%02X \n", tmpBuffer_rd[recv_len-2], tmpBuffer_rd[recv_len-1] );
 				WriteLogToFile( szLog );
-				LOGE("SKF_ExportCertificate failed, status code: %02X%02X \n", response[nResponseLen-2], response[nResponseLen-1]);
+				LOGE("SKF_ExportCertificate failed, status code: %02X%02X \n", tmpBuffer_rd[recv_len-2], tmpBuffer_rd[recv_len-1]);
 			}
 		}
 	}

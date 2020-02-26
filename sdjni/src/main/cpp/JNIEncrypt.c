@@ -281,10 +281,16 @@ JNIEXPORT jlong JNICALL gen_data_key_ecc(JNIEnv *env, jobject instance, jint han
 
 JNIEXPORT jlong JNICALL export_public_key(JNIEnv *env, jobject instance, jint handle) {
     LOGI("export_public_key handle: %ld", handle);
-    BYTE pbBlob;
-    ULONG pulBlobLen;
-    unsigned long baseResult = SKF_ExportPublicKey( handle, 1, &pbBlob, &pulBlobLen );
+    unsigned char *pubKey = (unsigned char *) malloc(SIZE_BUFFER_64 * sizeof(char));
+    if (pubKey == NULL) {
+        LOGE("export_public_key with null alloc.");
+        return (*env)->NewStringUTF(env, '\0');
+    }
+    memset(pubKey, '0x00', SIZE_BUFFER_64 * sizeof(char));
+    ULONG pulBlobLen = 0;
+    unsigned long baseResult = SKF_ExportPublicKey( handle, pubKey, &pulBlobLen );
     LOGI("export_public_key baseResult: %ld", baseResult);
+    LOGI("export_public_key pubKey: %s\n", pubKey);
     return baseResult;
 }
 

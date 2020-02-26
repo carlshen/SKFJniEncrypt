@@ -30,10 +30,7 @@ ULONG SKF_GenRandom( HANDLE hDev, BYTE *pbRandom, ULONG *ulRandomLen )
 {
 	CHAR* pszLog = ( "**********Start to execute SKF_GenRandom ********** \n" );
 	CHAR szLog[SIZE_BUFFER_1024];
-    BYTE response[SIZE_BUFFER_1024];
-	DWORD nResponseLen = 0;
 	sv_fEnd = FALSE;
-    memset( response, 0x00, sizeof(response) );
 	memset( szLog, 0x0, sizeof(szLog) );
 
     WriteLogToFile( pszLog );
@@ -85,9 +82,9 @@ ULONG SKF_GenRandom( HANDLE hDev, BYTE *pbRandom, ULONG *ulRandomLen )
             memcpy(pbRandom, tmpBuffer_rd, *ulRandomLen);
 			break;
 		} else {
-			sprintf( szLog, "SKF_GenRandom failed, status code: %02X%02X \n", response[nResponseLen-2], response[nResponseLen-1] );
+			sprintf( szLog, "SKF_GenRandom failed, status code: %02X%02X \n", tmpBuffer_rd[recv_len-2], tmpBuffer_rd[recv_len-1] );
 			WriteLogToFile( szLog );
-			LOGE("SKF_GenRandom failed, status code: %02X%02X \n", response[nResponseLen-2], response[nResponseLen-1]);
+			LOGE("SKF_GenRandom failed, status code: %02X%02X \n", tmpBuffer_rd[recv_len-2], tmpBuffer_rd[recv_len-1]);
 		}
 	}
 
@@ -267,18 +264,11 @@ ULONG SKF_GenECCKeyPair( HANDLE hDev, BYTE * pBlob )
 {
 	CHAR* pszLog = ( "**********Start to execute SKF_GenECCKeyPair ********** \n" );
 	CHAR szLog[SIZE_BUFFER_1024];
-	BYTE response[SIZE_BUFFER_1024];
-	BYTE fileSFI[0x06] = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
 	BYTE apdu[0x0D];
-	ECCPUBLICKEYBLOB eccPubKeyBlob;
-	PCONTAINERINFO pContainer;
-	DWORD nResponseLen = 0;
-	LONG nRet = 0;
 	sv_fEnd = FALSE;
 	
     memset( szLog, 0x0, strlen(szLog) );
 	memset( apdu, 0x00, sizeof(apdu) );
-	memset( response, 0x00, sizeof(response) );
 
 	WriteLogToFile( pszLog );
 
@@ -299,7 +289,7 @@ ULONG SKF_GenECCKeyPair( HANDLE hDev, BYTE * pBlob )
     unsigned char * tmpBuffer_wr = memalign(512, DATA_TRANSMIT_BUFFER_MAX_SIZE);
     memset(tmpBuffer_wr, 0, DATA_TRANSMIT_BUFFER_MAX_SIZE);
     //copy the raw data
-    memcpy(tmpBuffer_wr, (unsigned char *)apdu_84_00, send_len);
+    memcpy(tmpBuffer_wr, (unsigned char *)apdu, send_len);
 
     unsigned char *tmpBuffer_rd = memalign(512, DATA_TRANSMIT_BUFFER_MAX_SIZE);
     unsigned long recv_len = 0;
@@ -330,9 +320,9 @@ ULONG SKF_GenECCKeyPair( HANDLE hDev, BYTE * pBlob )
             // get data if need
             break;
         } else {
-            sprintf( szLog, "SKF_GenECCKeyPair failed, status code: %02X%02X \n", response[nResponseLen-2], response[nResponseLen-1] );
+            sprintf( szLog, "SKF_GenECCKeyPair failed, status code: %02X%02X \n", tmpBuffer_rd[recv_len-2], tmpBuffer_rd[recv_len-1] );
             WriteLogToFile( szLog );
-            LOGE("SKF_GenECCKeyPair failed, status code: %02X%02X \n", response[nResponseLen-2], response[nResponseLen-1]);
+            LOGE("SKF_GenECCKeyPair failed, status code: %02X%02X \n", tmpBuffer_rd[recv_len-2], tmpBuffer_rd[recv_len-1]);
         }
     }
 	if (ret < 0) {
@@ -376,9 +366,9 @@ ULONG SKF_GenECCKeyPair( HANDLE hDev, BYTE * pBlob )
 			memcpy(pBlob, tmpBuffer_rd, recv_len-2);
 			break;
         } else {
-            sprintf( szLog, "SKF_GenECCKeyPair failed, status code: %02X%02X \n", response[nResponseLen-2], response[nResponseLen-1] );
+            sprintf( szLog, "SKF_GenECCKeyPair failed, status code: %02X%02X \n", tmpBuffer_rd[recv_len-2], tmpBuffer_rd[recv_len-1] );
             WriteLogToFile( szLog );
-            LOGE("SKF_GenECCKeyPair failed, status code: %02X%02X \n", response[nResponseLen-2], response[nResponseLen-1]);
+            LOGE("SKF_GenECCKeyPair failed, status code: %02X%02X \n", tmpBuffer_rd[recv_len-2], tmpBuffer_rd[recv_len-1]);
         }
 	}
 
@@ -405,20 +395,7 @@ ULONG SKF_ImportECCKeyPair( HANDLE hDev, BYTE* pubKey, BYTE* privKey )
 {
 	CHAR* pszLog = ( "**********Start to execute SKF_ImportECCKeyPair ********** \n" );
 	CHAR szLog[SIZE_BUFFER_1024];
-	BYTE appFID[2] = { 0xDF, 0x00 };
-	BYTE fileSFI[6] = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
-	BYTE bSFI = 0x00;
 	BYTE apdu[0x4B];
-	BYTE response[SIZE_BUFFER_1024];
-	BYTE tempbuf[SIZE_BUFFER_1024];
-	ULONG length = 0;
-	//ENVELOPEDKEYBLOB envelopedKeyBlob;
-	INT nDivider = 0;
-	INT nRemainder = 0;
-	INT nIndex = 0;
-	ULONG dwOffset = 0;
-	DWORD nResponseLen = 0;
-	LONG nRet = 0;
 	if( hDev < 0 ) {
 		return SAR_INVALIDHANDLEERR;
 	}
@@ -434,7 +411,6 @@ ULONG SKF_ImportECCKeyPair( HANDLE hDev, BYTE* pubKey, BYTE* privKey )
 	WriteLogToFile( pszLog );
 	sv_fEnd = FALSE;
 	memset( apdu, 0x00, sizeof(apdu) );
-	memset( response, 0x00, sizeof(response) );
 	memset( szLog, 0x0, strlen(szLog) );
 
 	//  80CC0000 46 0107+A002+0040+64字节SM2公钥
@@ -478,9 +454,9 @@ ULONG SKF_ImportECCKeyPair( HANDLE hDev, BYTE* pubKey, BYTE* privKey )
 			// get data if need
 			break;
 		} else {
-			sprintf( szLog, "SKF_ImportECCKeyPair failed, status code: %02X%02X \n", response[nResponseLen-2], response[nResponseLen-1] );
+			sprintf( szLog, "SKF_ImportECCKeyPair failed, status code: %02X%02X \n", tmpBuffer_rd[recv_len-2], tmpBuffer_rd[recv_len-1] );
 			WriteLogToFile( szLog );
-			LOGE("SKF_ImportECCKeyPair failed, status code: %02X%02X \n", response[nResponseLen-2], response[nResponseLen-1]);
+			LOGE("SKF_ImportECCKeyPair failed, status code: %02X%02X \n", tmpBuffer_rd[recv_len-2], tmpBuffer_rd[recv_len-1]);
 		}
 	}
 	if (ret < 0) {
@@ -524,9 +500,9 @@ ULONG SKF_ImportECCKeyPair( HANDLE hDev, BYTE* pubKey, BYTE* privKey )
 			// get data if need
 			break;
         } else {
-            sprintf( szLog, "SKF_ImportECCKeyPair failed, status code: %02X%02X \n", response[nResponseLen-2], response[nResponseLen-1] );
+            sprintf( szLog, "SKF_ImportECCKeyPair failed, status code: %02X%02X \n", tmpBuffer_rd[recv_len-2], tmpBuffer_rd[recv_len-1] );
             WriteLogToFile( szLog );
-            LOGE("SKF_ImportECCKeyPair failed, status code: %02X%02X \n", response[nResponseLen-2], response[nResponseLen-1]);
+            LOGE("SKF_ImportECCKeyPair failed, status code: %02X%02X \n", tmpBuffer_rd[recv_len-2], tmpBuffer_rd[recv_len-1]);
         }
 	}
 
@@ -1593,93 +1569,76 @@ ULONG SKF_GenerateKeyWithECC( HANDLE hAgreementHandle, ECCPUBLICKEYBLOB* pECCPub
 * 返 回 值：SAR_OK: 成功
             其他值: 错误码
 */
-ULONG SKF_ExportPublicKey( HANDLE hContainer, BOOL bSignFlag, BYTE* pbBlob, ULONG* pulBlobLen )
+ULONG SKF_ExportPublicKey( HANDLE hDev, BYTE* pbBlob, ULONG* pulBlobLen )
 {
 	CHAR* pszLog = ( "**********Start to execute SKF_ExportPublicKey ********** \n" );
 	CHAR szLog[SIZE_BUFFER_1024];
-	BYTE appFID[2] = { 0xDF, 0x00 };
-	BYTE fileSFI[6] = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
-	BYTE bSFI = 0x00;
-	BYTE apdu[SIZE_BUFFER_1024];
-	BYTE response[SIZE_BUFFER_1024];
-	ECCPUBLICKEYBLOB eccPubKeyBlob;
-	INT nIndex = 0;
-	INT nDivider = 0;
-	INT nRemainder = 0;
-	ULONG dwOffset = 0;
-	DWORD dwCertificateSize = 0;
-	HANDLE hDev;
-
-	eccPubKeyBlob.BitLen = 256;
-	DWORD nResponseLen = 0;
-	LONG nRet = 0;
+	BYTE apdu[0x07];
+    DWORD nResponseLen = 0;
 	sv_fEnd = FALSE;
 	memset( apdu, 0x00, sizeof(apdu) );
-	memset( response, 0x00, sizeof(response) );
 	memset( szLog, 0x0, strlen(szLog) );
-	memset( (void*)&eccPubKeyBlob, 0x0, sizeof(eccPubKeyBlob) );
-	
 	
 	WriteLogToFile( pszLog );
 
-	//--------容器句柄不能为空
-	if( hContainer == NULL )
-	{
-		return SAR_INVALIDHANDLEERR;
-	}
+    if( hDev < 0 ) {
+        return SAR_INVALIDHANDLEERR;
+    }
+    if (pbBlob == NULL) {
+        LOGE("SKF_ExportPublicKey param is null.");
+        return -1;
+    }
+    memcpy(apdu, (unsigned char *)apdu_CE_01, 0x05);
+    memcpy(apdu + 0x05, apdu_A002, 0x02);
+    unsigned long send_len = strlen(apdu);
+    unsigned char check_sum = 0;
+    int ret;
+    unsigned char * tmpBuffer_wr = memalign(512, DATA_TRANSMIT_BUFFER_MAX_SIZE);
+    memset(tmpBuffer_wr, 0, DATA_TRANSMIT_BUFFER_MAX_SIZE);
+    //copy the raw data
+    memcpy(tmpBuffer_wr, (unsigned char *)apdu, send_len);
 
-	//--------选择ADF，通过FID选择
-	if( SV_SelectDFByFID(hDev, appFID, "选择ADF") != SAR_OK )
-		return SAR_FAIL;
+    unsigned char *tmpBuffer_rd = memalign(512, DATA_TRANSMIT_BUFFER_MAX_SIZE);
+    unsigned long recv_len = 0;
 
-	//--------读取ADF下的加密/签名文件
-	//--------读取加密/签名密钥公钥
-	memcpy( apdu, apdu_readBinary, 0x05 );
+    //fill the checksum byte
+    check_sum = CalculateCheckSum((tmpBuffer_wr+1), (send_len-1));
 
-	if( !bSignFlag ) //加密密钥文件
-	{
-		bSFI = fileSFI[3];
-	}
-	else            //签名密钥文件
-	{
-		bSFI = fileSFI[4];
-	}
+    //fill the data ...........................................
+    *(tmpBuffer_wr+send_len) = check_sum;
+    send_len = send_len + 1;
 
-    apdu[2] |= bSFI;
-	apdu[3] = 0x00;
-	apdu[4] = 0x40;  //对于加密/签名密钥公钥来说，公钥长度为64字节
-    nResponseLen = sizeof( response );
-    nRet = TransmitData( hDev, apdu, 0x05, response, &nResponseLen );
-    if( nRet != SAR_OK )
-	{
-		sprintf( szLog, "导出加密/签名公钥失败，错误码: %d \n", nRet );
-		WriteLogToFile( szLog );
-		sv_nStatus = 1;
-		return SAR_FAIL;
-	}
+    int repeat_times = 10;
+    for (int i = 0; i < repeat_times; i++) {
+        if (repeat_times > 1)
+            usleep(500 * 1000);  //gap between each cycle
 
-	if( (response[nResponseLen-2] == 0x90) && (response[nResponseLen-1] == 0x00) )
-	{
-		eccPubKeyBlob.BitLen = 256;
-		memcpy( eccPubKeyBlob.XCoordinate+SIZE_BUFFER_32, response, SIZE_BUFFER_32 );
-		memcpy( eccPubKeyBlob.YCoordinate+SIZE_BUFFER_32, response+SIZE_BUFFER_32, SIZE_BUFFER_32 );
+        memset(tmpBuffer_rd, 0, DATA_TRANSMIT_BUFFER_MAX_SIZE);
+        recv_len = DATA_TRANSMIT_BUFFER_MAX_SIZE;
+        ret = TransmitData(trans_dev_id, tmpBuffer_wr, send_len, tmpBuffer_rd, &recv_len);
+        if (ret < 0) {
+            sprintf( szLog, "SKF_ExportPublicKey failed, error code: %d \n", ret );
+            WriteLogToFile( szLog );
+            LOGE("SKF_ExportPublicKey return failed, ret %d.", ret);
+            ret = -1;
+            continue;
+        }
+        if( (tmpBuffer_rd[recv_len-2] == 0x90) && (tmpBuffer_rd[recv_len-1] == 0x00 ) ) {
+            // get data if need
+            memcpy(pbBlob, tmpBuffer_rd, recv_len - 2);
+            break;
+        } else {
+            sprintf( szLog, "SKF_ExportPublicKey failed, status code: %02X%02X \n", tmpBuffer_rd[nResponseLen-2], tmpBuffer_rd[nResponseLen-1] );
+            WriteLogToFile( szLog );
+            LOGE("SKF_ExportPublicKey failed, status code: %02X%02X \n", tmpBuffer_rd[nResponseLen-2], tmpBuffer_rd[nResponseLen-1]);
+        }
+    }
 
-		if( pbBlob != NULL )
-		{
-			memcpy( pbBlob, &eccPubKeyBlob, sizeof(eccPubKeyBlob) );
-			memcpy( pbBlob, response, nResponseLen-2 );
-		}
-
-		*pulBlobLen = sizeof(eccPubKeyBlob);	
-		*pulBlobLen = (nResponseLen-2);
-	}
-	else
-	{
-		sprintf( szLog, "导出加密/签名公钥失败，状态码: %02X%02X \n", response[nResponseLen-2], response[nResponseLen-1] );
-	    WriteLogToFile( szLog );
-		return SAR_FAIL;
-	}
-
+    free(tmpBuffer_wr);
+    free(tmpBuffer_rd);
+    if (ret < 0) {
+        return SAR_FAIL;
+    }
 
 	return SAR_OK;
 }

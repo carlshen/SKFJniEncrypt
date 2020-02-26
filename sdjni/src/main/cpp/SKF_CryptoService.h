@@ -47,7 +47,7 @@ ULONG SKF_GenerateAgreementDataAndKeyWithECC( HANDLE hContainer, ULONG ulAlgId,
 ULONG SKF_GenerateKeyWithECC( HANDLE hAgreementHandle, ECCPUBLICKEYBLOB* pECCPubKeyBlob,
                               ECCPUBLICKEYBLOB* pTempECCPubKeyBlob, BYTE* pbID,
                               ULONG ulIDLen, HANDLE* phKeyHandle );
-ULONG SKF_ExportPublicKey( HANDLE hContainer, BOOL bSignFlag, BYTE* pbBlob, ULONG* pulBlobLen );
+ULONG SKF_ExportPublicKey( HANDLE hContainer, BYTE* pbBlob, ULONG* pulBlobLen );
 ULONG SKF_ImportSessionKey( HANDLE hContainer, ULONG ulAlgId, BYTE* pbWrapedData,
                             ULONG ulWrapedLen, HANDLE* phKey );
 ULONG SKF_SetSymmKey( HANDLE hDev,  BYTE *pbKey, ULONG ulAlgID, HANDLE *phKey );
