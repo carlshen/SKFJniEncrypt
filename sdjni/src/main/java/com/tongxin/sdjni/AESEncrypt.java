@@ -21,8 +21,8 @@ public class AESEncrypt {
      */
     public static native long setPackageName(String str);
     public static native String GetFuncList();
-    public static native long ImportCert(int handle);
-    public static native long ExportCert(int handle);
+    public static native long ImportCert(int handle, byte[] command);
+    public static native byte[] ExportCert(int handle);
     public static native String EnumDev();
     public static native int ConnectDev(String dev);
     public static native long DisconnectDev(int handle);

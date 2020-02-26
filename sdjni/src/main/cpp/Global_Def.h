@@ -16,7 +16,6 @@
 #define SIZE_BUFFER_64         64
 #define SIZE_BUFFER_96         96
 #define SIZE_BUFFER_128        128
-#define SIZE_BUFFER_255        255
 #define SIZE_BUFFER_256        256
 #define SIZE_BUFFER_512        512
 #define SIZE_BUFFER_1024       1024

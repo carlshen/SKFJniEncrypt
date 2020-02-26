@@ -63,32 +63,43 @@ JNIEXPORT jstring JNICALL get_func_list(JNIEnv *env, jobject instance) {
     return result;
 }
 
-JNIEXPORT jlong JNICALL import_cert(JNIEnv *env, jobject instance, jint handle) {
+JNIEXPORT jlong JNICALL import_cert(JNIEnv *env, jobject instance, jint handle, jbyteArray str_) {
     LOGI("import_cert handle: %ld", handle);
-    char *pszDrives = (char *) malloc(SDSC_MAX_DEV_NUM * SDSC_MAX_DEV_NAME_LEN * sizeof(char));
-    if (pszDrives == NULL) {
-        LOGE("import_cert with null alloc.");
-        return (*env)->NewStringUTF(env, '\0');
+    jbyte* bBuffer = (*env)->GetByteArrayElements(env, str_, 0);
+    unsigned char* pbCommand = (unsigned char*) bBuffer;
+    LOGI("import_cert pbCommand: %s\n", pbCommand);
+    LOGI("import_cert pbCommand size: %d\n", strlen(pbCommand));
+    if (pbCommand == NULL) {
+        LOGE("transmit_ex with null string.");
+        return -1;
     }
-    memset(pszDrives, 0x00, SDSC_MAX_DEV_NUM * SDSC_MAX_DEV_NAME_LEN * sizeof(char));
-    unsigned long pulDrivesLen = SDSC_MAX_DEV_NUM * SDSC_MAX_DEV_NAME_LEN * sizeof(char);
-    unsigned long baseResult = SKF_ImportCertificate(handle, 1, pszDrives, &pulDrivesLen);
+    unsigned long baseResult = SKF_ImportCertificate(handle, 1, pbCommand);
     LOGI("import_cert result: %ld", baseResult);
-    return handle;
+    return baseResult;
 }
 
-JNIEXPORT jlong JNICALL export_cert(JNIEnv *env, jobject instance, jint handle) {
+JNIEXPORT jbyteArray JNICALL export_cert(JNIEnv *env, jobject instance, jint handle) {
     LOGI("export_cert handle: %ld", handle);
-    char *pszDrives = (char *) malloc(SDSC_MAX_DEV_NUM * SDSC_MAX_DEV_NAME_LEN * sizeof(char));
-    if (pszDrives == NULL) {
+    unsigned char *pbOutData = (char *) malloc(SIZE_BUFFER_1024 * sizeof(char));
+    if (pbOutData == NULL) {
         LOGE("export_cert with null alloc.");
-        return (*env)->NewStringUTF(env, '\0');
+        return NULL;
     }
-    memset(pszDrives, 0x00, SDSC_MAX_DEV_NUM * SDSC_MAX_DEV_NAME_LEN * sizeof(char));
-    unsigned long pulDrivesLen = SDSC_MAX_DEV_NUM * SDSC_MAX_DEV_NAME_LEN * sizeof(char);
-    unsigned long baseResult = SKF_ExportCertificate(handle, 1, pszDrives, &pulDrivesLen);
+    memset(pbOutData, 0x00, SIZE_BUFFER_1024 * sizeof(char));
+    unsigned long pulCertLen = 0;
+    unsigned long baseResult = SKF_ExportCertificate(handle, 1, pbOutData, &pulCertLen);
     LOGI("export_cert result: %ld", baseResult);
-    return handle;
+    LOGI("export_cert pulCertLen: %ld", pulCertLen);
+    if (baseResult != 0) {
+        free(pbOutData);
+        return NULL;
+    }
+    jbyte *by = (jbyte*) pbOutData;
+    jbyteArray retArray = (*env)->NewByteArray(env, pulCertLen);
+    (*env)->SetByteArrayRegion(env, retArray, 0, pulCertLen, by);
+    // need free the memory
+    free(pbOutData);
+    return retArray;
 }
 
 JNIEXPORT jstring JNICALL enum_dev(JNIEnv *env, jobject instance) {
@@ -720,8 +731,8 @@ JNIEXPORT jlong JNICALL get_scio_type(JNIEnv *env, jobject instance, jint handle
 static JNINativeMethod method_table[] = {
         {"setPackageName",  "(Ljava/lang/String;)J",                                   (void *) set_package},
         {"GetFuncList",     "()Ljava/lang/String;",                                    (void *) get_func_list},
-        {"ImportCert",      "(I)J",                                                     (void *) import_cert},
-        {"ExportCert",      "(I)J",                                                     (void *) export_cert},
+        {"ImportCert",      "(I[B)J",                                                  (void *) import_cert},
+        {"ExportCert",      "(I)[B",                                                   (void *) export_cert},
         {"EnumDev",         "()Ljava/lang/String;",                                    (void *) enum_dev},
         {"ConnectDev",      "(Ljava/lang/String;)I",                                    (void *) connect_dev},
         {"DisconnectDev",   "(I)J",                                                    (void *) disconnect_dev},

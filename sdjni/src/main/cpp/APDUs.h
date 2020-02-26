@@ -86,7 +86,7 @@ BYTE apdu_eccDecrypt[0x05];
 BYTE apdu_connect[0x07];
 BYTE apdu_84_00[0x04];
 BYTE apdu_A4_04[0x04];
-BYTE apdu_A5_00[0x04];
+BYTE apdu_A5_00[0x05];
 BYTE apdu_B0_00[0x04];
 BYTE apdu_C8_00[0x04];
 BYTE apdu_C6_00[0x04];
@@ -111,6 +111,8 @@ BYTE apdu_FC_02[0x04];
 BYTE apdu_FC_03[0x04];
 BYTE apdu_A001[0x02];
 BYTE apdu_A002[0x02];
+BYTE apdu_0001[0x02];
+BYTE apdu_0002[0x02];
 BYTE apdu_01[0x01];
 BYTE apdu_02[0x01];
 

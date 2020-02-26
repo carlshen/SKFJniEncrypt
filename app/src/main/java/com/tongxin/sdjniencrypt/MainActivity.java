@@ -98,16 +98,27 @@ public class MainActivity extends AppCompatActivity {
         mImportCert.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                long result = AESEncrypt.ImportCert(deviceHandle);
-                tvResult.setText("ImportCert: " + result);
+                StringBuilder encbuilder = new StringBuilder(1024);
+                for (int i = 0; i < 32; i++) {
+                    encbuilder.append("00112233445566778899001122334455");
+                }
+                String encode = encbuilder.toString();
+                tvLog.setText("ImportCert string: " + encode);
+                long result = AESEncrypt.ImportCert(deviceHandle, encode.getBytes());
+                tvResult.setText("ImportCert result: " + result);
             }
         });
         mExportCert = (Button) findViewById(R.id.btn_exportcert);
         mExportCert.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                long result = AESEncrypt.ExportCert(deviceHandle);
-                tvResult.setText("ExportCert: " + result);
+                byte[] result = AESEncrypt.ExportCert(deviceHandle);
+                if (result != null) {
+                    tvLog.setText("ExportCert result: " + EncryptUtil.ByteArrayToHexString(result));
+                    tvResult.setText("ExportCert result length: " + result.length);
+                } else {
+                    tvResult.setText("ExportCert result failed. ");
+                }
             }
         });
         mSetAppPath = (Button) findViewById(R.id.btn_setpath);
