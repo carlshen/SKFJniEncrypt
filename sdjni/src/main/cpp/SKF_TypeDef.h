@@ -26,10 +26,8 @@ typedef HANDLE DEVHANDLE;
 
 //算法标识
 //分组密码算法标识
-//#define  SGD_SM1          0x00000100
-//#define  SGD_SSF33        0x00000200
-//#define  SGD_SM4          0x00000400
-//#define  SGD_ECB          0x00000001
+#define  SGD_SM1          0x00000100
+#define  SGD_SM4          0x00000400
 #define  SGD_SM1_ECB	  0x00000101	//SM1算法ECB加密模式
 #define  SGD_SM1_CBC	  0x00000102	//SM1算法CBC加密模式
 #define  SGD_SM1_CFB	  0x00000104	//SM1算法CFB加密模式

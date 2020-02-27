@@ -2479,79 +2479,224 @@ ULONG SKF_CloseHandle( HANDLE hHandle )
 }
 
 // need update.
-ULONG SKF_ECCPrvKeyDecrypt( HANDLE hContainer, PECCCIPHERBLOB pCipherText, BYTE* pbPlainText, ULONG* pulPlainTextLen )
+ULONG V_ECCPrvKeyDecrypt( HANDLE hDev, BYTE *bKeyFlag, BYTE *pData, BYTE *pbOutData, ULONG *uOutLen )
 {
-    CHAR* pszLog = ( "**********Start to execute SKF_ECCDecrypt ********** \n");
+    CHAR* pszLog = ( "**********Start to execute V_ECCPrvKeyDecrypt ********** \n");
     CHAR szLog[SIZE_BUFFER_1024];
-    //ECCCIPHERBLOB eccCiperBlob;
-    BYTE fileSFI[0x06] = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
-    PCONTAINERINFO pContainer;
-    BYTE apdu[SIZE_BUFFER_1024];
-    BYTE response[SIZE_BUFFER_1024];
-    HANDLE hDev;
-    DWORD nResponseLen = 0;
-    LONG nRet = 0;
-#ifdef _DEBUG
-    ULONG m = 0;
-#endif
-    sv_fEnd = FALSE;
-    memset( apdu, 0x00, sizeof(apdu) );
-    memset( response, 0x00, sizeof(response) );
-    memset( szLog, 0x0, strlen(szLog) );
+    BYTE apdu[0x0B];
+    int nIndex = 0;
 
-    WriteLogToFile( pszLog );
-
-    //--------容器句柄不能为空
-    if( hContainer == NULL )
-    {
+    if( hDev < 0 ) {
         return SAR_INVALIDHANDLEERR;
     }
-
-    if( pCipherText->CipherLen > SIZE_BUFFER_128 )
-    {
-        return SAR_INDATALENERR;
+    if (bKeyFlag == NULL) {
+        LOGE("V_ECCPrvKeyDecrypt param bKeyFlag is null.");
+        return -1;
     }
-
-    //--------组织APDU
-    memcpy( apdu, apdu_eccDecrypt, 0x05 );
-    apdu[2] = 0xEA;
-    apdu[3] = fileSFI[3];
-    apdu[4] = (BYTE)((BYTE)pCipherText->CipherLen + SIZE_BUFFER_96);  //长度字节
-
-    memcpy( apdu+0x05, (pCipherText->XCoordinate) + SIZE_BUFFER_32, SIZE_BUFFER_32 );
-    memcpy( apdu+0x05+SIZE_BUFFER_32, (pCipherText->YCoordinate) + SIZE_BUFFER_32, SIZE_BUFFER_32 );
-    memcpy( apdu+0x05+SIZE_BUFFER_64, (pCipherText->HASH), SIZE_BUFFER_32 );
-    memcpy( apdu+0x05+SIZE_BUFFER_96, pCipherText->Cipher, pCipherText->CipherLen);
-
-    nResponseLen = sizeof( response );
-    nRet = TransmitData( hDev, apdu, (BYTE)(0x05+(BYTE)pCipherText->CipherLen + SIZE_BUFFER_96), response, &nResponseLen );
-    if( nRet != SAR_OK )
-    {
-        sprintf( szLog, "ECC解密失败，错误码: %d \n", nRet );
-        WriteLogToFile( szLog );
-        sv_nStatus = 1;
-        return SAR_FAIL;
+    if (pData == NULL) {
+        LOGE("V_ECCPrvKeyDecrypt param pData is null.");
+        return -1;
     }
+    if (pbOutData == NULL) {
+        LOGE("V_ECCPrvKeyDecrypt param pbOutData is null.");
+        return -1;
+    }
+	WriteLogToFile( pszLog );
+	sv_fEnd = FALSE;
+	memset( apdu, '\0', sizeof(apdu) );
+	memcpy( apdu, apdu_FA_01, 0x05 );
+    memcpy( apdu + 0x05, apdu_0107, 0x02 );
+    memcpy( apdu + 0x07, bKeyFlag, 0x02 );
+    memcpy( apdu + 0x09, apdu_0200, 0x02 );
 
-    if( (response[nResponseLen-2] == 0x90) && (response[nResponseLen-1] == 0x00) )
-    {
-        if (pbPlainText != NULL)
-        {
-            memcpy( pbPlainText, response, nResponseLen-2 );
+	unsigned long send_len = strlen(apdu);
+	unsigned char check_sum = 0;
+	int ret;
+	unsigned char * tmpBuffer_wr = memalign(512, DATA_TRANSMIT_BUFFER_MAX_SIZE);
+	memset(tmpBuffer_wr, 0, DATA_TRANSMIT_BUFFER_MAX_SIZE);
+	//copy the raw data
+	memcpy(tmpBuffer_wr, (unsigned char *)apdu, send_len);
+
+	unsigned char *tmpBuffer_rd = memalign(512, DATA_TRANSMIT_BUFFER_MAX_SIZE);
+	unsigned long recv_len = 0;
+
+	//fill the checksum byte
+	check_sum = CalculateCheckSum((tmpBuffer_wr+1), (send_len-1));
+
+	//fill the data ...........................................
+	*(tmpBuffer_wr+send_len) = check_sum;
+	send_len = send_len + 1;
+
+	for (int i = 0; i < REPEAT_TIMES; i++) {
+		if (REPEAT_TIMES > 1)
+			usleep(500 * 1000);  //gap between each cycle
+
+		memset(tmpBuffer_rd, 0, DATA_TRANSMIT_BUFFER_MAX_SIZE);
+		recv_len = DATA_TRANSMIT_BUFFER_MAX_SIZE;
+		ret = TransmitData(trans_dev_id, tmpBuffer_wr, send_len, tmpBuffer_rd, &recv_len);
+		if (ret < 0) {
+			sprintf( szLog, "V_ECCPrvKeyDecrypt failed, error code: %d \n", ret );
+			WriteLogToFile( szLog );
+			LOGE("V_ECCPrvKeyDecrypt return failed, error code: %d \n", ret );
+			ret = -1;
+			continue;
+		}
+		if( (tmpBuffer_rd[recv_len-2] == 0x90) && (tmpBuffer_rd[recv_len-1] == 0x00 ) ) {
+			// get data if need
+			break;
+		} else {
+			sprintf( szLog, "V_ECCPrvKeyDecrypt failed, status code: %02X%02X \n", tmpBuffer_rd[recv_len-2], tmpBuffer_rd[recv_len-1] );
+			WriteLogToFile( szLog );
+			LOGE("V_ECCPrvKeyDecrypt failed, status code: %02X%02X \n", tmpBuffer_rd[recv_len-2], tmpBuffer_rd[recv_len-1]);
+		}
+	}
+	if (ret < 0) {
+		sprintf( szLog, "V_ECCPrvKeyDecrypt Certificate failed, error code: %d \n", ret );
+		WriteLogToFile( szLog );
+		LOGE("V_ECCPrvKeyDecrypt return failed, error code: %d \n", ret );
+		free(tmpBuffer_wr);
+		free(tmpBuffer_rd);
+		return SAR_FAIL;
+	}
+	// next private key decrypt
+	int size = strlen(pData);
+	if (size > SIZE_BUFFER_255) {
+		int parts = size / SIZE_BUFFER_255;
+		int i = 0;
+		unsigned char DataTobeSend[0x0104];
+		for (i = 0; i < parts; i++) {
+			send_len = 0x0104;
+			memset(DataTobeSend, '\0', 0x0104);
+			memcpy(DataTobeSend, apdu_FA_02, 0x04);
+			memcpy(DataTobeSend + 0x04, apdu_FF, 0x01);
+			memcpy(DataTobeSend + 0x05, pData + i * SIZE_BUFFER_255, SIZE_BUFFER_255);
+			memset(tmpBuffer_wr, 0, DATA_TRANSMIT_BUFFER_MAX_SIZE);
+			//copy the raw data
+			memcpy(tmpBuffer_wr, (unsigned char *)DataTobeSend, send_len);
+
+			//fill the checksum byte
+			check_sum = CalculateCheckSum((tmpBuffer_wr+1), (send_len-1));
+
+			//fill the data ...........................................
+			*(tmpBuffer_wr+send_len) = check_sum;
+			send_len = send_len + 1;
+			for (int i = 0; i < REPEAT_TIMES; i++) {
+				if (REPEAT_TIMES > 1)
+					usleep(500 * 1000);  //gap between each cycle
+
+				memset(tmpBuffer_rd, 0, DATA_TRANSMIT_BUFFER_MAX_SIZE);
+				recv_len = DATA_TRANSMIT_BUFFER_MAX_SIZE;
+				ret = TransmitData(trans_dev_id, tmpBuffer_wr, send_len, tmpBuffer_rd, &recv_len);
+				if (ret < 0) {
+					sprintf( szLog, "V_ECCPrvKeyDecrypt failed, error code: %d \n", ret );
+					WriteLogToFile( szLog );
+					LOGE("V_ECCPrvKeyDecrypt return failed, error code: %d \n", ret );
+					continue;
+				}
+				if( (tmpBuffer_rd[recv_len-2] == 0x90) && (tmpBuffer_rd[recv_len-1] == 0x00 ) ) {
+					// get data if need
+					break;
+				} else {
+					sprintf( szLog, "V_ECCPrvKeyDecrypt failed, status code: %02X%02X \n", tmpBuffer_rd[recv_len-2], tmpBuffer_rd[recv_len-1] );
+					WriteLogToFile( szLog );
+					LOGE("V_ECCPrvKeyDecrypt failed, status code: %02X%02X \n", tmpBuffer_rd[recv_len-2], tmpBuffer_rd[recv_len-1]);
+				}
+			}
+		}
+		int last = size - i * SIZE_BUFFER_255;
+		send_len = last + 5;
+		unsigned char LastToBeSend[send_len];
+		unsigned char len;
+		sprintf(len, "%X", last);
+		memset(LastToBeSend, '\0', send_len);
+		memcpy(LastToBeSend, apdu_FA_03, 0x04);
+		memcpy(LastToBeSend + 0x04, apdu_02, 0x01);
+		memcpy(LastToBeSend + 0x05, pData + i * SIZE_BUFFER_255, last);
+		memset(tmpBuffer_wr, 0, DATA_TRANSMIT_BUFFER_MAX_SIZE);
+		//copy the raw data
+		memcpy(tmpBuffer_wr, (unsigned char *)LastToBeSend, send_len);
+
+		//fill the checksum byte
+		check_sum = CalculateCheckSum((tmpBuffer_wr+1), (send_len-1));
+
+		//fill the data ...........................................
+		*(tmpBuffer_wr+send_len) = check_sum;
+		send_len = send_len + 1;
+
+		for (int i = 0; i < REPEAT_TIMES; i++) {
+			if (REPEAT_TIMES > 1)
+				usleep(500 * 1000);  //gap between each cycle
+
+			memset(tmpBuffer_rd, 0, DATA_TRANSMIT_BUFFER_MAX_SIZE);
+			recv_len = DATA_TRANSMIT_BUFFER_MAX_SIZE;
+			ret = TransmitData(trans_dev_id, tmpBuffer_wr, send_len, tmpBuffer_rd, &recv_len);
+			if (ret < 0) {
+				LOGE("V_ECCPrvKeyDecrypt return failed, error code: %d \n", ret );
+				sprintf( szLog, "V_ECCPrvKeyDecrypt failed, error code: %d \n", ret );
+				WriteLogToFile( szLog );
+				continue;
+			}
+			if( (tmpBuffer_rd[recv_len-2] == 0x90) && (tmpBuffer_rd[recv_len-1] == 0x00 ) ) {
+				// get data if need
+                memcpy(pbOutData + nIndex, tmpBuffer_rd, recv_len - 2);
+                nIndex = nIndex + recv_len - 2;
+				break;
+			} else {
+				sprintf( szLog, "V_ECCPrvKeyDecrypt failed, status code: %02X%02X \n", tmpBuffer_rd[recv_len-2], tmpBuffer_rd[recv_len-1] );
+				WriteLogToFile( szLog );
+				LOGE("V_ECCPrvKeyDecrypt failed, status code: %02X%02X \n", tmpBuffer_rd[recv_len-2], tmpBuffer_rd[recv_len-1]);
+			}
+		}
+	}
+    send_len = 5;
+    memset(tmpBuffer_wr, 0, DATA_TRANSMIT_BUFFER_MAX_SIZE);
+    //copy the raw data
+    memcpy(tmpBuffer_wr, (unsigned char *)apdu_C6_A0, send_len);
+
+    //fill the checksum byte
+    check_sum = CalculateCheckSum((tmpBuffer_wr+1), (send_len-1));
+
+    //fill the data ...........................................
+    *(tmpBuffer_wr+send_len) = check_sum;
+    send_len = send_len + 1;
+
+    for (int i = 0; i < REPEAT_TIMES; i++) {
+        if (REPEAT_TIMES > 1)
+            usleep(500 * 1000);  //gap between each cycle
+
+        memset(tmpBuffer_rd, 0, DATA_TRANSMIT_BUFFER_MAX_SIZE);
+        recv_len = DATA_TRANSMIT_BUFFER_MAX_SIZE;
+        ret = TransmitData(trans_dev_id, tmpBuffer_wr, send_len, tmpBuffer_rd, &recv_len);
+        if (ret < 0) {
+            LOGE("V_ECCPrvKeyDecrypt return failed, error code: %d \n", ret );
+            sprintf( szLog, "V_ECCPrvKeyDecrypt failed, error code: %d \n", ret );
+            WriteLogToFile( szLog );
+            continue;
         }
-        *pulPlainTextLen = nResponseLen-2;
-    }
-    else
-    {
-        sprintf( szLog, "ECC解密失败，状态码: %02x%02x \n", response[nResponseLen-2], response[nResponseLen-1] );
-        WriteLogToFile( szLog );
-        return SAR_FAIL;
+        if( (tmpBuffer_rd[recv_len-2] == 0x90) && (tmpBuffer_rd[recv_len-1] == 0x00 ) ) {
+            // get data if need
+            memcpy(pbOutData + nIndex, tmpBuffer_rd, recv_len - 2);
+            nIndex = nIndex + recv_len - 2;
+            break;
+        } else {
+            sprintf( szLog, "V_ECCPrvKeyDecrypt failed, status code: %02X%02X \n", tmpBuffer_rd[recv_len-2], tmpBuffer_rd[recv_len-1] );
+            WriteLogToFile( szLog );
+            LOGE("V_ECCPrvKeyDecrypt failed, status code: %02X%02X \n", tmpBuffer_rd[recv_len-2], tmpBuffer_rd[recv_len-1]);
+        }
     }
 
-    return SAR_OK;
+    *uOutLen = nIndex;
+	free(tmpBuffer_wr);
+	free(tmpBuffer_rd);
+
+	if (ret < 0) {
+		return SAR_FAIL;
+	}
+	return SAR_OK;
 }
 
-ULONG SKF_Cipher( HANDLE hContainer, BYTE *pbData, ULONG  ulDataLen, BYTE *pbSignature, ULONG *pulSignLen )
+ULONG V_Cipher(HANDLE hContainer, BYTE *pbData, ULONG ulDataLen, BYTE *pbSignature,
+			   ULONG *pulSignLen)
 {
     CHAR* pszLog = ( "**********Start to execute SKF_Cipher ********** \n" );
 
@@ -2560,9 +2705,9 @@ ULONG SKF_Cipher( HANDLE hContainer, BYTE *pbData, ULONG  ulDataLen, BYTE *pbSig
     return SAR_OK;
 }
 
-ULONG SKF_GetZA( HANDLE hContainer, BYTE *pData, BYTE *pZA, ULONG  *ulZALen )
+ULONG V_GetZA( HANDLE hContainer, BYTE *pData, BYTE *pZA, ULONG  *ulZALen )
 {
-    CHAR* pszLog = ( "**********Start to execute SKF_GetZA ********** \n" );
+    CHAR* pszLog = ( "**********Start to execute V_GetZA ********** \n" );
     CHAR szLog[SIZE_BUFFER_1024];
     memset( szLog, 0x0, strlen(szLog) );
 
@@ -2571,23 +2716,22 @@ ULONG SKF_GetZA( HANDLE hContainer, BYTE *pData, BYTE *pZA, ULONG  *ulZALen )
         return SAR_INVALIDHANDLEERR;
     }
     if (pData == NULL || (strlen(pData) != SIZE_BUFFER_64)) {
-        LOGE("SKF_GetZA param pData is not correct.");
+        LOGE("V_GetZA param pData is not correct.");
         return -1;
     }
 	if (pZA == NULL) {
-		LOGE("SKF_GetZA param pZA is null.");
+		LOGE("V_GetZA param pZA is null.");
 		return -1;
 	}
 
     // 1st command  80F10000 40 64字节SM2公钥
     unsigned char DataTobeSend[0x45];
-    unsigned long send_len = 0;
+    unsigned long send_len = 0x45;
     unsigned char check_sum = 0;
 
     int ret;
     unsigned char * tmpBuffer_wr = memalign(512, DATA_TRANSMIT_BUFFER_MAX_SIZE);
     memset(tmpBuffer_wr, 0, DATA_TRANSMIT_BUFFER_MAX_SIZE);
-    send_len = sizeof(DataTobeSend);
 
     unsigned char *tmpBuffer_rd = memalign(512, DATA_TRANSMIT_BUFFER_MAX_SIZE);
     unsigned long recv_len = 0;
@@ -2614,9 +2758,9 @@ ULONG SKF_GetZA( HANDLE hContainer, BYTE *pData, BYTE *pZA, ULONG  *ulZALen )
         recv_len = DATA_TRANSMIT_BUFFER_MAX_SIZE;
         ret = TransmitData(hContainer, tmpBuffer_wr, send_len, tmpBuffer_rd, &recv_len);
         if (ret < 0) {
-            sprintf( szLog, "SKF_GetZA failed, error code: %d \n", ret );
+            sprintf( szLog, "V_GetZA failed, error code: %d \n", ret );
             WriteLogToFile( szLog );
-            LOGE("SKF_GetZA return failed, ret %d.", ret);
+            LOGE("V_GetZA return failed, error code: %d \n", ret );
             ret = -1;
             continue;
         }
@@ -2626,17 +2770,195 @@ ULONG SKF_GetZA( HANDLE hContainer, BYTE *pData, BYTE *pZA, ULONG  *ulZALen )
             memcpy( pZA, tmpBuffer_rd, *ulZALen );
             break;
         } else {
-            sprintf( szLog, "SKF_GetZA failed, status code: %02X%02X \n", tmpBuffer_rd[recv_len-2], tmpBuffer_rd[recv_len-1] );
+            sprintf( szLog, "V_GetZA failed, status code: %02X%02X \n", tmpBuffer_rd[recv_len-2], tmpBuffer_rd[recv_len-1] );
             WriteLogToFile( szLog );
-            LOGE("SKF_GetZA failed, status code: %02X%02X \n", tmpBuffer_rd[recv_len-2], tmpBuffer_rd[recv_len-1]);
+            LOGE("V_GetZA failed, status code: %02X%02X \n", tmpBuffer_rd[recv_len-2], tmpBuffer_rd[recv_len-1]);
         }
     }
 
-    free(DataTobeSend);
     free(tmpBuffer_wr);
     free(tmpBuffer_rd);
 
+	if (ret < 0) {
+		return SAR_FAIL;
+	}
     return SAR_OK;
+}
+
+ULONG V_GenerateKey( HANDLE hContainer, ULONG ulAlgId, BYTE *bKeyFlag, BYTE *pKeyData, ULONG  *uKeyLen )
+{
+    CHAR* pszLog = ( "**********Start to execute V_GenerateKey ********** \n" );
+    CHAR szLog[SIZE_BUFFER_1024];
+    memset( szLog, 0x0, strlen(szLog) );
+
+    WriteLogToFile( pszLog );
+    if( hContainer < 0 ) {
+        return SAR_INVALIDHANDLEERR;
+    }
+    if (pKeyData == NULL) {
+        LOGE("V_GenerateKey param pKeyData is null.");
+        return -1;
+    }
+	if (bKeyFlag == NULL) {
+		LOGE("V_GenerateKey param bKeyFlag is null.");
+		return -1;
+	}
+
+    // command  80C80000 06 00+XX（02:SM1,03:SM4）+2字节KID+ 0080
+    unsigned char DataTobeSend[0x0B];
+    unsigned long send_len = 0x0B;
+    unsigned char check_sum = 0;
+
+    int ret;
+    unsigned char * tmpBuffer_wr = memalign(512, DATA_TRANSMIT_BUFFER_MAX_SIZE);
+    memset(tmpBuffer_wr, 0, DATA_TRANSMIT_BUFFER_MAX_SIZE);
+
+    unsigned char *tmpBuffer_rd = memalign(512, DATA_TRANSMIT_BUFFER_MAX_SIZE);
+    unsigned long recv_len = 0;
+    memset(tmpBuffer_rd, 0, DATA_TRANSMIT_BUFFER_MAX_SIZE);
+
+    memset(DataTobeSend, '\0', 0x0B);
+    memcpy(DataTobeSend, apdu_C8_06, 0x06);
+    if ( ulAlgId == SGD_SM1 ) {
+        memcpy( DataTobeSend + 0x06, apdu_02, 0x01 );
+    } else if ( ulAlgId == SGD_SM4 ) {
+		memcpy( DataTobeSend + 0x06, apdu_03, 0x01 );
+	} else {
+		LOGE("V_GenerateKey param ulAlgId is not correct.");
+		return -1;
+    }
+	memcpy(DataTobeSend + 0x07, bKeyFlag, 0x02);
+	memcpy(DataTobeSend + 0x09, apdu_0800, 0x02);
+    //copy the raw data
+    memcpy(tmpBuffer_wr, (unsigned char *)DataTobeSend, send_len);
+
+    //fill the checksum byte
+    check_sum = CalculateCheckSum((tmpBuffer_wr+1), (send_len-1));
+
+    //fill the data ...........................................
+    *(tmpBuffer_wr+send_len) = check_sum;
+    send_len = send_len + 1;
+
+    for (int i = 0; i < REPEAT_TIMES; i++) {
+        if (REPEAT_TIMES > 1)
+            usleep(500 * 1000);  //gap between each cycle
+
+        memset(tmpBuffer_rd, 0, DATA_TRANSMIT_BUFFER_MAX_SIZE);
+        recv_len = DATA_TRANSMIT_BUFFER_MAX_SIZE;
+        ret = TransmitData(hContainer, tmpBuffer_wr, send_len, tmpBuffer_rd, &recv_len);
+        if (ret < 0) {
+            sprintf( szLog, "V_GenerateKey failed, error code: %d \n", ret );
+            WriteLogToFile( szLog );
+            LOGE("V_GenerateKey return failed, error code: %d \n", ret );
+            ret = -1;
+            continue;
+        }
+        if( (tmpBuffer_rd[recv_len-2] == 0x90) && (tmpBuffer_rd[recv_len-1] == 0x00 ) ) {
+            // get ZA
+            *uKeyLen = recv_len-2;
+            memcpy( pKeyData, tmpBuffer_rd, *uKeyLen );
+            break;
+        } else {
+            sprintf( szLog, "V_GenerateKey failed, status code: %02X%02X \n", tmpBuffer_rd[recv_len-2], tmpBuffer_rd[recv_len-1] );
+            WriteLogToFile( szLog );
+            LOGE("V_GenerateKey failed, status code: %02X%02X \n", tmpBuffer_rd[recv_len-2], tmpBuffer_rd[recv_len-1]);
+        }
+    }
+
+    free(tmpBuffer_wr);
+    free(tmpBuffer_rd);
+
+	if (ret < 0) {
+		return SAR_FAIL;
+	}
+    return SAR_OK;
+}
+
+ULONG V_ECCExportSessionKeyByHandle( HANDLE hContainer, BYTE *bKeyFlag, BYTE *pKeyData, ULONG uKeyLen, BYTE *pOutData, ULONG  *uOutLen )
+{
+	CHAR* pszLog = ( "**********Start to execute V_GenerateKey ********** \n" );
+	CHAR szLog[SIZE_BUFFER_1024];
+	memset( szLog, 0x0, strlen(szLog) );
+
+	WriteLogToFile( pszLog );
+	if( hContainer < 0 ) {
+		return SAR_INVALIDHANDLEERR;
+	}
+	if (pKeyData == NULL) {
+		LOGE("V_ECCExportSessionKeyByHandle param pKeyData is null.");
+		return -1;
+	}
+	if (bKeyFlag == NULL) {
+		LOGE("V_ECCExportSessionKeyByHandle param bKeyFlag is null.");
+		return -1;
+	}
+	if (pOutData == NULL) {
+		LOGE("V_ECCExportSessionKeyByHandle param pOutData is null.");
+		return -1;
+	}
+
+	// command  80C80000 06 00+XX（02:SM1,03:SM4）+2字节KID+ 0080
+	unsigned char DataTobeSend[0x2A];
+	unsigned long send_len = 0x2A;
+	unsigned char check_sum = 0;
+
+	int ret;
+	unsigned char * tmpBuffer_wr = memalign(512, DATA_TRANSMIT_BUFFER_MAX_SIZE);
+	memset(tmpBuffer_wr, 0, DATA_TRANSMIT_BUFFER_MAX_SIZE);
+
+	unsigned char *tmpBuffer_rd = memalign(512, DATA_TRANSMIT_BUFFER_MAX_SIZE);
+	unsigned long recv_len = 0;
+	memset(tmpBuffer_rd, 0, DATA_TRANSMIT_BUFFER_MAX_SIZE);
+
+	memset(DataTobeSend, '\0', 0x0B);
+	memcpy(DataTobeSend, apdu_FA_06, 0x05);
+    memcpy( DataTobeSend + 0x05, apdu_2007, 0x02 );
+	memcpy(DataTobeSend + 0x07, bKeyFlag, 0x02);
+	memcpy(DataTobeSend + 0x09, apdu_20, 0x01);
+    memcpy(DataTobeSend + 0x0A, pKeyData, 0x20);
+	//copy the raw data
+	memcpy(tmpBuffer_wr, (unsigned char *)DataTobeSend, send_len);
+
+	//fill the checksum byte
+	check_sum = CalculateCheckSum((tmpBuffer_wr+1), (send_len-1));
+
+	//fill the data ...........................................
+	*(tmpBuffer_wr+send_len) = check_sum;
+	send_len = send_len + 1;
+
+	for (int i = 0; i < REPEAT_TIMES; i++) {
+		if (REPEAT_TIMES > 1)
+			usleep(500 * 1000);  //gap between each cycle
+
+		memset(tmpBuffer_rd, 0, DATA_TRANSMIT_BUFFER_MAX_SIZE);
+		recv_len = DATA_TRANSMIT_BUFFER_MAX_SIZE;
+		ret = TransmitData(hContainer, tmpBuffer_wr, send_len, tmpBuffer_rd, &recv_len);
+		if (ret < 0) {
+			sprintf( szLog, "V_ECCExportSessionKeyByHandle failed, error code: %d \n", ret );
+			WriteLogToFile( szLog );
+			LOGE("V_ECCExportSessionKeyByHandle return failed, error code: %d \n", ret );
+			ret = -1;
+			continue;
+		}
+		if( (tmpBuffer_rd[recv_len-2] == 0x90) && (tmpBuffer_rd[recv_len-1] == 0x00 ) ) {
+			// get ZA
+			*uOutLen = recv_len-2;
+			memcpy( pOutData, tmpBuffer_rd, *uOutLen );
+			break;
+		} else {
+			sprintf( szLog, "V_ECCExportSessionKeyByHandle failed, status code: %02X%02X \n", tmpBuffer_rd[recv_len-2], tmpBuffer_rd[recv_len-1] );
+			WriteLogToFile( szLog );
+			LOGE("V_ECCExportSessionKeyByHandle failed, status code: %02X%02X \n", tmpBuffer_rd[recv_len-2], tmpBuffer_rd[recv_len-1]);
+		}
+	}
+
+	free(tmpBuffer_wr);
+	free(tmpBuffer_rd);
+
+	if (ret < 0) {
+		return SAR_FAIL;
+	}
+	return SAR_OK;
 }
 
 #ifdef __cplusplus

@@ -109,7 +109,7 @@ ULONG SKF_ImportCertificate( HANDLE hDev, BOOL bSignFlag, BYTE* pbCert )
             send_len = 0x85;
 			memset(DataTobeSend, '\0', 0x85);
 			memcpy(DataTobeSend, apdu_D6_00, 0x04);
-			memcpy(DataTobeSend + 0x04, '0x80', 0x01);
+			memcpy(DataTobeSend + 0x04, apdu_80, 0x01);
 			memcpy(DataTobeSend + 0x05, pbCert + i * SIZE_BUFFER_128, 0x80);
 			memset(tmpBuffer_wr, 0, DATA_TRANSMIT_BUFFER_MAX_SIZE);
 			//copy the raw data
@@ -342,7 +342,7 @@ ULONG SKF_ExportCertificate( HANDLE hDev, BOOL bSignFlag, BYTE* pbCert, ULONG* p
 		send_len = 0x85;
 		memset(DataTobeSend, '\0', 0x85);
 		memcpy(DataTobeSend, apdu_B0_00, 0x04);
-		memcpy(DataTobeSend + 0x04, '0x80', 0x01);
+		memcpy(DataTobeSend + 0x04, apdu_80, 0x01);
 		memcpy(DataTobeSend + 0x05, pbCert + i * SIZE_BUFFER_128, 0x80);
 		memset(tmpBuffer_wr, 0, DATA_TRANSMIT_BUFFER_MAX_SIZE);
 		//copy the raw data

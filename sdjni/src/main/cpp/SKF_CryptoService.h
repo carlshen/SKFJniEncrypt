@@ -73,8 +73,11 @@ ULONG SKF_Mac( HANDLE hMac, BYTE* pbData, ULONG ulDataLen, BYTE* pbMacData, ULON
 ULONG SKF_MacUpdate( HANDLE hMac, BYTE* pbData, ULONG ulDataLen );
 ULONG SKF_MacFinal( HANDLE hMac, BYTE* pbMacData, ULONG* pulMacDataLen );
 ULONG SKF_CloseHandle( HANDLE hHandle );
-ULONG SKF_ECCPrvKeyDecrypt( HANDLE hContainer, PECCCIPHERBLOB pCipherText, BYTE* pbPlainText, ULONG* pulPlainTextLen );
-ULONG SKF_Cipher( HANDLE hContainer, BYTE *pbData, ULONG  ulDataLen, BYTE *pbSignature, ULONG *pulSignLen );
-ULONG SKF_GetZA( HANDLE hContainer, BYTE *pData, BYTE *pZA, ULONG  *ulZALen );
+ULONG V_ECCPrvKeyDecrypt( HANDLE hContainer, BYTE *bKeyFlag, BYTE *pData, BYTE *pbOutData, ULONG *uOutLen );
+ULONG V_Cipher(HANDLE hContainer, BYTE *pbData, ULONG ulDataLen, BYTE *pbSignature,
+               ULONG *pulSignLen);
+ULONG V_GetZA( HANDLE hContainer, BYTE *pData, BYTE *pZA, ULONG  *ulZALen );
+ULONG V_GenerateKey( HANDLE hContainer, ULONG ulAlgId, BYTE *bKeyFlag, BYTE* pKeyData, ULONG *uKeyLen );
+ULONG V_ECCExportSessionKeyByHandle( HANDLE hContainer, BYTE *bKeyFlag, BYTE* pKeyData, ULONG uKeyLen, BYTE *pbOutData, ULONG *uOutLen );
 
 #endif //SKF_CRYPTO_SERVICE_H

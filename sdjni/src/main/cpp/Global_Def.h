@@ -16,6 +16,7 @@
 #define SIZE_BUFFER_64         64
 #define SIZE_BUFFER_96         96
 #define SIZE_BUFFER_128        128
+#define SIZE_BUFFER_255        255
 #define SIZE_BUFFER_256        256
 #define SIZE_BUFFER_512        512
 #define SIZE_BUFFER_1024       1024
@@ -27,6 +28,7 @@
 
 static int sv_Device = -1;
 #define REPEAT_TIMES       1
+static unsigned char KEY_HANDLE[SIZE_BUFFER_32] = { '\0' };
 
 // 有关日志变量
 static CHAR SV_PSZLOGPATH[SIZE_BUFFER_128];

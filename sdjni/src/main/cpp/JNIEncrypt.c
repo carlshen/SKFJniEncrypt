@@ -345,7 +345,7 @@ JNIEXPORT jlong JNICALL get_za(JNIEnv *env, jobject instance, jint handle, jbyte
     }
     BYTE pbZAData[64];
     ULONG pulZALen;
-    unsigned long baseResult = SKF_GetZA( handle, pbCommand, pbZAData, &pulZALen );
+    unsigned long baseResult = V_GetZA( handle, pbCommand, pbZAData, &pulZALen );
     LOGI("get_za baseResult: %ld", baseResult);
     return baseResult;
 }
@@ -508,32 +508,50 @@ JNIEXPORT jlong JNICALL mac_final(JNIEnv *env, jobject instance, jint handle) {
 
 JNIEXPORT jlong JNICALL gen_key(JNIEnv *env, jobject instance, jint handle) {
     LOGI("generate_key handle: %ld", handle);
-    // need update GenerateKey
-    ULONG ulBitsLen;
-    RSAPRIVATEKEYBLOB *pBlob;
-    unsigned long baseResult = SKF_GenExtRSAKey( handle, ulBitsLen, pBlob );
+    unsigned char *pbOutData = (char *) malloc(SIZE_BUFFER_32 * sizeof(char));
+    if (pbOutData == NULL) {
+        LOGE("export_cert with null alloc.");
+        return NULL;
+    }
+    memset(pbOutData, 0x00, SIZE_BUFFER_32 * sizeof(char));
+    unsigned long pDataLen = 0;
+    unsigned long baseResult = V_GenerateKey( handle, SGD_SM1, apdu_A001, pbOutData, &pDataLen );
+    memcpy(KEY_HANDLE, pbOutData, pDataLen);
     LOGI("generate_key baseResult: %ld", baseResult);
+    LOGI("generate_key pbOutData: %s\n", pbOutData);
+    free(pbOutData);
     return baseResult;
 }
 
 JNIEXPORT jlong JNICALL ecc_export_session_key(JNIEnv *env, jobject instance, jint handle) {
     LOGI("ecc_export_session_key handle: %ld", handle);
-    ECCPUBLICKEYBLOB* pPubKey;
-    PECCCIPHERBLOB pData;
-    HANDLE* phSessionKey;
-    unsigned long baseResult = SKF_ECCExportSessionKey( handle, SGD_SM2_1, pPubKey, pData, phSessionKey );
+    unsigned char *pbOutData = (char *) malloc(SIZE_BUFFER_32 * sizeof(char));
+    if (pbOutData == NULL) {
+        LOGE("export_cert with null alloc.");
+        return NULL;
+    }
+    memset(pbOutData, 0x00, SIZE_BUFFER_32 * sizeof(char));
+    unsigned long pDataLen = 0;
+    unsigned long baseResult = V_ECCExportSessionKeyByHandle( handle, apdu_A001, KEY_HANDLE, SIZE_BUFFER_32, pbOutData, &pDataLen );
     LOGI("ecc_export_session_key baseResult: %ld", baseResult);
+    LOGI("ecc_export_session_key pbOutData: %s\n", pbOutData);
+    free(pbOutData);
     return baseResult;
 }
 
 JNIEXPORT jlong JNICALL ecc_prv_key_decrypt(JNIEnv *env, jobject instance, jint handle) {
     LOGI("ecc_prv_key_decrypt handle: %ld", handle);
-    // need update ECCPrvKeyDecrypt
-    PECCCIPHERBLOB pCipherText;
-    BYTE* pbPlainText;
-    ULONG* pulPlainTextLen;
-    unsigned long baseResult = SKF_ECCPrvKeyDecrypt( handle, pCipherText, pbPlainText, pulPlainTextLen );
+    unsigned char *pbOutData = (char *) malloc(SIZE_BUFFER_32 * sizeof(char));
+    if (pbOutData == NULL) {
+        LOGE("export_cert with null alloc.");
+        return NULL;
+    }
+    memset(pbOutData, 0x00, SIZE_BUFFER_32 * sizeof(char));
+    unsigned long pDataLen = 0;
+    BYTE pbPlainText[SIZE_BUFFER_512];
+    unsigned long baseResult = V_ECCPrvKeyDecrypt( handle, apdu_A001, pbPlainText, pbOutData, &pDataLen );
     LOGI("ecc_prv_key_decrypt baseResult: %ld", baseResult);
+    LOGI("ecc_prv_key_decrypt pbOutData: %s\n", pbOutData);
     return baseResult;
 }
 
@@ -552,7 +570,7 @@ JNIEXPORT jlong JNICALL cipher(JNIEnv *env, jobject instance, jint handle) {
     ULONG ulDataLen;
     BYTE *pbSignature;
     ULONG *pulSignLen;
-    unsigned long baseResult = SKF_Cipher( handle, pbData, ulDataLen, pbSignature, pulSignLen );
+    unsigned long baseResult = V_Cipher(handle, pbData, ulDataLen, pbSignature, pulSignLen);
     LOGI("ecc_sign_data baseResult: %ld", baseResult);
     return baseResult;
 }
