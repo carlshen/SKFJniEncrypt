@@ -26,7 +26,7 @@
 #define PARAM_B_EXIST		0x04
 
 static int sv_Device = -1;
-static CHAR sv_pszCCIDDevNameA[SIZE_BUFFER_1024];
+#define REPEAT_TIMES       1
 
 // 有关日志变量
 static CHAR SV_PSZLOGPATH[SIZE_BUFFER_128];

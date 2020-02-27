@@ -103,7 +103,13 @@ public class SyncActivity extends AppCompatActivity {
         mGetZA.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                long result = AESEncrypt.GetZA(deviceHandle);
+                StringBuilder encbuilder = new StringBuilder(64);
+                for (int i = 0; i < 2; i++) {
+                    encbuilder.append("00112233445566778899001122334455");
+                }
+                String encode = encbuilder.toString();
+                tvLog.setText("mGetZA string: " + encode);
+                long result = AESEncrypt.GetZA(deviceHandle, encode.getBytes());
                 tvResult.setText("GetZA: " + result);
             }
         });
@@ -289,14 +295,6 @@ public class SyncActivity extends AppCompatActivity {
             public void onClick(View v) {
                 long result = AESEncrypt.Cipher(deviceHandle);
                 tvResult.setText("Cipher: " + result);
-            }
-        });
-        mGetZA = (Button) findViewById(R.id.btn_getza);
-        mGetZA.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                long result = AESEncrypt.GetZA(deviceHandle);
-                tvResult.setText("GetZA: " + result);
             }
         });
     }

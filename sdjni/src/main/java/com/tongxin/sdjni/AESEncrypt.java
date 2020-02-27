@@ -42,7 +42,7 @@ public class AESEncrypt {
     public static native long SetSymKey(int handle);
     public static native long CloseHandle(int handle);
     public static native String GetDevInfo(int handle);
-    public static native long GetZA(int handle);
+    public static native long GetZA(int handle, byte[] command);
     public static native long EncryptInit(int handle);
     public static native long Encrypt(int handle);
     public static native long EncryptUpdate(int handle);

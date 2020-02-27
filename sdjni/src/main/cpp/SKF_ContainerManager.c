@@ -68,9 +68,8 @@ ULONG SKF_ImportCertificate( HANDLE hDev, BOOL bSignFlag, BYTE* pbCert )
 	*(tmpBuffer_wr+send_len) = check_sum;
 	send_len = send_len + 1;
 
-	int repeat_times = 10;
-	for (int i = 0; i < repeat_times; i++) {
-		if (repeat_times > 1)
+	for (int i = 0; i < REPEAT_TIMES; i++) {
+		if (REPEAT_TIMES > 1)
 			usleep(500 * 1000);  //gap between each cycle
 
 		memset(tmpBuffer_rd, 0, DATA_TRANSMIT_BUFFER_MAX_SIZE);
@@ -79,7 +78,7 @@ ULONG SKF_ImportCertificate( HANDLE hDev, BOOL bSignFlag, BYTE* pbCert )
 		if (ret < 0) {
             sprintf( szLog, "SKF_ImportCertificate failed, error code: %d \n", ret );
             WriteLogToFile( szLog );
-			LOGE("SKF_ImportCertificate return failed, ret %d.", ret);
+			LOGE("SKF_ImportCertificate return failed, error code: %d \n", ret );
 			ret = -1;
 			continue;
 		}
@@ -95,7 +94,7 @@ ULONG SKF_ImportCertificate( HANDLE hDev, BOOL bSignFlag, BYTE* pbCert )
 	if (ret < 0) {
         sprintf( szLog, "SKF_ImportCertificate Certificate failed, error code: %d \n", ret );
         WriteLogToFile( szLog );
-		LOGE("SKF_ImportCertificate return failed, ret %d.", ret);
+		LOGE("SKF_ImportCertificate return failed, error code: %d \n", ret );
 		free(tmpBuffer_wr);
 		free(tmpBuffer_rd);
 		return SAR_FAIL;
@@ -122,9 +121,8 @@ ULONG SKF_ImportCertificate( HANDLE hDev, BOOL bSignFlag, BYTE* pbCert )
 			//fill the data ...........................................
 			*(tmpBuffer_wr+send_len) = check_sum;
 			send_len = send_len + 1;
-			repeat_times = 10;
-			for (int i = 0; i < repeat_times; i++) {
-				if (repeat_times > 1)
+			for (int i = 0; i < REPEAT_TIMES; i++) {
+				if (REPEAT_TIMES > 1)
 					usleep(500 * 1000);  //gap between each cycle
 
 				memset(tmpBuffer_rd, 0, DATA_TRANSMIT_BUFFER_MAX_SIZE);
@@ -133,7 +131,7 @@ ULONG SKF_ImportCertificate( HANDLE hDev, BOOL bSignFlag, BYTE* pbCert )
 				if (ret < 0) {
                     sprintf( szLog, "SKF_ImportCertificate failed, error code: %d \n", ret );
                     WriteLogToFile( szLog );
-					LOGE("SKF_ImportCertificate return failed, ret %d.", ret);
+					LOGE("SKF_ImportCertificate return failed, error code: %d \n", ret );
 					continue;
 				}
 				if( (tmpBuffer_rd[recv_len-2] == 0x90) && (tmpBuffer_rd[recv_len-1] == 0x00 ) ) {
@@ -166,16 +164,15 @@ ULONG SKF_ImportCertificate( HANDLE hDev, BOOL bSignFlag, BYTE* pbCert )
 		*(tmpBuffer_wr+send_len) = check_sum;
 		send_len = send_len + 1;
 
-		repeat_times = 10;
-		for (int i = 0; i < repeat_times; i++) {
-			if (repeat_times > 1)
+		for (int i = 0; i < REPEAT_TIMES; i++) {
+			if (REPEAT_TIMES > 1)
 				usleep(500 * 1000);  //gap between each cycle
 
 			memset(tmpBuffer_rd, 0, DATA_TRANSMIT_BUFFER_MAX_SIZE);
 			recv_len = DATA_TRANSMIT_BUFFER_MAX_SIZE;
 			ret = TransmitData(trans_dev_id, tmpBuffer_wr, send_len, tmpBuffer_rd, &recv_len);
 			if (ret < 0) {
-				LOGE("SKF_ImportCertificate return failed, ret %d.", ret);
+				LOGE("SKF_ImportCertificate return failed, error code: %d \n", ret );
                 sprintf( szLog, "SKF_ImportCertificate failed, error code: %d \n", ret );
                 WriteLogToFile( szLog );
 				continue;
@@ -209,16 +206,15 @@ ULONG SKF_ImportCertificate( HANDLE hDev, BOOL bSignFlag, BYTE* pbCert )
         *(tmpBuffer_wr+send_len) = check_sum;
         send_len = send_len + 1;
 
-        repeat_times = 10;
-        for (int i = 0; i < repeat_times; i++) {
-            if (repeat_times > 1)
+        for (int i = 0; i < REPEAT_TIMES; i++) {
+            if (REPEAT_TIMES > 1)
                 usleep(500 * 1000);  //gap between each cycle
 
             memset(tmpBuffer_rd, 0, DATA_TRANSMIT_BUFFER_MAX_SIZE);
             recv_len = DATA_TRANSMIT_BUFFER_MAX_SIZE;
             ret = TransmitData(trans_dev_id, tmpBuffer_wr, send_len, tmpBuffer_rd, &recv_len);
             if (ret < 0) {
-                LOGE("SKF_ImportCertificate return failed, ret %d.", ret);
+                LOGE("SKF_ImportCertificate return failed, error code: %d \n", ret );
                 sprintf( szLog, "SKF_ImportCertificate failed, error code: %d \n", ret );
                 WriteLogToFile( szLog );
                 continue;
@@ -237,6 +233,9 @@ ULONG SKF_ImportCertificate( HANDLE hDev, BOOL bSignFlag, BYTE* pbCert )
 	free(tmpBuffer_wr);
 	free(tmpBuffer_rd);
 
+	if (ret < 0) {
+		return SAR_FAIL;
+	}
 	return SAR_OK;
 }
 
@@ -277,7 +276,6 @@ ULONG SKF_ExportCertificate( HANDLE hDev, BOOL bSignFlag, BYTE* pbCert, ULONG* p
 		return SAR_FAIL;
 	}
 
-    memset( apdu, 0x00, sizeof(apdu) );
     // set the certificate file
     memcpy( apdu, apdu_A5_00, 0x05 );
     if( !bSignFlag ) { //¼ÓÃÜÖ¤Êé
@@ -304,9 +302,8 @@ ULONG SKF_ExportCertificate( HANDLE hDev, BOOL bSignFlag, BYTE* pbCert, ULONG* p
     *(tmpBuffer_wr+send_len) = check_sum;
     send_len = send_len + 1;
 
-    int repeat_times = 10;
-    for (int i = 0; i < repeat_times; i++) {
-        if (repeat_times > 1)
+    for (int i = 0; i < REPEAT_TIMES; i++) {
+        if (REPEAT_TIMES > 1)
             usleep(500 * 1000);  //gap between each cycle
 
         memset(tmpBuffer_rd, 0, DATA_TRANSMIT_BUFFER_MAX_SIZE);
@@ -315,7 +312,7 @@ ULONG SKF_ExportCertificate( HANDLE hDev, BOOL bSignFlag, BYTE* pbCert, ULONG* p
         if (ret < 0) {
             sprintf( szLog, "SKF_ExportCertificate failed, error code: %d \n", ret );
             WriteLogToFile( szLog );
-            LOGE("SKF_ExportCertificate return failed, ret %d.", ret);
+            LOGE("SKF_ExportCertificate return failed, error code: %d \n", ret );
             ret = -1;
             continue;
         }
@@ -331,7 +328,7 @@ ULONG SKF_ExportCertificate( HANDLE hDev, BOOL bSignFlag, BYTE* pbCert, ULONG* p
     if (ret < 0) {
         sprintf( szLog, "SKF_ExportCertificate failed, error code: %d \n", ret );
         WriteLogToFile( szLog );
-        LOGE("SKF_ExportCertificate return failed, ret %d.", ret);
+        LOGE("SKF_ExportCertificate return failed, error code: %d \n", ret );
         free(tmpBuffer_wr);
         free(tmpBuffer_rd);
         return SAR_FAIL;
@@ -357,9 +354,8 @@ ULONG SKF_ExportCertificate( HANDLE hDev, BOOL bSignFlag, BYTE* pbCert, ULONG* p
 		//fill the data ...........................................
 		*(tmpBuffer_wr+send_len) = check_sum;
 		send_len = send_len + 1;
-		repeat_times = 10;
-		for (int i = 0; i < repeat_times; i++) {
-			if (repeat_times > 1)
+		for (int i = 0; i < REPEAT_TIMES; i++) {
+			if (REPEAT_TIMES > 1)
 				usleep(500 * 1000);  //gap between each cycle
 
 			memset(tmpBuffer_rd, 0, DATA_TRANSMIT_BUFFER_MAX_SIZE);
@@ -368,7 +364,7 @@ ULONG SKF_ExportCertificate( HANDLE hDev, BOOL bSignFlag, BYTE* pbCert, ULONG* p
 			if (ret < 0) {
 				sprintf( szLog, "SKF_ExportCertificate failed, error code: %d \n", ret );
 				WriteLogToFile( szLog );
-				LOGE("SKF_ExportCertificate return failed, ret %d.", ret);
+				LOGE("SKF_ExportCertificate return failed, error code: %d \n", ret );
 				continue;
 			}
 			if( (tmpBuffer_rd[recv_len-2] == 0x90) && (tmpBuffer_rd[recv_len-1] == 0x00 ) ) {
@@ -388,6 +384,9 @@ ULONG SKF_ExportCertificate( HANDLE hDev, BOOL bSignFlag, BYTE* pbCert, ULONG* p
 	free(tmpBuffer_wr);
 	free(tmpBuffer_rd);
 
+	if (ret < 0) {
+		return SAR_FAIL;
+	}
 	return SAR_OK;
 }
 

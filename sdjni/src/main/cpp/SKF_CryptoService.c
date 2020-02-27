@@ -2560,11 +2560,24 @@ ULONG SKF_Cipher( HANDLE hContainer, BYTE *pbData, ULONG  ulDataLen, BYTE *pbSig
     return SAR_OK;
 }
 
-ULONG SKF_GetZA( HANDLE hContainer,BYTE *pData, ULONG  ulDataLen, BYTE *pZA, ULONG  *ulZALen )
+ULONG SKF_GetZA( HANDLE hContainer, BYTE *pData, BYTE *pZA, ULONG  *ulZALen )
 {
     CHAR* pszLog = ( "**********Start to execute SKF_GetZA ********** \n" );
+    CHAR szLog[SIZE_BUFFER_1024];
+    memset( szLog, 0x0, strlen(szLog) );
 
     WriteLogToFile( pszLog );
+    if( hContainer < 0 ) {
+        return SAR_INVALIDHANDLEERR;
+    }
+    if (pData == NULL || (strlen(pData) != SIZE_BUFFER_64)) {
+        LOGE("SKF_GetZA param pData is not correct.");
+        return -1;
+    }
+	if (pZA == NULL) {
+		LOGE("SKF_GetZA param pZA is null.");
+		return -1;
+	}
 
     // 1st command  80F10000 40 64×Ö½ÚSM2¹«Ô¿
     unsigned char DataTobeSend[0x45];
@@ -2577,9 +2590,12 @@ ULONG SKF_GetZA( HANDLE hContainer,BYTE *pData, ULONG  ulDataLen, BYTE *pZA, ULO
     send_len = sizeof(DataTobeSend);
 
     unsigned char *tmpBuffer_rd = memalign(512, DATA_TRANSMIT_BUFFER_MAX_SIZE);
-    unsigned long recv_len = DATA_TRANSMIT_BUFFER_MAX_SIZE;
+    unsigned long recv_len = 0;
     memset(tmpBuffer_rd, 0, DATA_TRANSMIT_BUFFER_MAX_SIZE);
 
+    memset(DataTobeSend, '\0', 0x45);
+    memcpy(DataTobeSend, apdu_F1_40, 0x05);
+    memcpy(DataTobeSend + 0x05, pData, 0x40);
     //copy the raw data
     memcpy(tmpBuffer_wr, (unsigned char *)DataTobeSend, send_len);
 
@@ -2590,27 +2606,29 @@ ULONG SKF_GetZA( HANDLE hContainer,BYTE *pData, ULONG  ulDataLen, BYTE *pZA, ULO
     *(tmpBuffer_wr+send_len) = check_sum;
     send_len = send_len + 1;
 
-	memset(DataTobeSend, '\0', 0x45);
-	memcpy(DataTobeSend, apdu_F1_40, 0x05);
-	memcpy(DataTobeSend + 0x05, pData, 0x40);
-    int repeat_times = 10;
-    for (int i = 0; i < repeat_times; i++) {
-        if (repeat_times > 1)
+    for (int i = 0; i < REPEAT_TIMES; i++) {
+        if (REPEAT_TIMES > 1)
             usleep(500 * 1000);  //gap between each cycle
 
         memset(tmpBuffer_rd, 0, DATA_TRANSMIT_BUFFER_MAX_SIZE);
         recv_len = DATA_TRANSMIT_BUFFER_MAX_SIZE;
         ret = TransmitData(hContainer, tmpBuffer_wr, send_len, tmpBuffer_rd, &recv_len);
         if (ret < 0) {
-            LOGE("TransmitData return failed, ret %d.", ret);
+            sprintf( szLog, "SKF_GetZA failed, error code: %d \n", ret );
+            WriteLogToFile( szLog );
+            LOGE("SKF_GetZA return failed, ret %d.", ret);
             ret = -1;
             continue;
         }
         if( (tmpBuffer_rd[recv_len-2] == 0x90) && (tmpBuffer_rd[recv_len-1] == 0x00 ) ) {
             // get ZA
-            pZA = tmpBuffer_rd[0];
             *ulZALen = recv_len-2;
+            memcpy( pZA, tmpBuffer_rd, *ulZALen );
             break;
+        } else {
+            sprintf( szLog, "SKF_GetZA failed, status code: %02X%02X \n", tmpBuffer_rd[recv_len-2], tmpBuffer_rd[recv_len-1] );
+            WriteLogToFile( szLog );
+            LOGE("SKF_GetZA failed, status code: %02X%02X \n", tmpBuffer_rd[recv_len-2], tmpBuffer_rd[recv_len-1]);
         }
     }
 

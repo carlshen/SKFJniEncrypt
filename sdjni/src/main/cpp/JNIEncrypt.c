@@ -333,13 +333,19 @@ JNIEXPORT jstring JNICALL get_dev_info(JNIEnv *env, jobject instance, jint handl
     return result;
 }
 
-JNIEXPORT jlong JNICALL get_za(JNIEnv *env, jobject instance, jint handle) {
+JNIEXPORT jlong JNICALL get_za(JNIEnv *env, jobject instance, jint handle, jbyteArray str_) {
     LOGI("get_za handle: %ld", handle);
-    BYTE *pbData;
-    ULONG ulDataLen;
-    BYTE *pbZAData;
+    jbyte* bBuffer = (*env)->GetByteArrayElements(env, str_, 0);
+    unsigned char* pbCommand = (unsigned char*) bBuffer;
+    LOGI("get_za pbCommand: %s\n", pbCommand);
+    LOGI("get_za pbCommand size: %d\n", strlen(pbCommand));
+    if (pbCommand == NULL) {
+        LOGE("transmit_ex with null string.");
+        return -1;
+    }
+    BYTE pbZAData[64];
     ULONG pulZALen;
-    unsigned long baseResult = SKF_GetZA( handle, pbData, ulDataLen, pbZAData, &pulZALen );
+    unsigned long baseResult = SKF_GetZA( handle, pbCommand, pbZAData, &pulZALen );
     LOGI("get_za baseResult: %ld", baseResult);
     return baseResult;
 }
@@ -781,7 +787,7 @@ static JNINativeMethod method_table[] = {
         {"SetSymKey",         "(I)J",                                                   (void *) set_sym_key},
         {"CloseHandle",       "(I)J",                                                   (void *) close_handle},
         {"GetDevInfo",        "(I)Ljava/lang/String;",                                  (void *) get_dev_info},
-        {"GetZA",             "(I)J",                                                   (void *) get_za},
+        {"GetZA",             "(I[B)J",                                                 (void *) get_za},
         {"EncryptInit",       "(I)J",                                                   (void *) encrypt_init},
         {"Encrypt",           "(I)J",                                                   (void *) encrypt},
         {"EncryptUpdate",     "(I)J",                                                   (void *) encrypt_update},
@@ -802,7 +808,6 @@ static JNINativeMethod method_table[] = {
         {"ECCPrvKeyDecrypt",  "(I)J",                                                   (void *) ecc_prv_key_decrypt},
         {"ImportKeyPair",     "(I)J",                                                   (void *) import_key_pair},
         {"Cipher",            "(I)J",                                                   (void *) cipher},
-        {"GetZA",             "(I)J",                                                   (void *) get_za},
         {"BeginTransaction", "(I)J",                                                   (void *) begin_transaction},
         {"EndTransaction",   "(I)J",                                                   (void *) end_transaction},
         {"GetFirmVer",        "(I)Ljava/lang/String;",                                 (void *) get_firm_ver},

@@ -69,6 +69,8 @@ extern "C" {
 	ULONG SKF_ConnectDev( char *szDrive, int *szNum )
 	{
 		CHAR* pszLog = ( "**********Start to execute SKF_ConnectDev ********** \n" );
+		CHAR szLog[SIZE_BUFFER_1024];
+		memset( szLog, 0x0, strlen(szLog) );
 		sv_fEnd = FALSE;
 		WriteLogToFile( pszLog );
 		if (szDrive == NULL) {
@@ -76,22 +78,28 @@ extern "C" {
 			return -1;
 		}
 #if 0 //mod by jason, for replace connectdev with opendev
+		if (trans_dev_id != -1) {
+			LOGE("SKF_ConnectDev, device is already opened.");
+			return -1;
+		}
+		strcpy(device_path, szDrive);
 		unsigned long baseResult = SDSCConnectDev(szDrive, szNum);
 		trans_dev_id = *szNum;
 #else
 		unsigned long baseResult = OpenDevice(szDrive, szNum); //SDSCConnectDev(szDrive, &pulDriveNum);
 #endif
 		if ( LOGCAT_PRINT ) {
-			LOGI("connect_dev baseResult: %ld", baseResult);
-			LOGI("connect_dev pulDriveNum: %d", *szNum);
-			LOGI("SKF_EnumDev szDrive: %s\n", szDrive);
+			LOGI("SKF_ConnectDev baseResult: %ld", baseResult);
+			LOGI("SKF_ConnectDev trans_dev_id: %d", trans_dev_id);
+			LOGI("SKF_ConnectDev szDrive: %s\n", szDrive);
 		}
 		if (trans_dev_id < 0) {
+			LOGE("SKF_ConnectDev failed, trans_dev_id: %d", trans_dev_id);
 			return trans_dev_id;
 		}
 
 		// command  00A40400 06 746D7373696D
-		unsigned char DataTobeSend[0xB];
+		unsigned char DataTobeSend[0x0B];
 		unsigned long send_len = 0;
 		unsigned char check_sum = 0;
 
@@ -101,9 +109,12 @@ extern "C" {
 		send_len = sizeof(DataTobeSend);
 
 		unsigned char *tmpBuffer_rd = memalign(512, DATA_TRANSMIT_BUFFER_MAX_SIZE);
-		unsigned long recv_len = DATA_TRANSMIT_BUFFER_MAX_SIZE;
+		unsigned long recv_len = 0;
 		memset(tmpBuffer_rd, 0, DATA_TRANSMIT_BUFFER_MAX_SIZE);
 
+		memset(DataTobeSend, '\0', 0x0B);
+		memcpy(DataTobeSend, apdu_A4_04, 0x04);
+		memcpy(DataTobeSend + 0x04, apdu_connect, 0x07);
 		//copy the raw data
 		memcpy(tmpBuffer_wr, (unsigned char *)DataTobeSend, send_len);
 
@@ -114,25 +125,27 @@ extern "C" {
 		*(tmpBuffer_wr+send_len) = check_sum;
 		send_len = send_len + 1;
 
-		memset(DataTobeSend, '\0', 0xB);
-		memcpy(DataTobeSend, apdu_A4_04, 0x04);
-		memcpy(DataTobeSend + 0x04, apdu_connect, 0x07);
-		int repeat_times = 10;
-		for (int i = 0; i < repeat_times; i++) {
-			if (repeat_times > 1)
+		for (int i = 0; i < REPEAT_TIMES; i++) {
+			if (REPEAT_TIMES > 1)
 				usleep(500 * 1000);  //gap between each cycle
 
 			memset(tmpBuffer_rd, 0, DATA_TRANSMIT_BUFFER_MAX_SIZE);
 			recv_len = DATA_TRANSMIT_BUFFER_MAX_SIZE;
 			ret = TransmitData(trans_dev_id, tmpBuffer_wr, send_len, tmpBuffer_rd, &recv_len);
 			if (ret < 0) {
-				LOGE("TransmitData return failed, ret %d.", ret);
+				sprintf( szLog, "SKF_ConnectDev failed, error code: %d \n", ret );
+				WriteLogToFile( szLog );
+				LOGE("SKF_ConnectDev return failed, error code: %d \n", ret );
 				ret = -1;
 				continue;
 			}
 			if( (tmpBuffer_rd[recv_len-2] == 0x90) && (tmpBuffer_rd[recv_len-1] == 0x00 ) ) {
 				// get data if need
 				break;
+			} else {
+				sprintf( szLog, "SKF_ConnectDev failed, status code: %02X%02X \n", tmpBuffer_rd[recv_len-2], tmpBuffer_rd[recv_len-1] );
+				WriteLogToFile( szLog );
+				LOGE("SKF_ConnectDev failed, status code: %02X%02X \n", tmpBuffer_rd[recv_len-2], tmpBuffer_rd[recv_len-1]);
 			}
 		}
 
@@ -185,10 +198,8 @@ extern "C" {
 	ULONG SKF_GetDevInfo( HANDLE hDev, DEVINFO * pDevInfo )
 	{
 		CHAR* pLog = ( "**********Start to execute SKF_GetDevInfo ********** \n" );
-		BYTE response[SIZE_BUFFER_1024];
-
-		DWORD nResponseLen = 0;
-		LONG nRet = 0;
+		CHAR szLog[SIZE_BUFFER_1024];
+		memset( szLog, 0x0, strlen(szLog) );
 		sv_fEnd = FALSE;
 		WriteLogToFile( pLog );
 
@@ -224,39 +235,61 @@ extern "C" {
 		sv_stDevice.MaxBufferSize         = 0x00000100;    //能够处理的分组运算和杂凑运算的数据大小
 		memset( sv_stDevice.Reserved, 0x00, sizeof(sv_stDevice.Reserved) );          //保留扩展
 
-		nResponseLen = sizeof( response );
+		unsigned long send_len = strlen(apdu_getDevInfo);
+		unsigned char check_sum = 0;
+		int ret;
+		unsigned char * tmpBuffer_wr = memalign(512, DATA_TRANSMIT_BUFFER_MAX_SIZE);
+		memset(tmpBuffer_wr, 0, DATA_TRANSMIT_BUFFER_MAX_SIZE);
+		//copy the raw data
+		memcpy(tmpBuffer_wr, (unsigned char *)apdu_getDevInfo, send_len);
 
-		//--------读二进制文件1E，读取设备标签
-		memset( response, 0x00, sizeof(response) );
+		unsigned char *tmpBuffer_rd = memalign(512, DATA_TRANSMIT_BUFFER_MAX_SIZE);
+		unsigned long recv_len = 0;
 
-//		PrintApduToFile( 0, apdu, 0x05 );
-		nRet = TransmitData( hDev, apdu_getDevInfo, 0x05, response, &nResponseLen );
-		if( nRet != SAR_OK )
-		{
-			sprintf( pLog, "read 1E (device label) file fail, status code: %d \n", nRet );
-			WriteLogToFile( pLog );
-			sv_nStatus = 1;
-			return SAR_FAIL;
-		}
+		//fill the checksum byte
+		check_sum = CalculateCheckSum((tmpBuffer_wr+1), (send_len-1));
 
-//		PrintApduToFile( 1, response, nResponseLen );
-		if( (response[nResponseLen-2] == 0x90) && (response[nResponseLen-1] == 0x00) )
-		{
-			for( int n=0; n<response[0]; n++ )
-			{
-				pLabel[n] = response[n+1];
+		//fill the data ...........................................
+		*(tmpBuffer_wr+send_len) = check_sum;
+		send_len = send_len + 1;
+
+		for (int i = 0; i < REPEAT_TIMES; i++) {
+			if (REPEAT_TIMES > 1)
+				usleep(500 * 1000);  //gap between each cycle
+
+			memset(tmpBuffer_rd, 0, DATA_TRANSMIT_BUFFER_MAX_SIZE);
+			recv_len = DATA_TRANSMIT_BUFFER_MAX_SIZE;
+			ret = TransmitData(trans_dev_id, tmpBuffer_wr, send_len, tmpBuffer_rd, &recv_len);
+			if (ret < 0) {
+				sprintf( szLog, "SKF_GetDevInfo failed, error code: %d \n", ret );
+				WriteLogToFile( szLog );
+				LOGE("SKF_GetDevInfo failed, error code: %d \n", ret );
+				ret = -1;
+				continue;
 			}
-			memcpy( sv_stDevice.Label, pLabel, response[0] );  //设备标签
-		}
-		else
-		{
-			sprintf( pLog, "read 1E (device label) file fail, status code: %02X%02X \n", response[nResponseLen-2], response[nResponseLen-1] );
-			WriteLogToFile( pLog );
-			return SAR_FAIL;
+			if( (tmpBuffer_rd[recv_len-2] == 0x90) && (tmpBuffer_rd[recv_len-1] == 0x00 ) ) {
+				// get data if need
+				for( int n=0; n<tmpBuffer_rd[0]; n++ )
+				{
+					pLabel[n] = tmpBuffer_rd[n+1];
+				}
+				memcpy( sv_stDevice.Label, pLabel, tmpBuffer_rd[0] );  //设备标签
+			}
+			else {
+				sprintf( szLog, "SKF_GetDevInfo device label file fail, status code: %02X%02X \n", tmpBuffer_rd[recv_len-2], tmpBuffer_rd[recv_len-1] );
+				WriteLogToFile( szLog );
+				LOGE("SKF_GetDevInfo failed, status code: %02X%02X \n", tmpBuffer_rd[recv_len-2], tmpBuffer_rd[recv_len-1] );
+				return SAR_FAIL;
+			}
 		}
 
 		* pDevInfo = sv_stDevice;
 
+		free(tmpBuffer_wr);
+		free(tmpBuffer_rd);
+		if (ret < 0) {
+			return SAR_FAIL;
+		}
 		return SAR_OK;
 	}
 
