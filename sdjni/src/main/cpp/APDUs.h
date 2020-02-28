@@ -119,6 +119,8 @@ BYTE apdu_A101[0x02];
 BYTE apdu_A102[0x02];
 BYTE apdu_0001[0x02];
 BYTE apdu_0002[0x02];
+BYTE apdu_0020[0x02];
+BYTE apdu_0040[0x02];
 BYTE apdu_0800[0x02];
 BYTE apdu_0107[0x02];
 BYTE apdu_0200[0x02];
@@ -128,6 +130,8 @@ BYTE apdu_01[0x01];
 BYTE apdu_02[0x01];
 BYTE apdu_03[0x01];
 BYTE apdu_20[0x01];
+BYTE apdu_26[0x01];
+BYTE apdu_46[0x01];
 BYTE apdu_80[0x01];
 BYTE apdu_FF[0x01];
 

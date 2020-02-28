@@ -196,7 +196,6 @@ JNIEXPORT jlong JNICALL import_ecc_key(JNIEnv *env, jobject instance, jint handl
         return (*env)->NewStringUTF(env, '\0');
     }
     memset(privKey, '0x05', SIZE_BUFFER_32 * sizeof(char));
-    PENVELOPEDKEYBLOB pEnvelopedKeyBlob;
     unsigned long baseResult = SKF_ImportECCKeyPair( handle, pubKey, privKey );
     LOGI("import_ecc_key baseResult: %ld", baseResult);
     LOGI("import_ecc_key pubKey: %s\n", pubKey);
@@ -557,9 +556,22 @@ JNIEXPORT jlong JNICALL ecc_prv_key_decrypt(JNIEnv *env, jobject instance, jint 
 
 JNIEXPORT jlong JNICALL import_key_pair(JNIEnv *env, jobject instance, jint handle) {
     LOGI("import_key_pair handle: %ld", handle);
-    PENVELOPEDKEYBLOB pEnvelopedKeyBlob;
-    unsigned long baseResult = SKF_ImportECCKeyPair2( handle, pEnvelopedKeyBlob );
-    LOGI("import_key_pair baseResult: %ld", baseResult);
+    unsigned char *pubKey = (unsigned char *) malloc(SIZE_BUFFER_64 * sizeof(char));
+    if (pubKey == NULL) {
+        LOGE("import_ecc_key with null alloc.");
+        return (*env)->NewStringUTF(env, '\0');
+    }
+    memset(pubKey, '0x06', SIZE_BUFFER_64 * sizeof(char));
+    unsigned char *privKey = (unsigned char *) malloc(SIZE_BUFFER_32 * sizeof(char));
+    if (privKey == NULL) {
+        LOGE("import_ecc_key with null alloc.");
+        return (*env)->NewStringUTF(env, '\0');
+    }
+    memset(privKey, '0x05', SIZE_BUFFER_32 * sizeof(char));
+    unsigned long baseResult = V_ImportKeyPair( handle, apdu_A001, pubKey, privKey );
+    LOGI("ecc_export_session_key baseResult: %ld", baseResult);
+    free(pubKey);
+    free(privKey);
     return baseResult;
 }
 

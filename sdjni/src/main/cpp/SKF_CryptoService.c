@@ -96,159 +96,6 @@ ULONG SKF_GenRandom( HANDLE hDev, BYTE *pbRandom, ULONG *ulRandomLen )
 	return SAR_OK;
 }
 
-
-//2--------------------NO
-ULONG SKF_GenExtRSAKey( HANDLE hDev, ULONG ulBitsLen, RSAPRIVATEKEYBLOB *pBlob )
-{
-	CHAR* pszLog = ( "**********Start to execute SKF_GenExtRSAKey ********** \n" );
-   
-	WriteLogToFile( pszLog );
-
-	return SAR_OK;
-}
-
-//3
-////////////////////////////////////////////////////////////////////////////////////////////////////////////
-/*
-* 函数名称：SKF_GenRSAKeyPair
-* 函数功能：生成RSA签名密钥对
-* 参数列表：hContainer:	        [IN], 容器句柄
-*	        ulBitsLen:	        [IN], 密钥模长
-*	        pBlob: 	            [OUT, 返回的RSA公钥数据结构
-
-* 返 回 值:	SAR_OK：成功
-            其他值：错误码
-*/
-ULONG SKF_GenRSAKeyPair( HANDLE hContainer, ULONG ulBitsLen, RSAPUBLICKEYBLOB* pBlob )
-{
-	CHAR* pszLog = ( "**********Start to execute SKF_GenRSAKeyPair ********** \n" );
-    
-	WriteLogToFile( pszLog );
-
-	return SAR_OK;
-}
-
-//4
-////////////////////////////////////////////////////////////////////////////////////////////////////////////
-/*
-* 函数名称：SKF_ImportRSAKeyPair
-* 函数功能：导入RSA加密密钥对
-* 参数列表：hContainer:	        [IN], 容器句柄。
-*	        ulSymAlgId:	        [IN], 对称算法密钥标识。
-*	        pbWrappedKey: 	    [IN], 使用该容器内签名公钥保护的对称算法密钥。
-*	        ulWrappedKeyLen:	[IN], 保护的对称算法密钥长度。
-*	        pbEncryptedData:	[IN], 对称算法密钥保护的RSA加密私钥。私钥的格式遵循PKCS #1 v2.1: RSA Cryptography Standard中的私钥格式定义。
-*	        ulEncryptedDataLen:	[IN], 对称算法密钥保护的RSA加密公私钥对长度。
-* 返 回 值:	SAR_OK：成功
-            其他值：错误码
-*/
-
-ULONG SKF_ImportRSAKeyPair( HANDLE hContainer, ULONG ulSymAlgId, BYTE *pbWrappedKey, ULONG ulWrappedKeyLen,
-                                   BYTE *pbEncryptedData, ULONG ulEncryptedDataLen)
-{
-	CHAR* pszLog = ( "**********Start to execute SKF_ImportRSAKeyPair ********** \n" );
-
-    WriteLogToFile( pszLog );
-
-	return SAR_OK;
-}
-
-//5
-////////////////////////////////////////////////////////////////////////////////////////////////////////////
-/*
-* 函数名称：SKF_RSASignData
-* 函数功能：RSA签名
-* 参数列表：hContainer:  [IN], 容器句柄
-*           pbData:      [IN], 被签名的数据
-*           ulDataLen:   [IN], 签名数据长度，应不大于RSA密钥模长-11
-*           pbSignature: [OUT], 存放签名结果的缓冲区指针；如果值为NULL，用于取得签名结果长度
-*           pulSignLen:  [IN/OUT], 输入时表示签名结果缓冲区大小，输出时表示签名结果长度
-
-* 返 回 值：SAR_OK: 成功
-            其他值: 错误码
-*/
-ULONG SKF_RSASignData( HANDLE hContainer, BYTE *pbData, ULONG  ulDataLen, BYTE *pbSignature, ULONG *pulSignLen )
-{
-	CHAR* pszLog = ( "**********Start to execute SKF_RSASignData ********** \n" );
-    
-	WriteLogToFile( pszLog );
-
-	return SAR_OK;
-}
- 
-
-//6--------------------NO   
-////////////////////////////////////////////////////////////////////////////////////////////////////////////
-/*
-* 函数名称：SKF_RSAVerify
-* 函数功能：RSA验签
-* 参数列表：hDev:           [IN], 设备句柄
-*           pRSAPubKeyBlob: [IN], RSA公钥数据结构
-*           pbData:         [IN], 待验证签名的数据
-*           ulDataLen:      [IN], 数据长度，应不大于公钥模长-11
-*           pbSignature:    [IN], 待验证的签名值
-*           ulSignLen:      [IN], 签名值长度，必须为公钥模长
-
-* 返 回 值：SAR_OK: 成功
-            其他值: 错误码
-*/
-                                   
-ULONG SKF_RSAVerify( HANDLE hDev, RSAPUBLICKEYBLOB* pRSAPubKeyBlob, BYTE *pbData, ULONG ulDataLen,
-						   BYTE* pbSignature, ULONG ulSignLen )
-{
-	CHAR* pszLog = ("**********Start to execute SKF_RSAVerify ********** \n");
-    
-	WriteLogToFile( pszLog );
-
-	return SAR_OK;
-}
-
-
-//7--------------------NO
-////////////////////////////////////////////////////////////////////////////////////////////////////////////
-/*
-* 函数名称：SKF_RSAExportSessionKey
-* 函数功能：RSA生成并导出会话密钥
-* 参数列表：hContainer:  [IN], 容器句柄
-*           ulAlgId:     [IN], 会话密钥算法标识
-*           pPubKey:     [IN], 加密会话密钥的RSA公钥数据结构
-*           pbData:      [OUT], 导出的加密会话密钥密文，按照RKCS#1v1.5要求封装
-*           pulDataLen:  [IN/OUT], 输入时表示会话密钥密文数据缓冲区长度，输出时表示会话密钥密文的实际长度
-*           phSessionKey: [OUT], 导出的密钥句柄
-* 返 回 值：SAR_OK: 成功
-            其他值: 错误码
-*/
-ULONG SKF_RSAExportSessionKey( HANDLE hContainer, ULONG ulAlgId, RSAPUBLICKEYBLOB *pPubKey,
-									 BYTE *pbData, ULONG  *pulDataLen, HANDLE *phSessionKey )
-{
-	CHAR* pszLog = ("**********Start to execute SKF_RSAExportSessionKey ********** \n");
-    
-	WriteLogToFile( pszLog );
-
-	return SAR_OK;
-}
-
-//8--------------------NO
-ULONG SKF_ExtRSAPubKeyOperation( HANDLE hDev, RSAPUBLICKEYBLOB* pRSAPubKeyBlob,BYTE* pbInput,
-										ULONG ulInputLen, BYTE* pbOutput, ULONG* pulOutputLen )
-{
-	CHAR* pszLog = ( "**********Start to execute SKF_ExtRSAPubKeyOperation ********** \n" );
-
-    WriteLogToFile( pszLog );
-
-	return SAR_OK;
-}
-
-//9--------------------NO
-ULONG SKF_ExtRSAPriKeyOperation( HANDLE hDev, RSAPRIVATEKEYBLOB* pRSAPriKeyBlob,BYTE* pbInput,
-									   ULONG ulInputLen, BYTE* pbOutput, ULONG* pulOutputLen )
-{
-	CHAR* pszLog = ( "**********Start to execute SKF_ExtRSAPriKeyOperation ********** \n" );
-
-    WriteLogToFile( pszLog );
-	return SAR_OK;
-}
-
 //10
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /*
@@ -269,7 +116,6 @@ ULONG SKF_GenECCKeyPair( HANDLE hDev, BYTE * pBlob )
 	
     memset( szLog, 0x0, strlen(szLog) );
 	memset( apdu, 0x00, sizeof(apdu) );
-
 	WriteLogToFile( pszLog );
 
     if( hDev < 0 ) {
@@ -301,9 +147,8 @@ ULONG SKF_GenECCKeyPair( HANDLE hDev, BYTE * pBlob )
     *(tmpBuffer_wr+send_len) = check_sum;
     send_len = send_len + 1;
 
-    int repeat_times = 10;
-    for (int i = 0; i < repeat_times; i++) {
-        if (repeat_times > 1)
+    for (int i = 0; i < REPEAT_TIMES; i++) {
+        if (REPEAT_TIMES > 1)
             usleep(500 * 1000);  //gap between each cycle
 
         memset(tmpBuffer_rd, 0, DATA_TRANSMIT_BUFFER_MAX_SIZE);
@@ -346,9 +191,8 @@ ULONG SKF_GenECCKeyPair( HANDLE hDev, BYTE * pBlob )
 	*(tmpBuffer_wr+send_len) = check_sum;
 	send_len = send_len + 1;
 
-	repeat_times = 10;
-	for (int i = 0; i < repeat_times; i++) {
-		if (repeat_times > 1)
+	for (int i = 0; i < REPEAT_TIMES; i++) {
+		if (REPEAT_TIMES > 1)
 			usleep(500 * 1000);  //gap between each cycle
 
 		memset(tmpBuffer_rd, 0, DATA_TRANSMIT_BUFFER_MAX_SIZE);
@@ -435,9 +279,8 @@ ULONG SKF_ImportECCKeyPair( HANDLE hDev, BYTE* pubKey, BYTE* privKey )
 	*(tmpBuffer_wr+send_len) = check_sum;
 	send_len = send_len + 1;
 
-	int repeat_times = 10;
-	for (int i = 0; i < repeat_times; i++) {
-		if (repeat_times > 1)
+	for (int i = 0; i < REPEAT_TIMES; i++) {
+		if (REPEAT_TIMES > 1)
 			usleep(500 * 1000);  //gap between each cycle
 
 		memset(tmpBuffer_rd, 0, DATA_TRANSMIT_BUFFER_MAX_SIZE);
@@ -481,9 +324,8 @@ ULONG SKF_ImportECCKeyPair( HANDLE hDev, BYTE* pubKey, BYTE* privKey )
 	*(tmpBuffer_wr+send_len) = check_sum;
 	send_len = send_len + 1;
 
-	repeat_times = 10;
-	for (int i = 0; i < repeat_times; i++) {
-		if (repeat_times > 1)
+	for (int i = 0; i < REPEAT_TIMES; i++) {
+		if (REPEAT_TIMES > 1)
 			usleep(500 * 1000);  //gap between each cycle
 
 		memset(tmpBuffer_rd, 0, DATA_TRANSMIT_BUFFER_MAX_SIZE);
@@ -683,210 +525,6 @@ ULONG SKF_ECCVerify( HANDLE hDev, ECCPUBLICKEYBLOB* pECCPubKeyBlob, BYTE* pbData
 	return SAR_OK;
 }
 
-//14--------------------NO
-////////////////////////////////////////////////////////////////////////////////////////////////////////////
-/*
-* 函数名称：SKF_ECCExportSessionKey
-* 函数功能：ECC生成并导出会话密钥
-* 参数列表：hContainer:   [IN], 容器句柄
-*           ulAlgId:      [IN], 会话密钥算法标识
-*           pPubKey:      [IN], 外部输入的公钥结构
-*           pData:        [OUT], 会话密钥密文
-*           phSessionKey: [OUT], 会话密钥句柄
-* 返 回 值：SAR_OK: 成功
-            其他值: 错误码
-*/
-ULONG SKF_ECCExportSessionKey( HANDLE hContainer, ULONG ulAlgId, ECCPUBLICKEYBLOB* pPubKey,
-									 PECCCIPHERBLOB pData, HANDLE* phSessionKey )
-{
-	CHAR* pszLog = ( "**********Start to execute SKF_ECCExportSessionKey ********** \n" );
-	CHAR szLog[SIZE_BUFFER_1024];
-	BYTE apdu[SIZE_BUFFER_1024];
-	BYTE response[SIZE_BUFFER_1024];
-	BYTE sessionBuf[0x10];
-	BYTE fileSFI[0x06] = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
-	BYTE appFID[0x02] = { 0xDF, 0x00 };
-    SESSIONKEY sessionKey;
-	HANDLE hDev;
-	DWORD nResponseLen = 0;
-	LONG nRet = 0;
-	sv_fEnd = FALSE;
-	memset( sessionBuf, 0x00, sizeof(sessionBuf) );
-	memset( apdu, 0x00, sizeof(apdu) );
-	memset( response, 0x00, sizeof(response) );
-	memset( szLog, 0x0, strlen(szLog) );
-
-	WriteLogToFile( pszLog );
-
-	//--------容器句柄不能为空
-	if( hContainer == NULL )
-	{
-		return SAR_INVALIDHANDLEERR;
-	}
-
-	//--------取16字节随机数
-	memcpy( apdu, apdu_random, 0x05 );
-	apdu[4] = 0x10;  //长度字节
-    nResponseLen = sizeof( response );
-    nRet = TransmitData( hDev, apdu, 0x05, response, &nResponseLen );
-    if( nRet != SAR_OK )
-	{
-        sprintf( szLog, "取随机数失败，错误码: %d \n", nRet );
-		WriteLogToFile( szLog );
-		sv_nStatus = 1;
-		return SAR_FAIL;
-	}
-	
-	if( (response[nResponseLen-2] == 0x90) && (response[nResponseLen-1] == 0x00) )
-	{
-		memcpy( sessionBuf, response, 0x10 );
-	}
-	else
-	{
-        sprintf( szLog, "取随机数失败，状态码: %02x%02x \n", response[nResponseLen-2], response[nResponseLen-1] );
-		WriteLogToFile( szLog );
-		return SAR_FAIL;
-	}
-
-	//--------调用SKF_ExtECCEncrypt对其加密
-	//if( SKF_ExtECCEncrypt( hDev, pPubKey, sessionBuf, 0x10, pData) != SAR_OK )
-	//	return SAR_FAIL;
-
-	//--------返回会话句柄
-	sessionKey.AlgID = ulAlgId;
- 	sessionKey.KeyLen=16;
-// 	sessionKey.hContainer=hContainer;
-    sessionKey.hDev=hDev;
- 	memcpy( sessionKey.KeyVal,sessionBuf,0x10 );	
- 	//memcpy((*myKey).SessionID,(*(PCONTAINER)hContainer).SessionkeyID,2);
-    *phSessionKey = &sessionKey;
-
-	return SAR_OK;
-}
-
-//15--------------------NO
-/*
-* 函数名称：SKF_ExtECCEncrypt
-* 函数功能：ECC外来公钥加密
-* 参数列表：hDev:           [IN], 设备句柄
-*           pECCPubKeyBlob: [IN], ECC公钥数据结构
-*           pbPlainText:    [IN], 待加密的明文数据
-*           ulPlainTextLen: [OUT], 待加密明文数据的长度
-*           pCipherText:    [OUT], 密文数据
-* 返 回 值：SAR_OK: 成功
-            其他值: 错误码
-*/
-ECCCIPHERBLOB eccCiperBlob;
-ULONG SKF_ExtECCEncrypt( HANDLE hDev, ECCPUBLICKEYBLOB* pECCPubKeyBlob, BYTE* pbPlainText,
-							   ULONG ulPlainTextLen, PECCCIPHERBLOB pCipherText )
-{
-	CHAR* pszLog = ( "**********Start to execute SKF_ExtECCEncrypt ********** \n");
-	CHAR szLog[SIZE_BUFFER_1024];
-	//ECCCIPHERBLOB eccCiperBlob;
-	BYTE apdu[SIZE_BUFFER_1024];
-	BYTE response[SIZE_BUFFER_1024];
-	DWORD nResponseLen = 0;
-	LONG nRet = 0;
-#ifdef _DEBUG
-	ULONG m = 0;
-#endif
-	sv_fEnd = FALSE;
-	memset( apdu, 0x00, sizeof(apdu) );
-	memset( response, 0x00, sizeof(response) );
-	memset( szLog, 0x0, strlen(szLog) );
-
-	WriteLogToFile( pszLog );
-
-#ifdef _DEBUG
-	WriteLogToFile( TEXT("SKF_ExtECCEncrypt: \n") );
-	for( m=0; m<ulPlainTextLen; m++ )
-	{
-		sprintf( szLog, "%02X", pbPlainText[m] );
-		WriteLogToFile( szLog );
-	}
-	WriteLogToFile( TEXT("\n") );
-#endif
-
-#ifdef _DEBUG
-	WriteLogToFile( TEXT("SKF_ExtECCEncrypt: \n") );
-	for( m=0; m<64; m++ )
-	{
-		sprintf( szLog, "%02X", pECCPubKeyBlob->XCoordinate[m] );
-		WriteLogToFile( szLog );
-	}
-	WriteLogToFile( TEXT("\n") );
-#endif
-
-#ifdef _DEBUG
-	WriteLogToFile( TEXT("SKF_ExtECCEncrypt: \n") );
-	for( m=0; m<64; m++ )
-	{
-		sprintf( szLog, "%02X", pECCPubKeyBlob->YCoordinate[m] );
-		WriteLogToFile( szLog );
-	}
-	WriteLogToFile( TEXT("\n") );
-#endif
-
-	//--------组织APDU
-	memcpy( apdu, apdu_eccEncrypt, 0x05 );
-	apdu[4] = (BYTE)(SIZE_BUFFER_64+(BYTE)ulPlainTextLen);  //长度字节
-
-	memcpy( apdu+0x05, (pECCPubKeyBlob->XCoordinate) +SIZE_BUFFER_32 , SIZE_BUFFER_32 );
-	memcpy( apdu+0x05+SIZE_BUFFER_32, (pECCPubKeyBlob->YCoordinate) +SIZE_BUFFER_32 , SIZE_BUFFER_32 );
-	memcpy( apdu+0x05+SIZE_BUFFER_64, pbPlainText, ulPlainTextLen );
-    nResponseLen = sizeof( response );
-    nRet = TransmitData( hDev, apdu, 0x05+SIZE_BUFFER_64+(BYTE)ulPlainTextLen, response, &nResponseLen );
-    if( nRet != SAR_OK )
-	{
-        sprintf( szLog, "ECC外来公钥加密失败，错误码: %d \n", nRet );
-		WriteLogToFile( szLog );
-		sv_nStatus = 1;
-		return SAR_FAIL;
-	}
-	
-	if( (response[nResponseLen-2] == 0x90) && (response[nResponseLen-1] == 0x00) )
-	{
-		memcpy( eccCiperBlob.XCoordinate+SIZE_BUFFER_32, response, SIZE_BUFFER_32 );
-		memcpy( eccCiperBlob.YCoordinate+SIZE_BUFFER_32, response+SIZE_BUFFER_32, SIZE_BUFFER_32 );
-
-		memcpy( eccCiperBlob.HASH, response+SIZE_BUFFER_64, SIZE_BUFFER_32 );
-		
-		eccCiperBlob.CipherLen = ulPlainTextLen;
-		memcpy( eccCiperBlob.Cipher, response+SIZE_BUFFER_96, ulPlainTextLen );
-	}
-	else
-	{
-		sprintf( szLog, "ECC外来公钥加密失败，状态码: %02x%02x \n", response[nResponseLen-2], response[nResponseLen-1] );
-		WriteLogToFile( szLog );
-		return SAR_FAIL;	
-	}
-
-	memcpy(pCipherText, &eccCiperBlob, sizeof(ECCCIPHERBLOB));
-	return SAR_OK;
-}
-
-//16--------------------NO
-ULONG SKF_ExtECCDecrypt( HANDLE hDev, ECCPRIVATEKEYBLOB*  pECCPriKeyBlob, PECCCIPHERBLOB pCipherText,
-							   BYTE* pbPlainText, ULONG* pulPlainTextLen )
-{
-	CHAR* pszLog = ("**********Start to execute SKF_ExtECCDecrypt ********** \n");
-
-	WriteLogToFile( pszLog );
-
-	return SAR_OK;
-}
-
-//17--------------------NO
-ULONG SKF_ExtECCSign( HANDLE hDev, ECCPRIVATEKEYBLOB*  pECCPriKeyBlob, BYTE* pbData, ULONG ulDataLen,
-							 PECCSIGNATUREBLOB pSignature )
-{
-	CHAR* pszLog = ( "**********Start to execute SKF_ExtECCSign ********** \n");
-
-	WriteLogToFile( pszLog );
-
-	return SAR_OK;
-}
-
 //18--------------------NO
 ULONG SKF_ExtECCVerify( HANDLE hDev, ECCPUBLICKEYBLOB*  pECCPubKeyBlob,BYTE* pbData, ULONG ulDataLen,
 							  PECCSIGNATUREBLOB pSignature )
@@ -897,557 +535,6 @@ ULONG SKF_ExtECCVerify( HANDLE hDev, ECCPUBLICKEYBLOB*  pECCPubKeyBlob,BYTE* pbD
 
 	return SAR_OK;
 }
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////
-/*
-* 函数名称：SKF_GenECCKeyPairEx
-* 函数功能：生成ECC签名密钥对并输出公钥和私钥
-* 参数列表：hContainer:  [IN], 容器句柄
-*           ulAlgId:     [IN], 算法标识，只支持SGD_SM2_1算法
-*           pPubKeyBlob:       [OUT], 返回ECC公钥数据结构
-*           pPrivKeyBlob:       [OUT], 返回ECC私钥数据结构
-* 返 回 值：SAR_OK: 成功
-            其他值: 错误码
-*/
-ULONG SKF_GenECCKeyPairEx( HANDLE hContainer, ULONG ulAlgId, ECCPUBLICKEYBLOB* pPubKeyBlob,
-                                                 ECCPRIVATEKEYBLOB *pPrivKeyBlob )
-{
-	CHAR* pszLog = ( "**********Start to execute SKF_GenECCKeyPairEx ********** \n" );
-	CHAR szLog[SIZE_BUFFER_1024];
-	BYTE response[SIZE_BUFFER_1024];
-	BYTE fileSFI[0x06] = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
-	BYTE apdu[SIZE_BUFFER_1024];
-	ECCPUBLICKEYBLOB eccPubKeyBlob = {0};
-	ECCPRIVATEKEYBLOB eccPriKeyBlob = {0};
-	PCONTAINERINFO pContainer;
-	HANDLE hDev;
-	DWORD nResponseLen = 0;
-	LONG nRet = 0;
-	sv_fEnd = FALSE;
-	
-    memset( szLog, 0x0, strlen(szLog) );
-	memset( apdu, 0x00, sizeof(apdu) );
-	memset( response, 0x00, sizeof(response) );
-
-	WriteLogToFile( pszLog );
-
-	//--------容器句柄不能为空
-	if( hContainer == NULL )
-	{
-		return SAR_INVALIDHANDLEERR;
-	}
-
-	//--------算法标识，只支持SGD_SM2_1算法
-	switch( ulAlgId )
-	{
-	    case SGD_SM2_1:
-		    break;
-	    default:
-		    return SAR_NOTSUPPORTYETERR;
-	}
-
-	//--------组织APDU
-	memcpy( apdu, apdu_eccGenKeyPair, 0x05 );
-	apdu[2] = 0xEB;
-	apdu[3] = fileSFI[4];
-	apdu[4] = 0x60;  //0x40公钥长度字节0x20 私钥长度字节
-
-//	PrintApduToFile( 0, apdu, 0x05 );
-
-	nResponseLen = sizeof( response );
-    nRet = TransmitData( hDev, apdu, 0x05, response, &nResponseLen );
-    if( nRet != SAR_OK )
-	{
-        sprintf( szLog, "生成ECC密钥对失败，错误码: %d \n", nRet );
-		WriteLogToFile( szLog );
-		sv_nStatus = 1;
-		return SAR_FAIL;
-	}
-	
-//	PrintApduToFile( 1, response, nResponseLen );
-
-	if( (response[nResponseLen-2] == 0x90) && (response[nResponseLen-1] == 0x00) )
-	{
-#ifdef _DEBUG
-		BYTE m = 0;
-		WriteLogToFile( TEXT("SKF_GenECCKeyPairEx: \n") );
-		for( m=0; m<nResponseLen-2; m++ )
-		{
-			sprintf( szLog, "%02X", response[m] );
-			WriteLogToFile( szLog );
-		}
-		WriteLogToFile( TEXT("\n") );
-#endif
-		eccPubKeyBlob.BitLen = 256;
-		memset( eccPubKeyBlob.XCoordinate, 0x00, sizeof(eccPubKeyBlob.XCoordinate) );
-		memset( eccPubKeyBlob.YCoordinate, 0x00, sizeof(eccPubKeyBlob.YCoordinate) );
-		memcpy( eccPubKeyBlob.XCoordinate+SIZE_BUFFER_32, response, SIZE_BUFFER_32 );
-		memcpy( eccPubKeyBlob.YCoordinate+SIZE_BUFFER_32, response+SIZE_BUFFER_32, SIZE_BUFFER_32 );
-
-		eccPriKeyBlob.BitLen = 256;
-		memcpy( eccPriKeyBlob.PrivateKey+SIZE_BUFFER_32, response+SIZE_BUFFER_64, SIZE_BUFFER_32 );
-		
-	
-		*pPubKeyBlob = eccPubKeyBlob;
-		*pPrivKeyBlob = eccPriKeyBlob;
-	}
-	else
-	{
-        sprintf( szLog, "生成ECC密钥对失败，状态码: %02x%02x \n", response[nResponseLen-2], response[nResponseLen-1] );
-		WriteLogToFile( szLog );
-		return SAR_FAIL;	
-	}
-    
-	return SAR_OK;
-}
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////
-/*
-* 函数名称：SKF_ImportECCKeyPair2
-* 函数功能：导入ECC部分签名密钥对并合成实际签名密钥
-* 参数列表：hContainer:            [IN], 容器句柄
-*           pEnvelopedKeyBlob:     [IN], 受保护的加密密钥对
-* 返 回 值：SAR_OK: 成功
-            其他值: 错误码
-*/
-ULONG SKF_ImportECCKeyPair2( HANDLE hContainer, PENVELOPEDKEYBLOB pEnvelopedKeyBlob )
-{
-	CHAR* pszLog = ( "**********Start to execute SKF_ImportECCKeyPair ********** \n" );
-	CHAR szLog[SIZE_BUFFER_1024];
-	BYTE appFID[2] = { 0xDF, 0x00 };
-	BYTE fileSFI[6] = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
-	BYTE bSFI = 0x00;
-	BYTE apdu[SIZE_BUFFER_1024];
-	BYTE response[SIZE_BUFFER_1024];
-	BYTE tempbuf[SIZE_BUFFER_1024];
-	ULONG length = 0;
-	//ENVELOPEDKEYBLOB envelopedKeyBlob;
-	INT nDivider = 0;
-	INT nRemainder = 0;
-	INT nIndex = 0;
-	ULONG dwOffset = 0;
-	HANDLE hDev;
-	DWORD nResponseLen = 0;
-	LONG nRet = 0;
-	//--------容器句柄不能为空
-	if( hContainer == NULL )
-	{
-		return SAR_INVALIDHANDLEERR;
-	}
-
-	WriteLogToFile( pszLog );
-	sv_fEnd = FALSE;
-	memset( apdu, 0x00, sizeof(apdu) );
-	memset( response, 0x00, sizeof(response) );
-	memset( szLog, 0x0, strlen(szLog) );
-
-	//--------选择ADF，通过FID选择
-	if( SV_SelectDFByFID(hDev, appFID, "选择ADF") != SAR_OK )
-		return SAR_FAIL;
-
-	//--------使用签名密钥对解密对称密钥密文
-	memcpy( apdu, apdu_eccDecrypt, 0x05 );
-	apdu[2] = 0xEB;
-	apdu[3] = fileSFI[4];
-	apdu[4] = (BYTE)(pEnvelopedKeyBlob->ECCCipherBlob.CipherLen + SIZE_BUFFER_96);  //长度字节
-
-	memcpy( apdu+0x05, (pEnvelopedKeyBlob->ECCCipherBlob.XCoordinate) + SIZE_BUFFER_32, SIZE_BUFFER_32 );
-	memcpy( apdu+0x05+SIZE_BUFFER_32, (pEnvelopedKeyBlob->ECCCipherBlob.YCoordinate) + SIZE_BUFFER_32, SIZE_BUFFER_32 );
-	memcpy( apdu+0x05+SIZE_BUFFER_64, (pEnvelopedKeyBlob->ECCCipherBlob.HASH), SIZE_BUFFER_32 );
-	memcpy( apdu+0x05+SIZE_BUFFER_96, pEnvelopedKeyBlob->ECCCipherBlob.Cipher, pEnvelopedKeyBlob->ECCCipherBlob.CipherLen);
-
-    nResponseLen = sizeof( response );
-    nRet = TransmitData( hDev, apdu, (BYTE)(0x05+(BYTE)pEnvelopedKeyBlob->ECCCipherBlob.CipherLen + SIZE_BUFFER_96), response, &nResponseLen );
-    if( nRet != SAR_OK )
-	{
-        sprintf( szLog, "ECC解密失败，错误码: %d \n", nRet );
-		WriteLogToFile( szLog );
-		sv_nStatus = 1;
-		return SAR_FAIL;
-	}
-	
-	if( (response[nResponseLen-2] == 0x90) && (response[nResponseLen-1] == 0x00) )
-	{
-		memcpy( tempbuf, response, nResponseLen-2 );
-		length = nResponseLen-2;
-	}
-	else
-	{
-        sprintf( szLog, "ECC解密失败，状态码: %02x%02x \n", response[nResponseLen-2], response[nResponseLen-1] );
-		WriteLogToFile( szLog );
-		return SAR_FAIL;
-	}
-
-	if(length != 16)
-	{
-		return SAR_INDATALENERR;
-	}
-
-	//--------使用对称密钥解密私钥密文
-	 //--------根据算法类型，调用加解密函数
-	switch( pEnvelopedKeyBlob->ulSymmAlgID)
-	{
-	    case SGD_SM1_ECB:  //SM1算法ECB加密模式
-		    memcpy( apdu, apdu_decrypt_sm1_ecb, 0x05 );
-			break;
-	    case SGD_SSF33_ECB:  //SSF33算法ECB加密模式
-		    memcpy( apdu, apdu_decrypt_ssf33_ecb, 0x05 );
-			break;
-	    case SGD_SM4_ECB:  //SMS4算法ECB加密模式
-		    memcpy( apdu, apdu_decrypt_sm4_ecb, 0x05 );
-			break;
-	    default: 
-		    return SAR_NOTSUPPORTYETERR;
-	}
-	apdu[4] = (BYTE)(0x10 + SIZE_BUFFER_32);
-
-	memcpy( apdu+5, tempbuf, length );
-	memcpy( apdu+21, pEnvelopedKeyBlob->cbEncryptedPriKey + SIZE_BUFFER_32, SIZE_BUFFER_32 );
-	
-//	PrintApduToFile( 0, apdu, 21+SIZE_BUFFER_32 );
-
-    nResponseLen = sizeof( response );
-    nRet = TransmitData( hDev, apdu, 21+SIZE_BUFFER_32, response, &nResponseLen );
-    if( nRet != SAR_OK )
-	{
-        sprintf( szLog, "解密私钥失败，错误码: %d \n", nRet );
-		WriteLogToFile( szLog );
-		sv_nStatus = 1;
-		return SAR_FAIL;
-	}
-
-	if( (response[nResponseLen-2] == 0x90) && (response[nResponseLen-1] == 0x00) )
-	{
-		memcpy( tempbuf, response, nResponseLen-2 );
-	}
-	else
-	{
-        sprintf( szLog, "解密私钥失败，状态码: %02X%02X \n", response[nResponseLen-2], response[nResponseLen-1] );
-		WriteLogToFile( szLog );
-		return SAR_FAIL;
-	}
-
-	//--------导入签名密钥对
-	memcpy( apdu, apdu_import_sm2_keypair, 0x05 );
-	apdu[2] = 0xEB;
-	apdu[3] = fileSFI[4];
-
-	memcpy( apdu+5, pEnvelopedKeyBlob->PubKey.XCoordinate + SIZE_BUFFER_32, SIZE_BUFFER_32 );
-	memcpy( apdu+5+SIZE_BUFFER_32, pEnvelopedKeyBlob->PubKey.YCoordinate + SIZE_BUFFER_32, SIZE_BUFFER_32 );
-	memcpy( apdu+5+SIZE_BUFFER_64, tempbuf, SIZE_BUFFER_32 );
-
-//	PrintApduToFile( 0, apdu, 0x05+SIZE_BUFFER_96 );
-
-    nResponseLen = sizeof( response );
-    nRet = TransmitData( hDev, apdu, 0x05+SIZE_BUFFER_96, response, &nResponseLen );
-    if( nRet != SAR_OK )
-	{
-        sprintf( szLog, "导入SM2签名密钥对失败，错误码: %d \n", nRet );
-		WriteLogToFile( szLog );
-		sv_nStatus = 1;
-		return SAR_FAIL;
-	}
-
-	if( (response[nResponseLen-2] != 0x90) && (response[nResponseLen-1] != 0x00) )
-	{
-        sprintf( szLog, "导入SM2签名密钥对失败，状态码: %02x%02x \n", response[nResponseLen-2], response[nResponseLen-1] );
-		WriteLogToFile( szLog );
-		return SAR_FAIL;
-	}
-
-	return SAR_OK;
-}
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////
-/*
-* 函数名称：SKF_ECCDecrypt
-* 函数功能：ECC内部私钥解密
-* 参数列表：hContainer:            [IN], 容器句柄
-*				pCipherText:		    [IN] 待解密的密文数据。
-*				pbPlainText:		    [OUT] 返回明文数据,如果该参数为NULL，则由pulPlainTextLen 返回明文数据的实际长度。
-*				pulPlainTextLen:	    [IN，OUT] 输入时表示pbPlainText 缓冲区的长度，输出时表示明文数据的实际长度。
-* 返 回 值：SAR_OK: 成功
-            其他值: 错误码
-*/
-ULONG SKF_ECCDecrypt( HANDLE hContainer, PECCCIPHERBLOB pCipherText, BYTE* pbPlainText, ULONG* pulPlainTextLen )
-{
-	CHAR* pszLog = ( "**********Start to execute SKF_ECCDecrypt ********** \n");
-	CHAR szLog[SIZE_BUFFER_1024];
-	//ECCCIPHERBLOB eccCiperBlob;
-	BYTE fileSFI[0x06] = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
-	PCONTAINERINFO pContainer;
-	BYTE apdu[SIZE_BUFFER_1024];
-	BYTE response[SIZE_BUFFER_1024];
-	HANDLE hDev;
-	DWORD nResponseLen = 0;
-	LONG nRet = 0;
-#ifdef _DEBUG
-	ULONG m = 0;
-#endif
-	sv_fEnd = FALSE;
-	memset( apdu, 0x00, sizeof(apdu) );
-	memset( response, 0x00, sizeof(response) );
-	memset( szLog, 0x0, strlen(szLog) );
-
-	WriteLogToFile( pszLog );
-
-	//--------容器句柄不能为空
-	if( hContainer == NULL )
-	{
-		return SAR_INVALIDHANDLEERR;
-	}
-
-	if( pCipherText->CipherLen > SIZE_BUFFER_128 ) 
-	{
-		return SAR_INDATALENERR;
-	}
-
-	//--------组织APDU
-	memcpy( apdu, apdu_eccDecrypt, 0x05 );
-	apdu[2] = 0xEA;
-	apdu[3] = fileSFI[3];
-	apdu[4] = (BYTE)((BYTE)pCipherText->CipherLen + SIZE_BUFFER_96);  //长度字节
-
-	memcpy( apdu+0x05, (pCipherText->XCoordinate) + SIZE_BUFFER_32, SIZE_BUFFER_32 );
-	memcpy( apdu+0x05+SIZE_BUFFER_32, (pCipherText->YCoordinate) + SIZE_BUFFER_32, SIZE_BUFFER_32 );
-	memcpy( apdu+0x05+SIZE_BUFFER_64, (pCipherText->HASH), SIZE_BUFFER_32 );
-	memcpy( apdu+0x05+SIZE_BUFFER_96, pCipherText->Cipher, pCipherText->CipherLen);
-
-    nResponseLen = sizeof( response );
-    nRet = TransmitData( hDev, apdu, (BYTE)(0x05+(BYTE)pCipherText->CipherLen + SIZE_BUFFER_96), response, &nResponseLen );
-    if( nRet != SAR_OK )
-	{
-        sprintf( szLog, "ECC解密失败，错误码: %d \n", nRet );
-		WriteLogToFile( szLog );
-		sv_nStatus = 1;
-		return SAR_FAIL;
-	}
-	
-	if( (response[nResponseLen-2] == 0x90) && (response[nResponseLen-1] == 0x00) )
-	{
-		if (pbPlainText != NULL)
-		{
-			memcpy( pbPlainText, response, nResponseLen-2 );
-		}
-		*pulPlainTextLen = nResponseLen-2;
-	}
-	else
-	{
-        sprintf( szLog, "ECC解密失败，状态码: %02x%02x \n", response[nResponseLen-2], response[nResponseLen-1] );
-		WriteLogToFile( szLog );
-		return SAR_FAIL;
-	}
-
-	return SAR_OK;
-}
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////
-/*
-* 函数名称：SKF_ECCMultAdd
-* 函数功能：ECC 点乘加运算函数
-* 参数列表：hContainer:            [IN], 容器句柄
-*					k:			    [IN] 私钥标识：
-*													1—使用内部加密私钥代替。
-*													2—使用内部签名私钥代替。
-*													0—k 不使用。
-*					e:			    [IN] 外送私钥，当e =NULL 时，e 不使用。
-*					A :			    [IN] SM2 椭圆曲线点，当A =NULL 时，使用内部SM2 基点G代替A。
-*					B:			    [IN] SM2 椭圆曲线点，当B =NULL 时，不作点加运算。
-*					C:			    [OUT] SM2 椭圆曲线点， C = (dk + e)A + B
-* 返 回 值：SAR_OK: 成功
-            其他值: 错误码
-*/
-ULONG SKF_ECCMultAdd(HANDLE hContainer, unsigned int k, ECCPRIVATEKEYBLOB *e,
-                                                 ECCPUBLICKEYBLOB *A, ECCPUBLICKEYBLOB * B, ECCPUBLICKEYBLOB * C)
-
-{
-	CHAR* pszLog = ( "**********Start to execute SKF_ECCMultAdd ********** \n");
-	CHAR szLog[SIZE_BUFFER_1024];
-	BYTE fileSFI[0x06] = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
-	PCONTAINERINFO pContainer;
-	BYTE apdu[SIZE_BUFFER_1024];
-	BYTE response[SIZE_BUFFER_1024];
-	BYTE Param1 = 0;
-	BYTE Param2 = 0;
-	BYTE offset = 5;
-	HANDLE hDev;
-	DWORD nResponseLen = 0;
-	LONG nRet = 0;
-	sv_fEnd = FALSE;
-	memset( apdu, 0x00, sizeof(apdu) );
-	memset( response, 0x00, sizeof(response) );
-	memset( szLog, 0x0, strlen(szLog) );
-
-	WriteLogToFile( pszLog );
-
-	//--------容器句柄不能为空
-	if( hContainer == NULL )
-	{
-		return SAR_INVALIDHANDLEERR;
-	}
-
-	if(( k < 0) || (k > 2))
-	{
-		return SAR_INDATAERR;
-	}
-
-	if(k != 0)
-	{
-		Param1 = 0x80;
-		if(k == 1)
-		{
-			Param1 |= fileSFI[3];  //加密密钥对
-		}
-		else 
-		{
-			Param1 |= fileSFI[4];  //签名密钥对
-		}
-	}
-	if(e != NULL)
-	{
-		Param2 |= PARAM_E_EXIST;
-		memcpy( apdu+offset, e->PrivateKey + SIZE_BUFFER_32, SIZE_BUFFER_32 );
-		offset += SIZE_BUFFER_32;
-	}
-	if(A != NULL)
-	{
-		Param2 |= PARAM_A_EXIST;
-		memcpy( apdu+offset, A->XCoordinate + SIZE_BUFFER_32, SIZE_BUFFER_32 );
-		memcpy( apdu+offset+SIZE_BUFFER_32, A->YCoordinate + SIZE_BUFFER_32, SIZE_BUFFER_32 );
-		offset += SIZE_BUFFER_64;
-	}
-	if(B != NULL)
-	{
-		Param2 |= PARAM_B_EXIST;
-		memcpy( apdu+offset, B->XCoordinate + SIZE_BUFFER_32, SIZE_BUFFER_32 );
-		memcpy( apdu+offset+SIZE_BUFFER_32, B->YCoordinate + SIZE_BUFFER_32, SIZE_BUFFER_32 );
-		offset += SIZE_BUFFER_64;
-	}
-
-
-	//--------组织APDU
-	memcpy( apdu, apdu_point_multadd, 0x05 );
-	apdu[2] = Param1;
-	apdu[3] = Param2;
-	apdu[4] = (BYTE)(offset-5);  //长度字节
-
-    nResponseLen = sizeof( response );
-    nRet = TransmitData( hDev, apdu, (BYTE)offset, response, &nResponseLen );
-    if( nRet != SAR_OK )
-	{
-        sprintf( szLog, "点乘加运算失败，错误码: %d \n", nRet );
-		WriteLogToFile( szLog );
-		sv_nStatus = 1;
-		return SAR_FAIL;
-	}
-	
-	if( (response[nResponseLen-2] == 0x90) && (response[nResponseLen-1] == 0x00) )
-	{
-		C->BitLen = 256;
-		memcpy( (C->XCoordinate)+SIZE_BUFFER_32, response, SIZE_BUFFER_32 );
-		memcpy( (C->YCoordinate)+SIZE_BUFFER_32, response+SIZE_BUFFER_32, SIZE_BUFFER_32 );
-	}
-	else
-	{
-        sprintf( szLog, "点乘加运算失败，状态码: %02x%02x \n", response[nResponseLen-2], response[nResponseLen-1] );
-		WriteLogToFile( szLog );
-		return SAR_FAIL;
-	}
-
-	return SAR_OK;
-}
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////
-/*
-* 函数名称：SKF_ECCModMultAdd
-* 函数功能：ECC 模乘加运算函数
-* 参数列表：hContainer:            [IN], 容器句柄
-*				k:				    [IN] 大数。
-*				a:				    [IN] 大数。
-*				b:				    [IN] 大数。
-*				c:				    [OUT] 运算结果 c = ka + b mod n
-* 返 回 值：SAR_OK: 成功
-            其他值: 错误码
-*/
-ULONG SKF_ECCModMultAdd(HANDLE hContainer, ECCPRIVATEKEYBLOB *k, ECCPRIVATEKEYBLOB * a,
-                                                 ECCPRIVATEKEYBLOB * b, ECCPRIVATEKEYBLOB * c)
-
-{
-	CHAR* pszLog = ( "**********Start to execute SKF_ECCModMultAdd ********** \n");
-	CHAR szLog[SIZE_BUFFER_1024];
-	BYTE fileSFI[0x06] = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
-	PCONTAINERINFO pContainer;
-	BYTE apdu[SIZE_BUFFER_1024];
-	BYTE response[SIZE_BUFFER_1024];
-	BYTE Param1 = 0;
-	BYTE Param2 = 0;
-	BYTE offset = 5;
-	HANDLE hDev;
-	DWORD nResponseLen = 0;
-	LONG nRet = 0;
-	sv_fEnd = FALSE;
-	memset( apdu, 0x00, sizeof(apdu) );
-	memset( response, 0x00, sizeof(response) );
-	memset( szLog, 0x0, strlen(szLog) );
-
-	WriteLogToFile( pszLog );
-
-	//--------容器句柄不能为空
-	if( hContainer == NULL )
-	{
-		return SAR_INVALIDHANDLEERR;
-	}
-
-	//--------组织APDU
-	memcpy( apdu, apdu_mod_multadd, 0x05 );
-
-	if(k != NULL)
-	{
-		Param1 = 0x01;
-		memcpy( apdu+offset, (k->PrivateKey)+SIZE_BUFFER_32, SIZE_BUFFER_32 );
-		offset += SIZE_BUFFER_32;
-	}
-	
-	memcpy( apdu+offset, (a->PrivateKey)+SIZE_BUFFER_32, SIZE_BUFFER_32 );
-	offset += SIZE_BUFFER_32;
-	
-	if(b != NULL)
-	{
-		Param2 = 0x01;
-		memcpy( apdu+offset, (b->PrivateKey)+SIZE_BUFFER_32, SIZE_BUFFER_32 );
-		offset += SIZE_BUFFER_32;
-	}
-
-	apdu[2] = Param1;
-	apdu[3] = Param2;
-	apdu[4] = (BYTE)(offset-5);  //长度字节
-
-    nResponseLen = sizeof( response );
-    nRet = TransmitData( hDev, apdu, (BYTE)offset, response, &nResponseLen );
-    if( nRet != SAR_OK )
-	{
-        sprintf( szLog, "模乘加运算失败，错误码: %d \n", nRet );
-		WriteLogToFile( szLog );
-		sv_nStatus = 1;
-		return SAR_FAIL;
-	}
-	
-	if( (response[nResponseLen-2] == 0x90) && (response[nResponseLen-1] == 0x00) )
-	{
-		c->BitLen = 256;
-		memcpy( (c->PrivateKey)+SIZE_BUFFER_32, response, SIZE_BUFFER_32 );
-	}
-	else
-	{
-        sprintf( szLog, "模乘加运算失败，状态码: %02x%02x \n", response[nResponseLen-2], response[nResponseLen-1] );
-		WriteLogToFile( szLog );
-		return SAR_FAIL;
-	}
-
-	return SAR_OK;
-}
-
-
 
 //19--------------------NO
 ULONG SKF_GenerateAgreementDataWithECC( HANDLE hContainer, ULONG ulAlgId, ECCPUBLICKEYBLOB* pTempECCPubKeyBlob,
@@ -1717,7 +804,7 @@ ULONG SKF_SetSymmKey( HANDLE hDev,  BYTE *pbKey, ULONG ulAlgID, HANDLE *phKey )
 	memcpy( (* pKey).KeyVal, pbKey, keyLen); //填充密钥，其长度为keyLen
 
 	*phKey = pKey;
-	
+
 	return SAR_OK;
 }
 
@@ -2478,7 +1565,6 @@ ULONG SKF_CloseHandle( HANDLE hHandle )
 	return SAR_OK;
 }
 
-// need update.
 ULONG V_ECCPrvKeyDecrypt( HANDLE hDev, BYTE *bKeyFlag, BYTE *pData, BYTE *pbOutData, ULONG *uOutLen )
 {
     CHAR* pszLog = ( "**********Start to execute V_ECCPrvKeyDecrypt ********** \n");
@@ -2695,96 +1781,6 @@ ULONG V_ECCPrvKeyDecrypt( HANDLE hDev, BYTE *bKeyFlag, BYTE *pData, BYTE *pbOutD
 	return SAR_OK;
 }
 
-ULONG V_Cipher(HANDLE hContainer, BYTE *pbData, ULONG ulDataLen, BYTE *pbSignature,
-			   ULONG *pulSignLen)
-{
-    CHAR* pszLog = ( "**********Start to execute SKF_Cipher ********** \n" );
-
-    WriteLogToFile( pszLog );
-
-    return SAR_OK;
-}
-
-ULONG V_GetZA( HANDLE hContainer, BYTE *pData, BYTE *pZA, ULONG  *ulZALen )
-{
-    CHAR* pszLog = ( "**********Start to execute V_GetZA ********** \n" );
-    CHAR szLog[SIZE_BUFFER_1024];
-    memset( szLog, 0x0, strlen(szLog) );
-
-    WriteLogToFile( pszLog );
-    if( hContainer < 0 ) {
-        return SAR_INVALIDHANDLEERR;
-    }
-    if (pData == NULL || (strlen(pData) != SIZE_BUFFER_64)) {
-        LOGE("V_GetZA param pData is not correct.");
-        return -1;
-    }
-	if (pZA == NULL) {
-		LOGE("V_GetZA param pZA is null.");
-		return -1;
-	}
-
-    // 1st command  80F10000 40 64字节SM2公钥
-    unsigned char DataTobeSend[0x45];
-    unsigned long send_len = 0x45;
-    unsigned char check_sum = 0;
-
-    int ret;
-    unsigned char * tmpBuffer_wr = memalign(512, DATA_TRANSMIT_BUFFER_MAX_SIZE);
-    memset(tmpBuffer_wr, 0, DATA_TRANSMIT_BUFFER_MAX_SIZE);
-
-    unsigned char *tmpBuffer_rd = memalign(512, DATA_TRANSMIT_BUFFER_MAX_SIZE);
-    unsigned long recv_len = 0;
-    memset(tmpBuffer_rd, 0, DATA_TRANSMIT_BUFFER_MAX_SIZE);
-
-    memset(DataTobeSend, '\0', 0x45);
-    memcpy(DataTobeSend, apdu_F1_40, 0x05);
-    memcpy(DataTobeSend + 0x05, pData, 0x40);
-    //copy the raw data
-    memcpy(tmpBuffer_wr, (unsigned char *)DataTobeSend, send_len);
-
-    //fill the checksum byte
-    check_sum = CalculateCheckSum((tmpBuffer_wr+1), (send_len-1));
-
-    //fill the data ...........................................
-    *(tmpBuffer_wr+send_len) = check_sum;
-    send_len = send_len + 1;
-
-    for (int i = 0; i < REPEAT_TIMES; i++) {
-        if (REPEAT_TIMES > 1)
-            usleep(500 * 1000);  //gap between each cycle
-
-        memset(tmpBuffer_rd, 0, DATA_TRANSMIT_BUFFER_MAX_SIZE);
-        recv_len = DATA_TRANSMIT_BUFFER_MAX_SIZE;
-        ret = TransmitData(hContainer, tmpBuffer_wr, send_len, tmpBuffer_rd, &recv_len);
-        if (ret < 0) {
-            sprintf( szLog, "V_GetZA failed, error code: %d \n", ret );
-            WriteLogToFile( szLog );
-            LOGE("V_GetZA return failed, error code: %d \n", ret );
-            ret = -1;
-            continue;
-        }
-        if( (tmpBuffer_rd[recv_len-2] == 0x90) && (tmpBuffer_rd[recv_len-1] == 0x00 ) ) {
-            // get ZA
-            *ulZALen = recv_len-2;
-            memcpy( pZA, tmpBuffer_rd, *ulZALen );
-            break;
-        } else {
-            sprintf( szLog, "V_GetZA failed, status code: %02X%02X \n", tmpBuffer_rd[recv_len-2], tmpBuffer_rd[recv_len-1] );
-            WriteLogToFile( szLog );
-            LOGE("V_GetZA failed, status code: %02X%02X \n", tmpBuffer_rd[recv_len-2], tmpBuffer_rd[recv_len-1]);
-        }
-    }
-
-    free(tmpBuffer_wr);
-    free(tmpBuffer_rd);
-
-	if (ret < 0) {
-		return SAR_FAIL;
-	}
-    return SAR_OK;
-}
-
 ULONG V_GenerateKey( HANDLE hContainer, ULONG ulAlgId, BYTE *bKeyFlag, BYTE *pKeyData, ULONG  *uKeyLen )
 {
     CHAR* pszLog = ( "**********Start to execute V_GenerateKey ********** \n" );
@@ -2949,6 +1945,228 @@ ULONG V_ECCExportSessionKeyByHandle( HANDLE hContainer, BYTE *bKeyFlag, BYTE *pK
 			sprintf( szLog, "V_ECCExportSessionKeyByHandle failed, status code: %02X%02X \n", tmpBuffer_rd[recv_len-2], tmpBuffer_rd[recv_len-1] );
 			WriteLogToFile( szLog );
 			LOGE("V_ECCExportSessionKeyByHandle failed, status code: %02X%02X \n", tmpBuffer_rd[recv_len-2], tmpBuffer_rd[recv_len-1]);
+		}
+	}
+
+	free(tmpBuffer_wr);
+	free(tmpBuffer_rd);
+
+	if (ret < 0) {
+		return SAR_FAIL;
+	}
+	return SAR_OK;
+}
+
+ULONG V_ImportKeyPair( HANDLE hContainer, BYTE *bKeyFlag, BYTE* pubKey, BYTE *privKey )
+{
+    CHAR* pszLog = ( "**********Start to execute V_ImportKeyPair ********** \n" );
+    CHAR szLog[SIZE_BUFFER_1024];
+    memset( szLog, 0x0, strlen(szLog) );
+
+    WriteLogToFile( pszLog );
+    if( hContainer < 0 ) {
+        return SAR_INVALIDHANDLEERR;
+    }
+    if (bKeyFlag == NULL) {
+        LOGE("V_ImportKeyPair param bKeyFlag is null.");
+        return -1;
+    }
+    if (pubKey == NULL) {
+        LOGE("V_ImportKeyPair param pubKey is null.");
+        return -1;
+    }
+    if (privKey == NULL) {
+        LOGE("V_ImportKeyPair param privKey is null.");
+        return -1;
+    }
+
+    // command  80CC0000 46 0107+2字节KID+0040+64字节SM2公钥
+    unsigned char DataTobeSend[0x4B];
+    unsigned long send_len = 0x4B;
+    unsigned char check_sum = 0;
+
+    int ret;
+    unsigned char * tmpBuffer_wr = memalign(512, DATA_TRANSMIT_BUFFER_MAX_SIZE);
+    memset(tmpBuffer_wr, 0, DATA_TRANSMIT_BUFFER_MAX_SIZE);
+
+    unsigned char *tmpBuffer_rd = memalign(512, DATA_TRANSMIT_BUFFER_MAX_SIZE);
+    unsigned long recv_len = 0;
+    memset(tmpBuffer_rd, 0, DATA_TRANSMIT_BUFFER_MAX_SIZE);
+
+    memset(DataTobeSend, '\0', 0x4B);
+    memcpy(DataTobeSend, apdu_CC_00, 0x04);
+    memcpy( DataTobeSend + 0x04, apdu_46, 0x01 );
+    memcpy(DataTobeSend + 0x05, apdu_0107, 0x02);
+    memcpy(DataTobeSend + 0x07, bKeyFlag, 0x02);
+    memcpy(DataTobeSend + 0x09, apdu_0040, 0x02);
+    memcpy(DataTobeSend + 0x0B, pubKey, 0x40);
+    //copy the raw data
+    memcpy(tmpBuffer_wr, (unsigned char *)DataTobeSend, send_len);
+
+    //fill the checksum byte
+    check_sum = CalculateCheckSum((tmpBuffer_wr+1), (send_len-1));
+
+    //fill the data ...........................................
+    *(tmpBuffer_wr+send_len) = check_sum;
+    send_len = send_len + 1;
+
+    for (int i = 0; i < REPEAT_TIMES; i++) {
+        if (REPEAT_TIMES > 1)
+            usleep(500 * 1000);  //gap between each cycle
+
+        memset(tmpBuffer_rd, 0, DATA_TRANSMIT_BUFFER_MAX_SIZE);
+        recv_len = DATA_TRANSMIT_BUFFER_MAX_SIZE;
+        ret = TransmitData(hContainer, tmpBuffer_wr, send_len, tmpBuffer_rd, &recv_len);
+        if (ret < 0) {
+            sprintf( szLog, "V_ImportKeyPair failed, error code: %d \n", ret );
+            WriteLogToFile( szLog );
+            LOGE("V_ImportKeyPair return failed, error code: %d \n", ret );
+            ret = -1;
+            continue;
+        }
+        if( (tmpBuffer_rd[recv_len-2] == 0x90) && (tmpBuffer_rd[recv_len-1] == 0x00 ) ) {
+            // get data if need
+            break;
+        } else {
+            sprintf( szLog, "V_ImportKeyPair failed, status code: %02X%02X \n", tmpBuffer_rd[recv_len-2], tmpBuffer_rd[recv_len-1] );
+            WriteLogToFile( szLog );
+            LOGE("V_ImportKeyPair failed, status code: %02X%02X \n", tmpBuffer_rd[recv_len-2], tmpBuffer_rd[recv_len-1]);
+        }
+    }
+
+	// command  80CC0000 26 0207+2字节KID+0020+32字节SM2私钥
+	unsigned char DataSend[0x2B];
+	send_len = 0x2B;
+	check_sum = 0;
+	memset(tmpBuffer_wr, 0, DATA_TRANSMIT_BUFFER_MAX_SIZE);
+	memset(DataSend, '\0', 0x2B);
+	memcpy(DataSend, apdu_CC_00, 0x04);
+	memcpy( DataSend + 0x04, apdu_26, 0x01 );
+	memcpy(DataSend + 0x05, apdu_0207, 0x02);
+	memcpy(DataSend + 0x07, bKeyFlag, 0x02);
+	memcpy(DataSend + 0x09, apdu_0020, 0x02);
+	memcpy(DataSend + 0x0B, privKey, 0x20);
+	//copy the raw data
+	memcpy(tmpBuffer_wr, (unsigned char *)DataSend, send_len);
+
+	//fill the checksum byte
+	check_sum = CalculateCheckSum((tmpBuffer_wr+1), (send_len-1));
+
+	//fill the data ...........................................
+	*(tmpBuffer_wr+send_len) = check_sum;
+	send_len = send_len + 1;
+
+	for (int i = 0; i < REPEAT_TIMES; i++) {
+		if (REPEAT_TIMES > 1)
+			usleep(500 * 1000);  //gap between each cycle
+
+		memset(tmpBuffer_rd, 0, DATA_TRANSMIT_BUFFER_MAX_SIZE);
+		recv_len = DATA_TRANSMIT_BUFFER_MAX_SIZE;
+		ret = TransmitData(hContainer, tmpBuffer_wr, send_len, tmpBuffer_rd, &recv_len);
+		if (ret < 0) {
+			sprintf( szLog, "V_ImportKeyPair failed, error code: %d \n", ret );
+			WriteLogToFile( szLog );
+			LOGE("V_ImportKeyPair return failed, error code: %d \n", ret );
+			ret = -1;
+			continue;
+		}
+		if( (tmpBuffer_rd[recv_len-2] == 0x90) && (tmpBuffer_rd[recv_len-1] == 0x00 ) ) {
+			// get data if need
+			break;
+		} else {
+			sprintf( szLog, "V_ImportKeyPair failed, status code: %02X%02X \n", tmpBuffer_rd[recv_len-2], tmpBuffer_rd[recv_len-1] );
+			WriteLogToFile( szLog );
+			LOGE("V_ImportKeyPair failed, status code: %02X%02X \n", tmpBuffer_rd[recv_len-2], tmpBuffer_rd[recv_len-1]);
+		}
+	}
+
+    free(tmpBuffer_wr);
+    free(tmpBuffer_rd);
+
+    if (ret < 0) {
+        return SAR_FAIL;
+    }
+    return SAR_OK;
+}
+
+ULONG V_Cipher(HANDLE hContainer, BYTE *pbData, ULONG ulDataLen, BYTE *pbSignature,
+			   ULONG *pulSignLen)
+{
+	CHAR* pszLog = ( "**********Start to execute SKF_Cipher ********** \n" );
+
+	WriteLogToFile( pszLog );
+
+	return SAR_OK;
+}
+
+ULONG V_GetZA( HANDLE hContainer, BYTE *pData, BYTE *pZA, ULONG  *ulZALen )
+{
+	CHAR* pszLog = ( "**********Start to execute V_GetZA ********** \n" );
+	CHAR szLog[SIZE_BUFFER_1024];
+	memset( szLog, 0x0, strlen(szLog) );
+
+	WriteLogToFile( pszLog );
+	if( hContainer < 0 ) {
+		return SAR_INVALIDHANDLEERR;
+	}
+	if (pData == NULL || (strlen(pData) != SIZE_BUFFER_64)) {
+		LOGE("V_GetZA param pData is not correct.");
+		return -1;
+	}
+	if (pZA == NULL) {
+		LOGE("V_GetZA param pZA is null.");
+		return -1;
+	}
+
+	// 1st command  80F10000 40 64字节SM2公钥
+	unsigned char DataTobeSend[0x45];
+	unsigned long send_len = 0x45;
+	unsigned char check_sum = 0;
+
+	int ret;
+	unsigned char * tmpBuffer_wr = memalign(512, DATA_TRANSMIT_BUFFER_MAX_SIZE);
+	memset(tmpBuffer_wr, 0, DATA_TRANSMIT_BUFFER_MAX_SIZE);
+
+	unsigned char *tmpBuffer_rd = memalign(512, DATA_TRANSMIT_BUFFER_MAX_SIZE);
+	unsigned long recv_len = 0;
+	memset(tmpBuffer_rd, 0, DATA_TRANSMIT_BUFFER_MAX_SIZE);
+
+	memset(DataTobeSend, '\0', 0x45);
+	memcpy(DataTobeSend, apdu_F1_40, 0x05);
+	memcpy(DataTobeSend + 0x05, pData, 0x40);
+	//copy the raw data
+	memcpy(tmpBuffer_wr, (unsigned char *)DataTobeSend, send_len);
+
+	//fill the checksum byte
+	check_sum = CalculateCheckSum((tmpBuffer_wr+1), (send_len-1));
+
+	//fill the data ...........................................
+	*(tmpBuffer_wr+send_len) = check_sum;
+	send_len = send_len + 1;
+
+	for (int i = 0; i < REPEAT_TIMES; i++) {
+		if (REPEAT_TIMES > 1)
+			usleep(500 * 1000);  //gap between each cycle
+
+		memset(tmpBuffer_rd, 0, DATA_TRANSMIT_BUFFER_MAX_SIZE);
+		recv_len = DATA_TRANSMIT_BUFFER_MAX_SIZE;
+		ret = TransmitData(hContainer, tmpBuffer_wr, send_len, tmpBuffer_rd, &recv_len);
+		if (ret < 0) {
+			sprintf( szLog, "V_GetZA failed, error code: %d \n", ret );
+			WriteLogToFile( szLog );
+			LOGE("V_GetZA return failed, error code: %d \n", ret );
+			ret = -1;
+			continue;
+		}
+		if( (tmpBuffer_rd[recv_len-2] == 0x90) && (tmpBuffer_rd[recv_len-1] == 0x00 ) ) {
+			// get ZA
+			*ulZALen = recv_len-2;
+			memcpy( pZA, tmpBuffer_rd, *ulZALen );
+			break;
+		} else {
+			sprintf( szLog, "V_GetZA failed, status code: %02X%02X \n", tmpBuffer_rd[recv_len-2], tmpBuffer_rd[recv_len-1] );
+			WriteLogToFile( szLog );
+			LOGE("V_GetZA failed, status code: %02X%02X \n", tmpBuffer_rd[recv_len-2], tmpBuffer_rd[recv_len-1]);
 		}
 	}
 
