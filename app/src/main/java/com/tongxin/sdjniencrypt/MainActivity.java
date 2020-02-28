@@ -53,6 +53,9 @@ public class MainActivity extends AppCompatActivity {
     private Button mGenerateDataAndKeyWithECC = null;
     private Button mExportPublicKey = null;
     private Button mImportSessionKey = null;
+    private Button mCloseHandle = null;
+    private Button mGetDevInfo = null;
+    private Button mGetZA = null;
     private Button mNextPage = null;
     private String mECCData = null;
     private String ECCKeyPair = null;
@@ -234,6 +237,36 @@ public class MainActivity extends AppCompatActivity {
                 EncrpytData = encbuilder.toString();
                 long result = AESEncrypt.ImportSessionKey(deviceHandle);
                 tvResult.setText("ImportSessionKey: " + result);
+            }
+        });
+        mCloseHandle = (Button) findViewById(R.id.btn_closehandle);
+        mCloseHandle.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                long result = AESEncrypt.CloseHandle(deviceHandle);
+                tvResult.setText("CloseHandle: " + result);
+            }
+        });
+        mGetDevInfo = (Button) findViewById(R.id.btn_getdevinfo);
+        mGetDevInfo.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                String result = AESEncrypt.GetDevInfo(deviceHandle);
+                tvResult.setText("GetDevInfo: " + result);
+            }
+        });
+        mGetZA = (Button) findViewById(R.id.btn_getza);
+        mGetZA.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                StringBuilder encbuilder = new StringBuilder(64);
+                for (int i = 0; i < 2; i++) {
+                    encbuilder.append("00112233445566778899001122334455");
+                }
+                String encode = encbuilder.toString();
+                tvLog.setText("mGetZA string: " + encode);
+                long result = AESEncrypt.GetZA(deviceHandle, encode.getBytes());
+                tvResult.setText("GetZA: " + result);
             }
         });
         mNextPage = (Button) findViewById(R.id.btn_nextpage);

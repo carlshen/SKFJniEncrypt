@@ -16,23 +16,23 @@
             android:layout_weight="1"
             android:text="SetSymKey" />
         <Button
-            android:id="@+id/btn_closehandle"
+            android:id="@+id/btn_getsymkey"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="CloseHandle" />
+            android:text="GetSymKey" />
         <Button
-            android:id="@+id/btn_getdevinfo"
+            android:id="@+id/btn_checksymkey"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="GetDevInfo" />
+            android:text="CheckSymKey" />
         <Button
-            android:id="@+id/btn_getza"
+            android:id="@+id/btn_cipher"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="GetZA" />
+            android:text="Cipher" />
     </LinearLayout>
     <LinearLayout
         android:layout_width="match_parent"
@@ -173,12 +173,6 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:text="ImportKeyPair" />
-        <Button
-            android:id="@+id/btn_cipher"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="Cipher" />
     </LinearLayout>
     <TextView
         android:id="@+id/tv_result"

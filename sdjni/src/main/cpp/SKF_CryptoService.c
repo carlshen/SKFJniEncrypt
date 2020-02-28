@@ -764,48 +764,263 @@ ULONG SKF_ImportSessionKey( HANDLE hContainer, ULONG ulAlgId, BYTE* pbWrapedData
 * 返 回 值：SAR_OK: 成功
             其他值: 错误码
 */
-ULONG SKF_SetSymmKey( HANDLE hDev,  BYTE *pbKey, ULONG ulAlgID, HANDLE *phKey )
+ULONG SKF_SetSymmKey( HANDLE hDev, ULONG ulAlgId, BYTE *bKeyFlag, BYTE *pbKey, BYTE *pHandle )
 {
 	CHAR* pszLog = ( "**********Start to execute SKF_SetSymmKey ********** \n" );
-    ULONG keyLen = 0;
+    CHAR szLog[SIZE_BUFFER_1024];
+    memset( szLog, 0x0, strlen(szLog) );
  
 	sv_fEnd = FALSE;
 	WriteLogToFile( pszLog );
 
-	if( hDev == NULL )
-		return SAR_INVALIDHANDLEERR;	
-
-	switch( ulAlgID )
-	{
-	    case SGD_SM1_ECB:
-			break;
-		case SGD_SM1_CBC:
-			break;
-		case SGD_SSF33_ECB:
-			break;
-		case SGD_SSF33_CBC:
-			break;
-		case SGD_SM4_ECB:
-			break;
-		case SGD_SM4_CBC:
-			break;
-		default:
-			return SAR_NOTSUPPORTYETERR;
+    if( hDev < 0 ) {
+        return SAR_INVALIDHANDLEERR;
+    }
+	if (bKeyFlag == NULL) {
+		LOGE("SKF_SetSymmKey param bKeyFlag is null.");
+		return -1;
+	}
+    if (pbKey == NULL) {
+        LOGE("SKF_SetSymmKey param pbKey is null.");
+        return -1;
+    }
+	if (pHandle == NULL) {
+		LOGE("SKF_SetSymmKey param pHandle is null.");
+		return -1;
 	}
 
-	keyLen = 16;
-	SESSIONKEY *pKey;
+    // command  80CC0000 16 00+XX（02:SM1,03:SM4）+2字节KID+0010+密钥明文值
+    unsigned char DataTobeSend[0x1B];
+    unsigned long send_len = 0x1B;
+    unsigned char check_sum = 0;
 
-	(* pKey).AlgID = ulAlgID;        //填充算法ID
-	(* pKey).KeyLen = (BYTE)keyLen;  //填充密钥长度，为固定值0x10 bytes
-	(* pKey).hDev = hDev;            //填充设备句柄
+    int ret;
+    unsigned char * tmpBuffer_wr = memalign(512, DATA_TRANSMIT_BUFFER_MAX_SIZE);
+    memset(tmpBuffer_wr, 0, DATA_TRANSMIT_BUFFER_MAX_SIZE);
 
-	memset( ( * pKey).KeyVal, 0x00, sizeof((* pKey).KeyVal) );
-	memcpy( (* pKey).KeyVal, pbKey, keyLen); //填充密钥，其长度为keyLen
+    unsigned char *tmpBuffer_rd = memalign(512, DATA_TRANSMIT_BUFFER_MAX_SIZE);
+    unsigned long recv_len = 0;
+    memset(tmpBuffer_rd, 0, DATA_TRANSMIT_BUFFER_MAX_SIZE);
 
-	*phKey = pKey;
+    memset(DataTobeSend, '\0', 0x1B);
+    memcpy(DataTobeSend, apdu_CC_00, 0x04);
+    memcpy( DataTobeSend + 0x04, apdu_16, 0x01 );
+    memcpy( DataTobeSend + 0x05, apdu_00, 0x01 );
+    if ( ulAlgId == SGD_SM1 ) {
+        memcpy( DataTobeSend + 0x06, apdu_02, 0x01 );
+    } else if ( ulAlgId == SGD_SM4 ) {
+        memcpy( DataTobeSend + 0x06, apdu_03, 0x01 );
+    } else {
+        LOGE("SKF_SetSymmKey param ulAlgId is not correct.");
+        return -1;
+    }
+    memcpy(DataTobeSend + 0x07, bKeyFlag, 0x02);
+    memcpy(DataTobeSend + 0x09, apdu_0010, 0x02);
+    memcpy(DataTobeSend + 0x0B, pbKey, 0x10);
+    //copy the raw data
+    memcpy(tmpBuffer_wr, (unsigned char *)DataTobeSend, send_len);
 
+    //fill the checksum byte
+    check_sum = CalculateCheckSum((tmpBuffer_wr+1), (send_len-1));
+
+    //fill the data ...........................................
+    *(tmpBuffer_wr+send_len) = check_sum;
+    send_len = send_len + 1;
+
+    for (int i = 0; i < REPEAT_TIMES; i++) {
+        if (REPEAT_TIMES > 1)
+            usleep(500 * 1000);  //gap between each cycle
+
+        memset(tmpBuffer_rd, 0, DATA_TRANSMIT_BUFFER_MAX_SIZE);
+        recv_len = DATA_TRANSMIT_BUFFER_MAX_SIZE;
+        ret = TransmitData(hDev, tmpBuffer_wr, send_len, tmpBuffer_rd, &recv_len);
+        if (ret < 0) {
+            sprintf( szLog, "SKF_SetSymmKey failed, error code: %d \n", ret );
+            WriteLogToFile( szLog );
+            LOGE("SKF_SetSymmKey return failed, error code: %d \n", ret );
+            ret = -1;
+            continue;
+        }
+        if( (tmpBuffer_rd[recv_len-2] == 0x90) && (tmpBuffer_rd[recv_len-1] == 0x00 ) ) {
+            // get data handle
+            memcpy( pHandle, tmpBuffer_rd, recv_len-2 );
+            break;
+        } else {
+            sprintf( szLog, "SKF_SetSymmKey failed, status code: %02X%02X \n", tmpBuffer_rd[recv_len-2], tmpBuffer_rd[recv_len-1] );
+            WriteLogToFile( szLog );
+            LOGE("SKF_SetSymmKey failed, status code: %02X%02X \n", tmpBuffer_rd[recv_len-2], tmpBuffer_rd[recv_len-1]);
+        }
+    }
+
+    free(tmpBuffer_wr);
+    free(tmpBuffer_rd);
+
+    if (ret < 0) {
+        return SAR_FAIL;
+    }
+    return SAR_OK;
+}
+
+ULONG SKF_GetSymmKey( HANDLE hDev, BYTE *bKeyFlag, BYTE *pHandle )
+{
+	CHAR* pszLog = ( "**********Start to execute SKF_GetSymmKey ********** \n" );
+	CHAR szLog[SIZE_BUFFER_1024];
+	memset( szLog, 0x0, strlen(szLog) );
+
+	sv_fEnd = FALSE;
+	WriteLogToFile( pszLog );
+
+	if( hDev < 0 ) {
+		return SAR_INVALIDHANDLEERR;
+	}
+	if (bKeyFlag == NULL) {
+		LOGE("SKF_GetSymmKey param bKeyFlag is null.");
+		return -1;
+	}
+	if (pHandle == NULL) {
+		LOGE("SKF_GetSymmKey param pHandle is null.");
+		return -1;
+	}
+
+	// command  80CC0000 16 00+XX（02:SM1,03:SM4）+2字节KID+0010+密钥明文值
+	unsigned char DataTobeSend[0x07];
+	unsigned long send_len = 0x07;
+	unsigned char check_sum = 0;
+
+	int ret;
+	unsigned char * tmpBuffer_wr = memalign(512, DATA_TRANSMIT_BUFFER_MAX_SIZE);
+	memset(tmpBuffer_wr, 0, DATA_TRANSMIT_BUFFER_MAX_SIZE);
+
+	unsigned char *tmpBuffer_rd = memalign(512, DATA_TRANSMIT_BUFFER_MAX_SIZE);
+	unsigned long recv_len = 0;
+	memset(tmpBuffer_rd, 0, DATA_TRANSMIT_BUFFER_MAX_SIZE);
+
+	memset(DataTobeSend, '\0', 0x07);
+	memcpy(DataTobeSend, apdu_D1_02, 0x05);
+	memcpy( DataTobeSend + 0x05, bKeyFlag, 0x02 );
+	//copy the raw data
+	memcpy(tmpBuffer_wr, (unsigned char *)DataTobeSend, send_len);
+
+	//fill the checksum byte
+	check_sum = CalculateCheckSum((tmpBuffer_wr+1), (send_len-1));
+
+	//fill the data ...........................................
+	*(tmpBuffer_wr+send_len) = check_sum;
+	send_len = send_len + 1;
+
+	for (int i = 0; i < REPEAT_TIMES; i++) {
+		if (REPEAT_TIMES > 1)
+			usleep(500 * 1000);  //gap between each cycle
+
+		memset(tmpBuffer_rd, 0, DATA_TRANSMIT_BUFFER_MAX_SIZE);
+		recv_len = DATA_TRANSMIT_BUFFER_MAX_SIZE;
+		ret = TransmitData(hDev, tmpBuffer_wr, send_len, tmpBuffer_rd, &recv_len);
+		if (ret < 0) {
+			sprintf( szLog, "SKF_GetSymmKey failed, error code: %d \n", ret );
+			WriteLogToFile( szLog );
+			LOGE("SKF_GetSymmKey return failed, error code: %d \n", ret );
+			ret = -1;
+			continue;
+		}
+		if( (tmpBuffer_rd[recv_len-2] == 0x90) && (tmpBuffer_rd[recv_len-1] == 0x00 ) ) {
+			// get data handle
+			memcpy( pHandle, tmpBuffer_rd, recv_len-2 );
+			break;
+		} else {
+			sprintf( szLog, "SKF_GetSymmKey failed, status code: %02X%02X \n", tmpBuffer_rd[recv_len-2], tmpBuffer_rd[recv_len-1] );
+			WriteLogToFile( szLog );
+			LOGE("SKF_GetSymmKey failed, status code: %02X%02X \n", tmpBuffer_rd[recv_len-2], tmpBuffer_rd[recv_len-1]);
+		}
+	}
+
+	free(tmpBuffer_wr);
+	free(tmpBuffer_rd);
+
+	if (ret < 0) {
+		return SAR_FAIL;
+	}
 	return SAR_OK;
+}
+
+ULONG SKF_CheckSymmKey( HANDLE hDev, BYTE *bKeyFlag, ULONG *pHandle )
+{
+    CHAR* pszLog = ( "**********Start to execute SKF_CheckSymmKey ********** \n" );
+    CHAR szLog[SIZE_BUFFER_1024];
+    memset( szLog, 0x0, strlen(szLog) );
+
+    sv_fEnd = FALSE;
+    WriteLogToFile( pszLog );
+
+    if( hDev < 0 ) {
+        return SAR_INVALIDHANDLEERR;
+    }
+    if (bKeyFlag == NULL) {
+        LOGE("SKF_CheckSymmKey param bKeyFlag is null.");
+        return -1;
+    }
+    if (pHandle == NULL) {
+        LOGE("SKF_CheckSymmKey param pHandle is null.");
+        return -1;
+    }
+
+    // command  80CC0000 16 00+XX（02:SM1,03:SM4）+2字节KID+0010+密钥明文值
+    unsigned char DataTobeSend[0x07];
+    unsigned long send_len = 0x07;
+    unsigned char check_sum = 0;
+
+    int ret;
+    unsigned char * tmpBuffer_wr = memalign(512, DATA_TRANSMIT_BUFFER_MAX_SIZE);
+    memset(tmpBuffer_wr, 0, DATA_TRANSMIT_BUFFER_MAX_SIZE);
+
+    unsigned char *tmpBuffer_rd = memalign(512, DATA_TRANSMIT_BUFFER_MAX_SIZE);
+    unsigned long recv_len = 0;
+    memset(tmpBuffer_rd, 0, DATA_TRANSMIT_BUFFER_MAX_SIZE);
+
+    memset(DataTobeSend, '\0', 0x07);
+    memcpy(DataTobeSend, apdu_C1_02, 0x05);
+    memcpy( DataTobeSend + 0x05, bKeyFlag, 0x02 );
+    //copy the raw data
+    memcpy(tmpBuffer_wr, (unsigned char *)DataTobeSend, send_len);
+
+    //fill the checksum byte
+    check_sum = CalculateCheckSum((tmpBuffer_wr+1), (send_len-1));
+
+    //fill the data ...........................................
+    *(tmpBuffer_wr+send_len) = check_sum;
+    send_len = send_len + 1;
+
+    for (int i = 0; i < REPEAT_TIMES; i++) {
+        if (REPEAT_TIMES > 1)
+            usleep(500 * 1000);  //gap between each cycle
+
+        memset(tmpBuffer_rd, 0, DATA_TRANSMIT_BUFFER_MAX_SIZE);
+        recv_len = DATA_TRANSMIT_BUFFER_MAX_SIZE;
+        ret = TransmitData(hDev, tmpBuffer_wr, send_len, tmpBuffer_rd, &recv_len);
+        if (ret < 0) {
+            sprintf( szLog, "SKF_CheckSymmKey failed, error code: %d \n", ret );
+            WriteLogToFile( szLog );
+            LOGE("SKF_CheckSymmKey return failed, error code: %d \n", ret );
+            ret = -1;
+            continue;
+        }
+        if( (tmpBuffer_rd[recv_len-2] == 0x90) && (tmpBuffer_rd[recv_len-1] == 0x00 ) ) {
+            // get data handle
+            *pHandle = tmpBuffer_rd[recv_len];
+            break;
+        } else {
+            sprintf( szLog, "SKF_CheckSymmKey failed, status code: %02X%02X \n", tmpBuffer_rd[recv_len-2], tmpBuffer_rd[recv_len-1] );
+            WriteLogToFile( szLog );
+            LOGE("SKF_CheckSymmKey failed, status code: %02X%02X \n", tmpBuffer_rd[recv_len-2], tmpBuffer_rd[recv_len-1]);
+        }
+    }
+
+    free(tmpBuffer_wr);
+    free(tmpBuffer_rd);
+
+    if (ret < 0) {
+        return SAR_FAIL;
+    }
+    return SAR_OK;
 }
 
 //25
@@ -1298,14 +1513,6 @@ ULONG SKF_DigestInit( HANDLE hDev, ULONG ulAlgID, ECCPUBLICKEYBLOB* pPubKey, BYT
 *           pulHashLen: [IN,OUT], 输入时表示杂凑结果缓冲区长度；输出时表示杂凑结果长度
 * 返 回 值：SAR_OK: 成功
             其他值: 错误码
-*/
-/*
-BYTE ss[32] = {
-    0xD2, 0x81, 0xBD, 0x10, 0xAE, 0x62, 0x4A, 0xFE, 
-	0x17, 0x3D, 0x97, 0x1F, 0x93, 0x3F, 0xE2, 0xFC, 
-	0x9B, 0xC2, 0xF1, 0xC5, 0x5E, 0xF9, 0x1F, 0xB5, 
-	0x5C, 0x38, 0x7B, 0x22, 0x39, 0xE4, 0xC7, 0xE6
-};
 */
 BYTE ss[32] = {
     0xC4, 0x0D, 0x25, 0xD5, 0xB2, 0xA4, 0xCB, 0x1A, 

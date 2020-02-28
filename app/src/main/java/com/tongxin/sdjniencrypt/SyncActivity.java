@@ -10,6 +10,7 @@ import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
@@ -28,9 +29,8 @@ public class SyncActivity extends AppCompatActivity {
     private TextView tvLog = null;
     // next 2nd page
     private Button mSetSymKey = null;
-    private Button mCloseHandle = null;
-    private Button mGetDevInfo = null;
-    private Button mGetZA = null;
+    private Button mGetSymKey = null;
+    private Button mCheckSymKey = null;
     // encrypt / decrypt
     private Button mEncryptInit = null;
     private Button mEncrypt = null;
@@ -79,38 +79,33 @@ public class SyncActivity extends AppCompatActivity {
         mSetSymKey.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                long result = AESEncrypt.SetSymKey(deviceHandle);
+                String symKey = "";
+                byte[] key = null;
+                try {
+                    key = EncryptUtil.generateKey();
+                    symKey = EncryptUtil.ByteArrayToHexString(key);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+                Log.i(TAG, "====== mSetSymKey = " + symKey);
+                long result = AESEncrypt.SetSymKey(deviceHandle, key);
                 tvResult.setText("SetSymKey: " + result);
             }
         });
-        mCloseHandle = (Button) findViewById(R.id.btn_closehandle);
-        mCloseHandle.setOnClickListener(new View.OnClickListener() {
+        mGetSymKey = (Button) findViewById(R.id.btn_getsymkey);
+        mGetSymKey.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                long result = AESEncrypt.CloseHandle(deviceHandle);
+                String result = AESEncrypt.GetSymKey(deviceHandle);
                 tvResult.setText("CloseHandle: " + result);
             }
         });
-        mGetDevInfo = (Button) findViewById(R.id.btn_getdevinfo);
-        mGetDevInfo.setOnClickListener(new View.OnClickListener() {
+        mCheckSymKey = (Button) findViewById(R.id.btn_checksymkey);
+        mCheckSymKey.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                String result = AESEncrypt.GetDevInfo(deviceHandle);
+                long result = AESEncrypt.CheckSymKey(deviceHandle);
                 tvResult.setText("GetDevInfo: " + result);
-            }
-        });
-        mGetZA = (Button) findViewById(R.id.btn_getza);
-        mGetZA.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                StringBuilder encbuilder = new StringBuilder(64);
-                for (int i = 0; i < 2; i++) {
-                    encbuilder.append("00112233445566778899001122334455");
-                }
-                String encode = encbuilder.toString();
-                tvLog.setText("mGetZA string: " + encode);
-                long result = AESEncrypt.GetZA(deviceHandle, encode.getBytes());
-                tvResult.setText("GetZA: " + result);
             }
         });
         mEncryptInit = (Button) findViewById(R.id.btn_encryptInit);

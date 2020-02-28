@@ -24,7 +24,9 @@ ULONG SKF_GenerateKeyWithECC( HANDLE hAgreementHandle, ECCPUBLICKEYBLOB* pECCPub
 ULONG SKF_ExportPublicKey( HANDLE hContainer, BYTE* pbBlob, ULONG* pulBlobLen );
 ULONG SKF_ImportSessionKey( HANDLE hContainer, ULONG ulAlgId, BYTE* pbWrapedData,
                             ULONG ulWrapedLen, HANDLE* phKey );
-ULONG SKF_SetSymmKey( HANDLE hDev,  BYTE *pbKey, ULONG ulAlgID, HANDLE *phKey );
+ULONG SKF_SetSymmKey( HANDLE hDev, ULONG ulAlgID, BYTE *bKeyFlag, BYTE *pbKey, BYTE *pHandle );
+ULONG SKF_GetSymmKey( HANDLE hDev, BYTE *bKeyFlag, BYTE *pHandle );
+ULONG SKF_CheckSymmKey( HANDLE hDev, BYTE *bKeyFlag, ULONG *pHandle );
 ULONG SKF_EncryptInit( HANDLE hKey, BLOCKCIPHERPARAM encryptParam );
 ULONG SKF_Encrypt( HANDLE hKey, BYTE *pbData, ULONG ulDataLen,
                    BYTE *pbEncryptedData, ULONG * pulEncryptedLen );

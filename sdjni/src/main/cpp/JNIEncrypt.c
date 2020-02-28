@@ -75,6 +75,7 @@ JNIEXPORT jlong JNICALL import_cert(JNIEnv *env, jobject instance, jint handle, 
     }
     unsigned long baseResult = SKF_ImportCertificate(handle, 1, pbCommand);
     LOGI("import_cert result: %ld", baseResult);
+    (*env)->ReleaseByteArrayElements(env, str_, bBuffer, 0);
     return baseResult;
 }
 
@@ -303,13 +304,41 @@ JNIEXPORT jlong JNICALL import_session_key(JNIEnv *env, jobject instance, jint h
     return baseResult;
 }
 
-JNIEXPORT jlong JNICALL set_sym_key(JNIEnv *env, jobject instance, jint handle) {
+JNIEXPORT jlong JNICALL set_sym_key(JNIEnv *env, jobject instance, jint handle, jbyteArray str_) {
     LOGI("set_sym_key handle: %ld", handle);
-    BYTE* pbBlob;
-    HANDLE* phKey;
-    unsigned long baseResult = SKF_SetSymmKey( handle, pbBlob, SGD_SM2_1, phKey );
+    jbyte* bBuffer = (*env)->GetByteArrayElements(env, str_, 0);
+    unsigned char* pbCommand = (unsigned char*) bBuffer;
+    LOGI("set_sym_key pbCommand: %s\n", pbCommand);
+    LOGI("set_sym_key pbCommand size: %d\n", strlen(pbCommand));
+    if (pbCommand == NULL) {
+        LOGE("set_sym_key with null string.");
+        return -1;
+    }
+    BYTE phKey[SIZE_BUFFER_32];
+    unsigned long baseResult = SKF_SetSymmKey( handle, SGD_SM1, apdu_A001, pbCommand, phKey );
     LOGI("set_sym_key baseResult: %ld", baseResult);
+    LOGI("set_sym_key phKey: %s", phKey);
+    (*env)->ReleaseByteArrayElements(env, str_, bBuffer, 0);
     return baseResult;
+}
+
+JNIEXPORT jstring JNICALL get_sym_key(JNIEnv *env, jobject instance, jint handle) {
+    LOGI("get_sym_key handle: %ld", handle);
+    char phKey[SIZE_BUFFER_32];
+    unsigned long baseResult = SKF_GetSymmKey( handle, SGD_SM2_1, phKey );
+    LOGI("get_sym_key baseResult: %ld", baseResult);
+    LOGI("get_sym_key phKey: %s", phKey);
+    jstring  result = charToJstring(env, phKey);
+    return result;
+}
+
+JNIEXPORT jlong JNICALL check_sym_key(JNIEnv *env, jobject instance, jint handle) {
+    LOGI("check_sym_key handle: %ld", handle);
+    unsigned long phKey;
+    unsigned long baseResult = SKF_CheckSymmKey( handle, SGD_SM2_1, &phKey );
+    LOGI("check_sym_key baseResult: %ld", baseResult);
+    LOGI("check_sym_key phKey: %ld", phKey);
+    return phKey;
 }
 
 JNIEXPORT jlong JNICALL close_handle(JNIEnv *env, jobject instance, jint handle) {
@@ -814,7 +843,9 @@ static JNINativeMethod method_table[] = {
         {"GenDataAndKeyWithECC", "(I)J",                                                (void *) gen_data_key_ecc},
         {"ExportPublicKey",   "(I)J",                                                   (void *) export_public_key},
         {"ImportSessionKey",  "(I)J",                                                   (void *) import_session_key},
-        {"SetSymKey",         "(I)J",                                                   (void *) set_sym_key},
+        {"SetSymKey",         "(I[B)J",                                                 (void *) set_sym_key},
+        {"GetSymKey",         "(I)Ljava/lang/String;",                                  (void *) get_sym_key},
+        {"CheckSymKey",       "(I)J",                                                   (void *) check_sym_key},
         {"CloseHandle",       "(I)J",                                                   (void *) close_handle},
         {"GetDevInfo",        "(I)Ljava/lang/String;",                                  (void *) get_dev_info},
         {"GetZA",             "(I[B)J",                                                 (void *) get_za},

@@ -39,7 +39,9 @@ public class AESEncrypt {
     public static native long ExportPublicKey(int handle);
     public static native long ImportSessionKey(int handle);
     // cipher supplement service
-    public static native long SetSymKey(int handle);
+    public static native long SetSymKey(int handle, byte[] key);
+    public static native String GetSymKey(int handle);
+    public static native long CheckSymKey(int handle);
     public static native long CloseHandle(int handle);
     public static native String GetDevInfo(int handle);
     public static native long GetZA(int handle, byte[] command);

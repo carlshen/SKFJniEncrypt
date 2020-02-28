@@ -131,6 +131,29 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:text="ImportSessionKey" />
+    </LinearLayout>
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal" >
+        <Button
+            android:id="@+id/btn_closehandle"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="CloseHandle" />
+        <Button
+            android:id="@+id/btn_getdevinfo"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="GetDevInfo" />
+        <Button
+            android:id="@+id/btn_getza"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="GetZA" />
         <Button
             android:id="@+id/btn_nextpage"
             android:layout_width="0dp"
